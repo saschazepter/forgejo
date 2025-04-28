@@ -62,14 +62,14 @@
 			{{else}}
 				{{if $v.SigningKey}}
 					{{if ne $v.SigningKey.KeyID ""}}
-						{{svg "octicon-verified" 16 "tw-mr-2"}}
+						{{svg "octicon-unverified" 16 "tw-mr-2"}}
 						<span class="ui text tw-mr-2">{{ctx.Locale.Tr "repo.commits.gpg_key_id"}}:</span>
 						{{$v.SigningKey.PaddedKeyID}}
 					{{end}}
 				{{end}}
 				{{if $v.SigningSSHKey}}
 					{{if ne $v.SigningSSHKey.Fingerprint ""}}
-						{{svg "octicon-verified" 16 "tw-mr-2"}}
+						{{svg "octicon-unverified" 16 "tw-mr-2"}}
 						<span class="ui text tw-mr-2">{{ctx.Locale.Tr "repo.commits.ssh_key_fingerprint"}}:</span>
 						{{$v.SigningSSHKey.Fingerprint}}
 					{{end}}
