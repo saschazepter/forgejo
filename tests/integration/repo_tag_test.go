@@ -54,6 +54,30 @@ func TestTagViewWithoutRelease(t *testing.T) {
 
 	// Test that there is no "Stable" link
 	htmlDoc.AssertElement(t, "h4.release-list-title > span.ui.green.label", false)
+
+	// Test that the correct user is linked
+	ownerLinkHref, _ := htmlDoc.Find("a.author").Attr("href")
+	assert.Equal(t, "/user2", ownerLinkHref)
+
+	t.Run("Ghost owner", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		ghost := user_model.NewGhostUser()
+		err = release.CreateNewTag(git.DefaultContext, ghost, repo, "master", "ghost-tag", "a spooky tag")
+		require.NoError(t, err)
+
+		req := NewRequestf(t, "GET", "/%s/releases/tag/ghost-tag", repo.FullName())
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		// Test that the Ghost user does not link anywhere
+		ownerLink := htmlDoc.Find("a.author")
+		_, ok := ownerLink.Attr("href")
+		assert.Equal(t, 1, ownerLink.Length())
+		assert.False(t, ok)
+		assert.Equal(t, "Ghost", ownerLink.Text())
+	})
 }
 
 func TestCreateNewTagProtected(t *testing.T) {

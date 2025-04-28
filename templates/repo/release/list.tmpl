@@ -42,9 +42,10 @@
 								{{svg (MigrationIcon $release.Repo.GetOriginalURLHostname) 20 "tw-mr-1"}}{{$release.OriginalAuthor}}
 							{{else if $release.Publisher}}
 								{{ctx.AvatarUtils.Avatar $release.Publisher 20 "tw-mr-1"}}
-								<a href="{{$release.Publisher.HomeLink}}">{{$release.Publisher.GetDisplayName}}</a>
+								{{template "shared/user/authorlink" $release.Publisher}}
 							{{else}}
-								Ghost
+								<!-- Fake the Ghost user -->
+								{{template "shared/user/authorlink" (dict "ID" -1)}}
 							{{end}}
 							</span>
 							<span class="released">

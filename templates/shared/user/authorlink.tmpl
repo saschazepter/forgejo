@@ -1,1 +1,7 @@
-<a class="author text black tw-font-semibold muted"{{if gt .ID 0}} href="{{.HomeLink}}"{{end}}>{{.GetDisplayName}}</a>{{if .IsBot}}<span class="ui basic label tw-p-1 tw-align-baseline">bot</span>{{end}}
+{{if eq .ID -1}}
+	<a class="author text black tw-font-semibold muted"
+		data-tooltip-content="{{ctx.Locale.Tr "repo.ghost_user.tooltip"}}">Ghost</a>
+{{else}}
+	<a class="author text black tw-font-semibold muted"{{if gt .ID 0}} href="{{.HomeLink}}"{{end}}>{{.GetDisplayName}}</a>
+	{{if .IsBot}}<span class="ui basic label tw-p-1 tw-align-baseline">bot</span>{{end}}
+{{end}}
