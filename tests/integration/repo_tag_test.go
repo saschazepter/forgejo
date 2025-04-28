@@ -32,12 +32,14 @@ func TestTagViewWithoutRelease(t *testing.T) {
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
 	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
 
+	session := loginUser(t, owner.Name)
+
 	err := release.CreateNewTag(git.DefaultContext, owner, repo, "master", "no-release", "release-less tag")
 	require.NoError(t, err)
 
 	// Test that the page loads
 	req := NewRequestf(t, "GET", "/%s/releases/tag/no-release", repo.FullName())
-	resp := MakeRequest(t, req, http.StatusOK)
+	resp := session.MakeRequest(t, req, http.StatusOK)
 
 	// Test that the tags sub-menu is active and has a counter
 	htmlDoc := NewHTMLParser(t, resp.Body)
@@ -55,6 +57,9 @@ func TestTagViewWithoutRelease(t *testing.T) {
 	// Test that there is no "Stable" link
 	htmlDoc.AssertElement(t, "h4.release-list-title > span.ui.green.label", false)
 
+	// Ensure that there is no "Edit" button
+	htmlDoc.AssertElement(t, ".detail a.muted > svg.octicon-pencil", false)
+
 	// Test that the correct user is linked
 	ownerLinkHref, _ := htmlDoc.Find("a.author").Attr("href")
 	assert.Equal(t, "/user2", ownerLinkHref)
@@ -67,7 +72,7 @@ func TestTagViewWithoutRelease(t *testing.T) {
 		require.NoError(t, err)
 
 		req := NewRequestf(t, "GET", "/%s/releases/tag/ghost-tag", repo.FullName())
-		resp := MakeRequest(t, req, http.StatusOK)
+		resp := session.MakeRequest(t, req, http.StatusOK)
 
 		htmlDoc := NewHTMLParser(t, resp.Body)
 
