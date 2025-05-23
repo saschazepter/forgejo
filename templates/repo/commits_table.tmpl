@@ -51,10 +51,12 @@
 	</div>
 {{end}}
 
-{{if .PageIsPullCommits}}
-	{{template "repo/pulls/commits_list" .}}
-{{else if and .Commits (gt .CommitCount 0)}}
-	{{template "repo/commits_list" .}}
+{{if and .Commits (gt .CommitCount 0)}}
+	{{if .PageIsPullCommits}}
+		{{template "repo/pulls/commits_list" .}}
+	{{else}}
+		{{template "repo/commits_list" .}}
+	{{end}}
 {{end}}
 
 {{template "base/paginate" .}}
