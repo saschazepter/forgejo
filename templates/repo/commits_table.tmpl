@@ -22,6 +22,24 @@
 </h4>
 
 {{if .PageIsCommits}}
+	<h4 class="ui top attached header commits-table tw-flex tw-items-center tw-justify-between">
+		<div class="commits-table-left tw-flex tw-items-center">
+			{{if or .PageIsCommits (gt .CommitCount 0)}}
+				{{ctx.Locale.TrN .CommitCount "repo.n_commit_one" "repo.n_commit_few" (StringUtils.ToString .CommitCount)}}
+			{{else if .IsNothingToCompare}}
+				{{ctx.Locale.Tr "repo.commits.nothing_to_compare"}}
+			{{else}}
+				{{ctx.Locale.Tr "repo.commits.no_commits" $.BaseBranch $.HeadBranch}}
+			{{end}}
+		</div>
+		{{if .IsDiffCompare}}
+			<div class="commits-table-right tw-whitespace-nowrap">
+				<a href="{{$.CommitRepoLink}}/commit/{{.BeforeCommitID | PathEscape}}" class="ui green sha label tw-mx-0">{{if not .BaseIsCommit}}{{if .BaseIsBranch}}{{svg "octicon-git-branch"}}{{else if .BaseIsTag}}{{svg "octicon-tag"}}{{end}}{{.BaseBranch}}{{else}}{{ShortSha .BaseBranch}}{{end}}</a>
+				...
+				<a href="{{$.CommitRepoLink}}/commit/{{.AfterCommitID | PathEscape}}" class="ui green sha label tw-mx-0">{{if not .HeadIsCommit}}{{if .HeadIsBranch}}{{svg "octicon-git-branch"}}{{else if .HeadIsTag}}{{svg "octicon-tag"}}{{end}}{{.HeadBranch}}{{else}}{{ShortSha .HeadBranch}}{{end}}</a>
+			</div>
+		{{end}}
+	</h4>
 	<div class="ui attached segment">
 		<form class="ignore-dirty" action="{{.RepoLink}}/commits/{{.BranchNameSubURL}}/search">
 			<div class="ui small fluid action input">
@@ -33,7 +51,9 @@
 	</div>
 {{end}}
 
-{{if and .Commits (gt .CommitCount 0)}}
+{{if .PageIsPullCommits}}
+	{{template "repo/pulls/commits_list" .}}
+{{else if and .Commits (gt .CommitCount 0)}}
 	{{template "repo/commits_list" .}}
 {{end}}
 

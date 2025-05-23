@@ -47,7 +47,7 @@
 				{{template "repo/commit_statuses" dict "Status" .Status "Statuses" .Statuses}}
 			</div>
 
-			<div class="tw-text-left tw-min-w-60 tw-max-w-60 tw-truncate">
+			<div class="sha tw-text-left tw-min-w-60 tw-max-w-60 tw-truncate">
 				{{$class := "ui sha label"}}
 				{{if .Signature}}
 					{{$class = (print $class " isSigned")}}
