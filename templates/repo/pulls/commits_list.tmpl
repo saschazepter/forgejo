@@ -1,97 +1,88 @@
-<div class="ui timeline-container tw-relativer">
-	{{$commitRepoLink := $.RepoLink}}{{if $.CommitRepoLink}}{{$commitRepoLink = $.CommitRepoLink}}{{end}}
-	{{$prevDate := ""}}
-	{{range .Commits}}
-		{{$commitTime := .Committer.When}}
-		{{if not $commitTime}}{{$commitTime = .Author.When}}{{end}}
-		{{$commitDate := $commitTime.Format "2006-01-02"}}
-		{{if ne $commitDate $prevDate}}
-			{{if ne $prevDate ""}}</div></div>{{end}} <!-- close previous date group -->
-			{{$prevDate = $commitDate}}
+{{$commitRepoLink := $.RepoLink}}{{if $.CommitRepoLink}}{{$commitRepoLink = $.CommitRepoLink}}{{end}}
+{{$prevDate := ""}}
+{{range .Commits}}
+	{{$commitTime := .Committer.When}}
+	{{if not $commitTime}}{{$commitTime = .Author.When}}{{end}}
+	{{$commitDate := $commitTime.Format "2006-01-02"}}
+	{{if ne $commitDate $prevDate}}
+		{{if ne $prevDate ""}}</div></div>{{end}} <!-- close previous date group -->
+		{{$prevDate = $commitDate}}
 
-			<!-- Start a new commit group -->
-			<div class="commit-group tw-relative tw-mb-6">
-				<div class="tw-absolute tw-left-0 tw-top-1 tw-w-4 tw-h-4 tw-rounded-full"></div>
-				<div class="tw-mb-2 tw-font-semibold tw-text-gray-700">{{ $commitTime.Format "Mon, 02 Jan 2006" }}</div>
+		<!-- Start a new commit group -->
+		<div class="commit-group">
+			<div class="tw-mb-2 tw-mt-2 tw-font-semibold">{{ $commitTime.Format "Mon, 02 Jan 2006" }}</div>
+			<div class="tw-border tw-border-[--color-secondary] tw-rounded-md tw-divide-y tw-divide-[--color-secondary]">
+	{{end}}
 
-				<!-- The date group's outer & inner bordered container -->
-				<div class="tw-border tw-border-[--color-secondary] tw-rounded-md tw-divide-y tw-divide-[--color-secondary]">
-		{{end}}
-
-		<!-- it's single commit box, each commit takes one box + need to change the layout to something similar to github -->
-		<div class="tw-grid tw-grid-cols-[auto_1fr_auto_auto_auto] tw-items-center tw-gap-4 tw-p-2 tw-w-full tw-overflow-hidden">
-			<div class="author tw-flex">
-			<!-- looks less weird, when text aligned in left + refine the ui for unsigned, signed  -->
-				<div class="tw-flex tw-items-center tw-min-w-40 tw-max-w-40 tw-truncate">
-					{{$userName := .Author.Name}}
-					<!-- username is not clickable and can't redirected to profile page, bcz of the DB absense, ig -->
-					{{if .User}}
-						{{if and .User.FullName DefaultShowFullName}}
-							{{$userName = .User.FullName}}
-						{{end}}
-						{{ctx.AvatarUtils.Avatar .User 28 "tw-mr-2"}}<a class="muted author-wrapper" href="{{.User.HomeLink}}">{{$userName}}</a>
-					{{else}}
-						{{ctx.AvatarUtils.AvatarByEmail .Author.Email .Author.Name 28 "tw-mr-2"}}
-						<span class="author-wrapper">{{$userName}}</span>
+	<div class="tw-grid tw-grid-cols-[auto_1fr_auto_auto_auto] tw-items-center tw-gap-4 tw-p-2">
+		<div class="author">
+			<div class="tw-min-w-40 tw-max-w-40 author-wrapper tw-truncate">
+				{{$userName := .Author.Name}}
+				{{if .User}}
+					{{if and .User.FullName DefaultShowFullName}}
+						{{$userName = .User.FullName}}
 					{{end}}
-				</div>
-			</div>
-
-			<div class="tw-flex-1 tw-min-w-0 tw-max-w-full tw-overflow-hidden tw-text-left tw-truncate">
-				{{$commitLink:= printf "%s/commit/%s" $commitRepoLink (PathEscape .ID.String)}}
-				<div class="message message-wrapper">{{RenderCommitMessageLinkSubject $.Context .Message $commitLink ($.Repository.ComposeMetas ctx)}}</div>
-				{{if IsMultilineCommitMessage .Message}}
-				<button class="ui button js-toggle-commit-body ellipsis-button" aria-expanded="false">...</button>
-				<pre class="commit-body tw-hidden">{{RenderCommitBody $.Context .Message ($.Repository.ComposeMetas ctx)}}</pre>
-				{{end}}
-				{{template "repo/commit_statuses" dict "Status" .Status "Statuses" .Statuses}}
-			</div>
-
-			<div class="sha tw-text-left tw-min-w-60 tw-max-w-60 tw-truncate">
-				{{$class := "ui sha label"}}
-				{{if .Signature}}
-					{{$class = (print $class " isSigned")}}
-					{{if .Verification.Verified}}
-						{{if eq .Verification.TrustStatus "trusted"}}
-							{{$class = (print $class " isVerified")}}
-						{{else if eq .Verification.TrustStatus "untrusted"}}
-							{{$class = (print $class " isVerifiedUntrusted")}}
-						{{else}}
-							{{$class = (print $class " isVerifiedUnmatched")}}
-						{{end}}
-					{{else if .Verification.Warning}}
-						{{$class = (print $class " isWarning")}}
-					{{end}}
-				{{end}}
-				{{$commitShaLink := ""}}
-				{{if $.PageIsWiki}}
-					{{$commitShaLink = (printf "%s/wiki/commit/%s" $commitRepoLink (PathEscape .ID.String))}}
-				{{else if $.PageIsPullCommits}}
-					{{$commitShaLink = (printf "%s/pulls/%d/commits/%s" $commitRepoLink $.Issue.Index (PathEscape .ID.String))}}
-				{{else if $.Reponame}}
-					{{$commitShaLink = (printf "%s/commit/%s" $commitRepoLink (PathEscape .ID.String))}}
-				{{end}}
-				<a {{if $commitShaLink}}href="{{$commitShaLink}}"{{end}} class="{{$class}}">
-					<span class="shortsha">{{ShortSha .ID.String}}</span>
-					{{if .Signature}}{{template "repo/shabox_badge" dict "root" $ "verification" .Verification}}{{end}}
-				</a>
-			</div>
-
-			<div class="tw-text-sm tw-text-gray-500 tw-text-right tw-min-w-28">
-				{{if .Committer}}{{DateUtils.TimeSince .Committer.When}}{{else}}{{DateUtils.TimeSince .Author.When}}{{end}}
-			</div>
-
-			<!-- fixed overflowing by placing them at the end of col -->
-			<div class="tw-flex tw-gap-1 tw-min-w-20 tw-justify-end">
-				<button class="btn interact-bg tw-p-2" data-tooltip-content="{{ctx.Locale.Tr "copy_hash"}}" data-clipboard-text="{{.ID}}">{{svg "octicon-copy"}}</button>
-				{{if not $.PageIsWiki}}
-					{{if $.FileName}}
-						<a class="btn interact-bg tw-p-2" href="{{printf "%s/commit/%s?files=%s" $commitRepoLink (PathEscape .ID.String) (PathEscapeSegments $.FileName)}}">{{svg "octicon-file-diff"}}</a>
-					{{end}}
-					<a class="btn interact-bg tw-p-2" href="{{if $.FileName}}{{printf "%s/src/commit/%s/%s" $commitRepoLink (PathEscape .ID.String) (PathEscapeSegments $.FileName)}}{{else}}{{printf "%s/src/commit/%s" $commitRepoLink (PathEscape .ID.String)}}{{end}}">{{svg "octicon-file-code"}}</a>
+					{{ctx.AvatarUtils.Avatar .User 28 "tw-mr-2"}}<a class="muted" href="{{.User.HomeLink}}">{{$userName}}</a>
+				{{else}}
+					{{ctx.AvatarUtils.AvatarByEmail .Author.Email .Author.Name 28 "tw-mr-2"}}
+					<span class="author-wrapper">{{$userName}}</span>
 				{{end}}
 			</div>
 		</div>
-	{{end}}
-	</div></div> <!-- Final group close -->
-</div>
+
+		<div class="tw-min-w-0 tw-max-w-full tw-overflow-hidden">
+			{{$commitLink:= printf "%s/commit/%s" $commitRepoLink (PathEscape .ID.String)}}
+			<div class="message message-wrapper">{{RenderCommitMessageLinkSubject $.Context .Message $commitLink ($.Repository.ComposeMetas ctx)}}</div>
+			{{if IsMultilineCommitMessage .Message}}
+			<button class="ui button js-toggle-commit-body ellipsis-button" aria-expanded="false">...</button>
+			<pre class="commit-body tw-hidden">{{RenderCommitBody $.Context .Message ($.Repository.ComposeMetas ctx)}}</pre>
+			{{end}}
+			{{template "repo/commit_statuses" dict "Status" .Status "Statuses" .Statuses}}
+		</div>
+
+		<div class="tw-min-w-60 tw-max-w-60">
+			{{$class := "ui sha label"}}
+			{{if .Signature}}
+				{{$class = (print $class " isSigned")}}
+				{{if .Verification.Verified}}
+					{{if eq .Verification.TrustStatus "trusted"}}
+						{{$class = (print $class " isVerified")}}
+					{{else if eq .Verification.TrustStatus "untrusted"}}
+						{{$class = (print $class " isVerifiedUntrusted")}}
+					{{else}}
+						{{$class = (print $class " isVerifiedUnmatched")}}
+					{{end}}
+				{{else if .Verification.Warning}}
+					{{$class = (print $class " isWarning")}}
+				{{end}}
+			{{end}}
+			{{$commitShaLink := ""}}
+			{{if $.PageIsWiki}}
+				{{$commitShaLink = (printf "%s/wiki/commit/%s" $commitRepoLink (PathEscape .ID.String))}}
+			{{else if $.PageIsPullCommits}}
+				{{$commitShaLink = (printf "%s/pulls/%d/commits/%s" $commitRepoLink $.Issue.Index (PathEscape .ID.String))}}
+			{{else if $.Reponame}}
+				{{$commitShaLink = (printf "%s/commit/%s" $commitRepoLink (PathEscape .ID.String))}}
+			{{end}}
+			<a {{if $commitShaLink}}href="{{$commitShaLink}}"{{end}} class="{{$class}}">
+				<span class="shortsha">{{ShortSha .ID.String}}</span>
+				{{if .Signature}}{{template "repo/shabox_badge" dict "root" $ "verification" .Verification}}{{end}}
+			</a>
+		</div>
+
+		<div class="tw-text-sm tw-text-right tw-min-w-28">
+			{{if .Committer}}{{DateUtils.TimeSince .Committer.When}}{{else}}{{DateUtils.TimeSince .Author.When}}{{end}}
+		</div>
+
+		<div class="tw-flex tw-gap-1 tw-min-w-20 tw-justify-end">
+			<button class="btn interact-bg tw-p-2" data-tooltip-content="{{ctx.Locale.Tr "copy_hash"}}" data-clipboard-text="{{.ID}}">{{svg "octicon-copy"}}</button>
+			{{if not $.PageIsWiki}}
+				{{if $.FileName}}
+					<a class="btn interact-bg tw-p-2" href="{{printf "%s/commit/%s?files=%s" $commitRepoLink (PathEscape .ID.String) (PathEscapeSegments $.FileName)}}">{{svg "octicon-file-diff"}}</a>
+				{{end}}
+				<a class="btn interact-bg tw-p-2" href="{{if $.FileName}}{{printf "%s/src/commit/%s/%s" $commitRepoLink (PathEscape .ID.String) (PathEscapeSegments $.FileName)}}{{else}}{{printf "%s/src/commit/%s" $commitRepoLink (PathEscape .ID.String)}}{{end}}">{{svg "octicon-file-code"}}</a>
+			{{end}}
+		</div>
+	</div>
+{{end}}
+</div></div> <!-- Final group close -->
