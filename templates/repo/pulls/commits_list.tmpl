@@ -14,15 +14,15 @@
 			<div class="tw-border tw-border-[--color-secondary] tw-rounded-md tw-divide-y tw-divide-[--color-secondary]">
 	{{end}}
 
-	<div class="tw-grid tw-grid-cols-[auto_1fr_auto_auto_auto] tw-items-center tw-gap-4 tw-p-2">
+	<div class="tw-grid tw-grid-cols-1 sm:tw-grid-cols-[minmax(8ch,15%)_1fr_minmax(8ch,15%)_auto_auto] sm:tw-items-center tw-p-2 tw-gap-y-2">
 		<div class="author">
-			<div class="tw-min-w-40 tw-max-w-40 author-wrapper tw-truncate">
+			<div class="tw-flex">
 				{{$userName := .Author.Name}}
 				{{if .User}}
 					{{if and .User.FullName DefaultShowFullName}}
 						{{$userName = .User.FullName}}
 					{{end}}
-					{{ctx.AvatarUtils.Avatar .User 28 "tw-mr-2"}}<a class="muted" href="{{.User.HomeLink}}">{{$userName}}</a>
+					{{ctx.AvatarUtils.Avatar .User 28 "tw-mr-2"}}<a class="muted author-wrapper" href="{{.User.HomeLink}}">{{$userName}}</a>
 				{{else}}
 					{{ctx.AvatarUtils.AvatarByEmail .Author.Email .Author.Name 28 "tw-mr-2"}}
 					<span class="author-wrapper">{{$userName}}</span>
@@ -30,9 +30,9 @@
 			</div>
 		</div>
 
-		<div class="tw-min-w-0 tw-max-w-full tw-overflow-hidden">
+		<div class="tw-flex-1">
 			{{$commitLink:= printf "%s/commit/%s" $commitRepoLink (PathEscape .ID.String)}}
-			<div class="message message-wrapper">{{RenderCommitMessageLinkSubject $.Context .Message $commitLink ($.Repository.ComposeMetas ctx)}}</div>
+			<div class="message-wrapper">{{RenderCommitMessageLinkSubject $.Context .Message $commitLink ($.Repository.ComposeMetas ctx)}}</div>
 			{{if IsMultilineCommitMessage .Message}}
 			<button class="ui button js-toggle-commit-body ellipsis-button" aria-expanded="false">...</button>
 			<pre class="commit-body tw-hidden">{{RenderCommitBody $.Context .Message ($.Repository.ComposeMetas ctx)}}</pre>
@@ -40,7 +40,7 @@
 			{{template "repo/commit_statuses" dict "Status" .Status "Statuses" .Statuses}}
 		</div>
 
-		<div class="tw-min-w-60 tw-max-w-60">
+		<div class="">
 			{{$class := "ui sha label"}}
 			{{if .Signature}}
 				{{$class = (print $class " isSigned")}}
@@ -70,11 +70,11 @@
 			</a>
 		</div>
 
-		<div class="tw-text-sm tw-text-right tw-min-w-28">
+		<div class="tw-flex-1 tw-text-right tw-p-2">
 			{{if .Committer}}{{DateUtils.TimeSince .Committer.When}}{{else}}{{DateUtils.TimeSince .Author.When}}{{end}}
 		</div>
 
-		<div class="tw-flex tw-gap-1 tw-min-w-20 tw-justify-end">
+		<div class="">
 			<button class="btn interact-bg tw-p-2" data-tooltip-content="{{ctx.Locale.Tr "copy_hash"}}" data-clipboard-text="{{.ID}}">{{svg "octicon-copy"}}</button>
 			{{if not $.PageIsWiki}}
 				{{if $.FileName}}
