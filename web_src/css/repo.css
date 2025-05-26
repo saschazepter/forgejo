@@ -2847,3 +2847,23 @@ tbody.commit-list {
 #repo-activity-top-authors-chart {
   height: 150px; /* Pre-allocate the height that will be taken up by the chart, to avoid the container 'jumping'. */
 }
+
+/* Layout for templates/repo/pulls/commits_list.tmpl */
+/* Redesigned commit layout using responsive grid configuration */
+.commit-ui-redesign {
+  display: grid;
+  padding: 0.5rem;
+  row-gap: 0.5rem;
+  grid-template-columns: minmax(8ch, 15%) 1fr minmax(20ch, 1%) minmax(10ch, 10%) auto;
+  align-items: center;
+  .message {padding-left: 10%}
+}
+
+@media (max-width: 640px) {
+  .commit-ui-redesign {
+    grid-template-columns: minmax(12ch, 100%) minmax(12ch,10%) auto minmax(10ch,40%) auto;
+    align-items: center;
+    column-gap: 0.5rem;
+  }
+  .sha.label {display:none}
+}
