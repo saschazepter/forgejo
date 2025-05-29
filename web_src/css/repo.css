@@ -2864,6 +2864,6 @@ tbody.commit-list {
     grid-template-columns: minmax(12ch, 100%) minmax(12ch,10%) auto minmax(10ch,40%) auto;
     align-items: center;
     column-gap: 0.5rem;
+    .sha.label {display:none}
   }
-  .sha.label {display:none}
 }
