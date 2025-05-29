@@ -31,7 +31,7 @@
 			</div>
 		</div>
 
-		<div class="message tw-flex-1">
+		<div class="message">
 			{{$commitLink:= printf "%s/commit/%s" $commitRepoLink (PathEscape .ID.String)}}
 			<div class="message-wrapper">{{RenderCommitMessageLinkSubject $.Context .Message $commitLink ($.Repository.ComposeMetas ctx)}}</div>
 			{{if IsMultilineCommitMessage .Message}}
@@ -71,12 +71,12 @@
 			</a>
 		</div>
 
-		<div class="tw-flex-1 tw-text-right tw-pr-4">
+		<div class="date tw-flex-1 tw-text-right tw-pr-4">
 			{{if .Committer}}{{DateUtils.TimeSince .Committer.When}}{{else}}{{DateUtils.TimeSince .Author.When}}{{end}}
 		</div>
 
-		<div>
-			<button class="btn interact-bg tw-p-2" data-tooltip-content="{{ctx.Locale.Tr "copy_hash"}}" data-clipboard-text="{{.ID}}">{{svg "octicon-copy"}}</button>
+		<div class="btn">
+			<button class="interact-bg tw-p-2" data-tooltip-content="{{ctx.Locale.Tr "copy_hash"}}" data-clipboard-text="{{.ID}}">{{svg "octicon-copy"}}</button>
 			{{if not $.PageIsWiki}}
 				{{if $.FileName}}
 				<a
