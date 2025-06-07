@@ -53,6 +53,14 @@ func index(ctx context.Context, indexer internal.Indexer, repoID int64) error {
 		repoTypes = []string{"sources"}
 	}
 
+	if !repo.IsCodeIndexerEnabled {
+		err = indexer.Delete(ctx, repoID)
+		if err != nil {
+			return err
+		}
+		return repo_model.UpdateIndexerStatus(ctx, repo, repo_model.RepoIndexerTypeCode, "")
+	}
+
 	// skip forks from being indexed if unit is not present
 	if !slices.Contains(repoTypes, "forks") && repo.IsFork {
 		return nil

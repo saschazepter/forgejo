@@ -62,6 +62,8 @@
     "error.not_found.title": "Page not found",
     "alert.asset_load_failed": "Failed to load asset files from {path}. Please make sure the asset files can be accessed.",
     "alert.range_error": " must be a number between %[1]s and %[2]s.",
+    "repo.settings.admin_enable_repo_code_indexer": "Enable code indexer for this repository",
+    "repo.settings.admin_code_indexer_is_globally_disabled": "Note: Code indexer is disabled globally",
     "install.invalid_lfs_path": "Unable to create the LFS root at the specified path: %[1]s",
     "admin.config.moderation_config": "Moderation configuration",
     "moderation.report_abuse": "Report abuse",

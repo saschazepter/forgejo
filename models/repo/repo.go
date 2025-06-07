@@ -180,6 +180,7 @@ type Repository struct {
 	GitSize                         int64              `xorm:"NOT NULL DEFAULT 0"`
 	LFSSize                         int64              `xorm:"NOT NULL DEFAULT 0"`
 	CodeIndexerStatus               *RepoIndexerStatus `xorm:"-"`
+	IsCodeIndexerEnabled            bool               `xorm:"NOT NULL DEFAULT true"`
 	StatsIndexerStatus              *RepoIndexerStatus `xorm:"-"`
 	IsFsckEnabled                   bool               `xorm:"NOT NULL DEFAULT true"`
 	CloseIssuesViaCommitInAnyBranch bool               `xorm:"NOT NULL DEFAULT false"`
