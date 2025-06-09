@@ -334,19 +334,20 @@ func (gro GenerateRepoOptions) IsValid() bool {
 // generateRepository generates a repository from a template
 func generateRepository(ctx context.Context, doer, owner *user_model.User, templateRepo *repo_model.Repository, opts GenerateRepoOptions) (_ *repo_model.Repository, err error) {
 	generateRepo := &repo_model.Repository{
-		OwnerID:          owner.ID,
-		Owner:            owner,
-		OwnerName:        owner.Name,
-		Name:             opts.Name,
-		LowerName:        strings.ToLower(opts.Name),
-		Description:      opts.Description,
-		DefaultBranch:    opts.DefaultBranch,
-		IsPrivate:        opts.Private,
-		IsEmpty:          !opts.GitContent || templateRepo.IsEmpty,
-		IsFsckEnabled:    templateRepo.IsFsckEnabled,
-		TemplateID:       templateRepo.ID,
-		TrustModel:       templateRepo.TrustModel,
-		ObjectFormatName: templateRepo.ObjectFormatName,
+		OwnerID:              owner.ID,
+		Owner:                owner,
+		OwnerName:            owner.Name,
+		Name:                 opts.Name,
+		LowerName:            strings.ToLower(opts.Name),
+		Description:          opts.Description,
+		DefaultBranch:        opts.DefaultBranch,
+		IsPrivate:            opts.Private,
+		IsEmpty:              !opts.GitContent || templateRepo.IsEmpty,
+		IsFsckEnabled:        templateRepo.IsFsckEnabled,
+		IsCodeIndexerEnabled: templateRepo.IsCodeIndexerEnabled,
+		TemplateID:           templateRepo.ID,
+		TrustModel:           templateRepo.TrustModel,
+		ObjectFormatName:     templateRepo.ObjectFormatName,
 	}
 
 	if err = repo_module.CreateRepositoryByExample(ctx, doer, owner, generateRepo, false, false); err != nil {
