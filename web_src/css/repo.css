@@ -981,13 +981,12 @@ td .commit-summary {
 }
 
 .repository.view.issue .comment-list .code-comment {
-  border: 1px solid transparent;
   margin: 0;
 }
 
 .repository.view.issue .comment-list .code-comment .header {
-  min-height: 41px;
   display: flex;
+  margin-bottom: 0.75rem;
   justify-content: space-between;
   align-items: center;
 }
@@ -2172,7 +2171,7 @@ details.repo-search-result summary::marker {
 }
 
 .comment-header-right.actions a:not(.label) {
-  padding: 0.5rem !important;
+  padding-inline: 0.5rem;
 }
 
 .comment-header-right.actions .label {
