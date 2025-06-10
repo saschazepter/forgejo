@@ -2125,7 +2125,7 @@ details.repo-search-result summary::marker {
   margin: 0 !important;
   position: relative;
   color: var(--color-text);
-  min-height: var(--repo-header-issue-min-height);
+  min-height: 41px;
   background-color: var(--color-box-header);
   display: flex;
   justify-content: space-between;
