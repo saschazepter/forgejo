@@ -991,8 +991,16 @@ td .commit-summary {
   align-items: center;
 }
 
+.repository.view.issue .comment-list .code-comment .header .comment-header-left {
+  gap: 0.5rem;
+}
+
+.repository.view.issue .comment-list .code-comment .header .avatar {
+  margin: 0 !important;
+}
+
 .repository.view.issue .comment-list .code-comment .comment-content {
-  margin-left: 36px;
+  margin-left: calc(20px + 0.5rem);
 }
 
 .repository.view.issue .comment-list .comment > .avatar {
