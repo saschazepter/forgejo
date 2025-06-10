@@ -985,15 +985,11 @@ td .commit-summary {
   margin: 0;
 }
 
-.repository.view.issue .comment-list .code-comment .comment-header {
-  background: transparent;
-  border-bottom: 0 !important;
-  padding: 0 !important;
-}
-
-.repository.view.issue .comment-list .code-comment .comment-header::after,
-.repository.view.issue .comment-list .code-comment .comment-header::before {
-  display: none;
+.repository.view.issue .comment-list .code-comment .header {
+  min-height: 41px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .repository.view.issue .comment-list .code-comment .comment-content {
