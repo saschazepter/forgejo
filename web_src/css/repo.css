@@ -1020,7 +1020,6 @@ td .commit-summary {
 .repository.view.issue .comment-list .comment-code-cloud .segment.reactions .ui.label {
   border: 1px solid;
   padding: 5px 8px !important;
-  margin: 0 2px;
   border-radius: var(--border-radius);
   border-color: var(--color-secondary-dark-1) !important;
 }
@@ -1841,6 +1840,7 @@ details.repo-search-result summary::marker {
 .repository .segment.reactions {
   padding: 0;
   display: flex;
+  gap: 0.5rem;
   border: none !important;
   border-top: 1px solid var(--color-secondary) !important;
   width: 100% !important;
