@@ -2175,11 +2175,11 @@ details.repo-search-result summary::marker {
   left: 7px;
 }
 
-.comment-header .actions a:not(.label) {
+.comment-header-right.actions a:not(.label) {
   padding: 0.5rem !important;
 }
 
-.comment-header .actions .label {
+.comment-header-right.actions .label {
   margin: 0 !important;
 }
 
