@@ -49,63 +49,61 @@
 		</div>
 	{{end}}
 	<div id="code-comments-{{(index .comments 0).ID}}" class="comment-code-cloud ui segment{{if $resolved}} tw-hidden{{end}}">
-		<div class="tw-mb-0">
-			{{range .comments}}
-				{{$createdSubStr:= DateUtils.TimeSince .CreatedUnix}}
-				<div class="comment code-comment tw-pb-4" id="{{.HashTag}}">
-					<div class="content">
-						<div class="header">
-							<div class="comment-header-left tw-flex tw-items-center">
-								{{if not .OriginalAuthor}}
-									<a class="avatar">
-										{{ctx.AvatarUtils.Avatar .Poster 20}}
-									</a>
-								{{end}}
-								<span class="text grey muted-links">
-									{{if .OriginalAuthor}}
-										<span class="text black">
-											{{svg (MigrationIcon $.Repository.GetOriginalURLHostname)}}
-											{{.OriginalAuthor}}
-										</span>
-										{{if $.Repository.OriginalURL}}
-										<span class="migrate">({{ctx.Locale.Tr "repo.migrated_from" $.Repository.OriginalURL $.Repository.GetOriginalURLHostname}})</span>
-										{{end}}
-									{{else}}
-										{{template "shared/user/authorlink" .Poster}}
+		{{range .comments}}
+			{{$createdSubStr:= DateUtils.TimeSince .CreatedUnix}}
+			<div class="comment code-comment tw-pb-4" id="{{.HashTag}}">
+				<div class="content">
+					<div class="header">
+						<div class="comment-header-left tw-flex tw-items-center">
+							{{if not .OriginalAuthor}}
+								<a class="avatar">
+									{{ctx.AvatarUtils.Avatar .Poster 20}}
+								</a>
+							{{end}}
+							<span class="text grey muted-links">
+								{{if .OriginalAuthor}}
+									<span class="text black">
+										{{svg (MigrationIcon $.Repository.GetOriginalURLHostname)}}
+										{{.OriginalAuthor}}
+									</span>
+									{{if $.Repository.OriginalURL}}
+									<span class="migrate">({{ctx.Locale.Tr "repo.migrated_from" $.Repository.OriginalURL $.Repository.GetOriginalURLHostname}})</span>
 									{{end}}
-									{{ctx.Locale.Tr "repo.issues.commented_at" .HashTag $createdSubStr}}
-								</span>
-							</div>
-							<div class="comment-header-right actions tw-flex tw-items-center">
-								{{template "repo/issue/view_content/show_role" dict "ShowRole" .ShowRole "IsPull" $.Issue.IsPull}}
-								{{if not $.Repository.IsArchived}}
-									{{template "repo/issue/view_content/add_reaction" dict "ctxData" $ "ActionURL" (printf "%s/comments/%d/reactions" $.RepoLink .ID)}}
-									{{template "repo/issue/view_content/context_menu" dict "ctxData" $ "item" . "delete" true "issue" true "diff" true "IsCommentPoster" (and $.IsSigned (eq $.SignedUserID .PosterID))}}
+								{{else}}
+									{{template "shared/user/authorlink" .Poster}}
 								{{end}}
-							</div>
+								{{ctx.Locale.Tr "repo.issues.commented_at" .HashTag $createdSubStr}}
+							</span>
 						</div>
-						<div class="text comment-content">
-							<div id="issuecomment-{{.ID}}-content" class="render-content markup" {{if or $.Permission.IsAdmin $.HasIssuesOrPullsWritePermission (and $.IsSigned (eq $.SignedUserID .PosterID))}}data-can-edit="true"{{end}}>
-							{{if .RenderedContent}}
-								{{.RenderedContent}}
-							{{else}}
-								<span class="no-content">{{ctx.Locale.Tr "repo.issues.no_content"}}</span>
-							{{end}}
-							</div>
-							<div id="issuecomment-{{.ID}}-raw" class="raw-content tw-hidden">{{.Content}}</div>
-							<div class="edit-content-zone tw-hidden" data-update-url="{{$.RepoLink}}/comments/{{.ID}}" data-content-version="{{.ContentVersion}}"  data-context="{{$.RepoLink}}" data-attachment-url="{{$.RepoLink}}/comments/{{.ID}}/attachments"></div>
-							{{if .Attachments}}
-								{{template "repo/issue/view_content/attachments" dict "Attachments" .Attachments "RenderedContent" .RenderedContent}}
+						<div class="comment-header-right actions tw-flex tw-items-center">
+							{{template "repo/issue/view_content/show_role" dict "ShowRole" .ShowRole "IsPull" $.Issue.IsPull}}
+							{{if not $.Repository.IsArchived}}
+								{{template "repo/issue/view_content/add_reaction" dict "ctxData" $ "ActionURL" (printf "%s/comments/%d/reactions" $.RepoLink .ID)}}
+								{{template "repo/issue/view_content/context_menu" dict "ctxData" $ "item" . "delete" true "issue" true "diff" true "IsCommentPoster" (and $.IsSigned (eq $.SignedUserID .PosterID))}}
 							{{end}}
 						</div>
-						{{$reactions := .Reactions.GroupByType}}
-						{{if $reactions}}
-							{{template "repo/issue/view_content/reactions" dict "ctxData" $ "ActionURL" (printf "%s/comments/%d/reactions" $.RepoLink .ID) "Reactions" $reactions}}
+					</div>
+					<div class="text comment-content">
+						<div id="issuecomment-{{.ID}}-content" class="render-content markup" {{if or $.Permission.IsAdmin $.HasIssuesOrPullsWritePermission (and $.IsSigned (eq $.SignedUserID .PosterID))}}data-can-edit="true"{{end}}>
+						{{if .RenderedContent}}
+							{{.RenderedContent}}
+						{{else}}
+							<span class="no-content">{{ctx.Locale.Tr "repo.issues.no_content"}}</span>
+						{{end}}
+						</div>
+						<div id="issuecomment-{{.ID}}-raw" class="raw-content tw-hidden">{{.Content}}</div>
+						<div class="edit-content-zone tw-hidden" data-update-url="{{$.RepoLink}}/comments/{{.ID}}" data-content-version="{{.ContentVersion}}"  data-context="{{$.RepoLink}}" data-attachment-url="{{$.RepoLink}}/comments/{{.ID}}/attachments"></div>
+						{{if .Attachments}}
+							{{template "repo/issue/view_content/attachments" dict "Attachments" .Attachments "RenderedContent" .RenderedContent}}
 						{{end}}
 					</div>
+					{{$reactions := .Reactions.GroupByType}}
+					{{if $reactions}}
+						{{template "repo/issue/view_content/reactions" dict "ctxData" $ "ActionURL" (printf "%s/comments/%d/reactions" $.RepoLink .ID) "Reactions" $reactions}}
+					{{end}}
 				</div>
-			{{end}}
-		</div>
+			</div>
+		{{end}}
 		<div class="tw-flex tw-items-center tw-flex-wrap tw-mt-2 tw-mb-1">
 			<div class="tw-flex-1">
 				{{if $resolved}}
