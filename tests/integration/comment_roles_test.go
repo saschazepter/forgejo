@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"forgejo.org/modules/translation"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
 )
