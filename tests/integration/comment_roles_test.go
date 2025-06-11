@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"forgejo.org/modules/translation"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,11 +20,12 @@ func TestCommentRoles(t *testing.T) {
 	user := "user2"
 	repo := "repo1"
 
-	ownerTooltip := "This user is the owner of this repository."
-	authorTooltipPR := "This user is the author of this pull request."
-	authorTooltipIssue := "This user is the author of this issue."
-	contributorTooltip := "This user has previously committed in this repository."
-	newContributorTooltip := "This is the first contribution of this user to the repository."
+	locale := translation.NewLocale("en-US")
+	authorTooltipPR := locale.TrString("repo.issues.author.tooltip.pr")
+	authorTooltipIssue := locale.TrString("repo.issues.author.tooltip.issue")
+	ownerTooltip := locale.TrString("repo.issues.role.owner_helper")
+	contributorTooltip := locale.TrString("repo.issues.role.contributor_helper")
+	newContributorTooltip := locale.TrString("repo.issues.role.first_time_contributor_helper")
 
 	// Test pulls
 	onGiteaRun(t, func(t *testing.T, giteaURL *url.URL) {
