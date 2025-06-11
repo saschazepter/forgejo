@@ -1,5 +1,5 @@
-// Copyright 2024 The Forgejo Authors. All rights reserved.
-// SPDX-License-Identifier: MIT
+// Copyright 2024-2025 The Forgejo Authors. All rights reserved.
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 package integration
 
@@ -32,7 +32,7 @@ func TestCommentRoles(t *testing.T) {
 		sessionUser11 := loginUser(t, "user11")
 
 		// Open a new PR as user2
-		testEditFileToNewBranch(t, sessionUser2, user, repo, "master", "comment-labels", "README.md", "test of comment labels\naline")
+		testEditFileToNewBranch(t, sessionUser2, user, repo, "master", "comment-labels", "README.md", "test of comment labels\naline") // Owner
 		sessionUser2.MakeRequest(t, NewRequestWithValues(t, "POST", path.Join(user, repo, "compare", "master...comment-labels"),
 			map[string]string{
 				"_csrf": GetCSRF(t, sessionUser2, path.Join(user, repo, "compare", "master...comment-labels")),
@@ -52,7 +52,7 @@ func TestCommentRoles(t *testing.T) {
 		page := NewHTMLParser(t, response.Body)
 		replyID, _ := page.Find(".comment-form input[name='reply']").Attr("value")
 
-		testEasyLeavePRReviewComment(t, sessionUser2, user, repo, testID, "README.md", "1", "Another review comment from user2 on this line", replyID)
+		testEasyLeavePRReviewComment(t, sessionUser1, user, repo, testID, "README.md", "1", "Reply comment from a contributor", replyID)
 		testEasyLeavePRComment(t, sessionUser2, user, repo, testID, "New comment from user2 on this PR")   // Author, Owner
 		testEasyLeavePRComment(t, sessionUser1, user, repo, testID, "New comment from user1 on this PR")   // Contributor
 		testEasyLeavePRComment(t, sessionUser11, user, repo, testID, "New comment from user11 on this PR") // First-time contributor
@@ -60,39 +60,47 @@ func TestCommentRoles(t *testing.T) {
 		// Fetch the PR page
 		response = sessionUser2.MakeRequest(t, NewRequest(t, "GET", path.Join(user, repo, "pulls", testID)), http.StatusOK)
 		page = NewHTMLParser(t, response.Body)
-		commentHeads := page.Find(".timeline .comment .comment-header .comment-header-right")
-		assert.Equal(t, 6, commentHeads.Length())
 
-		// Test the first comment and it's label "Owner"
-		labels := commentHeads.Eq(0).Find(".role-label")
+		reviewHeads := page.Find(".timeline .code-comment .header .comment-header-right")
+		assert.Equal(t, 2, reviewHeads.Length())
+		commentHeads := page.Find(".timeline .comment .comment-header .comment-header-right")
+		assert.Equal(t, 4, commentHeads.Length())
+
+		// === Review comments ===
+
+		// Test the first review comment labels
+		labels := reviewHeads.Eq(0).Find(".role-label")
+		assert.Equal(t, 2, labels.Length())
+		testIssueCommentUserLabel(t, labels.Eq(0), "Author", authorTooltipPR)
+		testIssueCommentUserLabel(t, labels.Eq(1), "Owner", ownerTooltip)
+
+		// Test the second review comment labels
+		labels = reviewHeads.Eq(1).Find(".role-label")
+		assert.Equal(t, 1, labels.Length())
+		testIssueCommentUserLabel(t, labels.Eq(0), "Contributor", contributorTooltip)
+
+		//== Top comment ==
+
+		// Top comment (PR description) never shows `Author` label because it is implied
+		labels = commentHeads.Eq(0).Find(".role-label")
 		assert.Equal(t, 1, labels.Length())
 		testIssueCommentUserLabel(t, labels.Eq(0), "Owner", ownerTooltip)
 
-		// Test the second (review) comment and it's labels "Author" and "Owner"
+		// === Regular comments ===
+
+		// Test the first regular comment labels
 		labels = commentHeads.Eq(1).Find(".role-label")
 		assert.Equal(t, 2, labels.Length())
 		testIssueCommentUserLabel(t, labels.Eq(0), "Author", authorTooltipPR)
 		testIssueCommentUserLabel(t, labels.Eq(1), "Owner", ownerTooltip)
 
-		// Test the third (review) comment and it's labels "Author" and "Owner"
+		// Test the second regular comment labels
 		labels = commentHeads.Eq(2).Find(".role-label")
-		assert.Equal(t, 2, labels.Length())
-		testIssueCommentUserLabel(t, labels.Eq(0), "Author", authorTooltipPR)
-		testIssueCommentUserLabel(t, labels.Eq(1), "Owner", ownerTooltip)
-
-		// Test the fourth comment and it's labels "Author" and "Owner"
-		labels = commentHeads.Eq(3).Find(".role-label")
-		assert.Equal(t, 2, labels.Length())
-		testIssueCommentUserLabel(t, labels.Eq(0), "Author", authorTooltipPR)
-		testIssueCommentUserLabel(t, labels.Eq(1), "Owner", ownerTooltip)
-
-		// Test the fivth comment and it's label "Contributor"
-		labels = commentHeads.Eq(4).Find(".role-label")
 		assert.Equal(t, 1, labels.Length())
 		testIssueCommentUserLabel(t, labels.Eq(0), "Contributor", contributorTooltip)
 
-		// Test the sixth comment and it's label "First-time contributor"
-		labels = commentHeads.Eq(5).Find(".role-label")
+		// Test the third regular comment labels
+		labels = commentHeads.Eq(3).Find(".role-label")
 		assert.Equal(t, 1, labels.Length())
 		testIssueCommentUserLabel(t, labels.Eq(0), "First-time contributor", newContributorTooltip)
 	})
