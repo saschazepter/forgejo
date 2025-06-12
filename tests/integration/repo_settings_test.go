@@ -367,7 +367,7 @@ func TestRepoFollowing(t *testing.T) {
 		isLikeType := activityType == "Like"
 		isCorrectObject := strings.HasSuffix(object, "/api/v1/activitypub/repository-id/1")
 		if !isLikeType || !isCorrectObject {
-			t.Errorf("Activity is not a like for this repo")
+			t.Error("Activity is not a like for this repo")
 		}
 	})
 }

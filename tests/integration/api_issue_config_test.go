@@ -155,7 +155,7 @@ func TestAPIRepoIssueConfigPaths(t *testing.T) {
 				assert.False(t, issueConfig.BlankIssuesEnabled)
 				assert.Empty(t, issueConfig.ContactLinks)
 
-				_, err = deleteFileInBranch(owner, repo, fullPath, repo.DefaultBranch)
+				err = deleteFileInBranch(owner, repo, fullPath, repo.DefaultBranch)
 				require.NoError(t, err)
 			})
 		}

@@ -34,6 +34,15 @@ var statusNames = map[Status]string{
 	StatusBlocked:   "blocked",
 }
 
+var nameToStatus = make(map[string]Status, len(statusNames))
+
+func init() {
+	// Populate name to status lookup map
+	for status, name := range statusNames {
+		nameToStatus[name] = status
+	}
+}
+
 // String returns the string name of the Status
 func (s Status) String() string {
 	return statusNames[s]
@@ -101,4 +110,9 @@ func (s Status) AsResult() runnerv1.Result {
 		return runnerv1.Result(s)
 	}
 	return runnerv1.Result_RESULT_UNSPECIFIED
+}
+
+func StatusFromString(name string) (Status, bool) {
+	status, exists := nameToStatus[name]
+	return status, exists
 }

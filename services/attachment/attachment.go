@@ -51,7 +51,7 @@ func NewExternalAttachment(ctx context.Context, attach *repo_model.Attachment) (
 	if attach.ExternalURL == "" {
 		return nil, fmt.Errorf("attachment %s should have a external url", attach.Name)
 	}
-	if !validation.IsValidExternalURL(attach.ExternalURL) {
+	if !validation.IsValidReleaseAssetURL(attach.ExternalURL) {
 		return nil, repo_model.ErrInvalidExternalURL{ExternalURL: attach.ExternalURL}
 	}
 

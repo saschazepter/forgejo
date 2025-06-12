@@ -1062,7 +1062,7 @@ func TestUserPasswordReset(t *testing.T) {
 	session.MakeRequest(t, req, http.StatusSeeOther)
 
 	unittest.AssertNotExistsBean(t, &auth_model.AuthorizationToken{ID: authToken.ID})
-	assert.True(t, unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2}).ValidatePassword("new_password"))
+	assert.True(t, unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2}).ValidatePassword(t.Context(), "new_password"))
 }
 
 func TestActivateEmailAddress(t *testing.T) {

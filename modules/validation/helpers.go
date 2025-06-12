@@ -75,6 +75,11 @@ func IsValidExternalURL(uri string) bool {
 	return true
 }
 
+// IsValidReleaseAssetURL checks if the URL is valid for external release assets
+func IsValidReleaseAssetURL(uri string) bool {
+	return IsValidURL(uri)
+}
+
 // IsValidExternalTrackerURLFormat checks if URL matches required syntax for external trackers
 func IsValidExternalTrackerURLFormat(uri string) bool {
 	if !IsValidExternalURL(uri) {

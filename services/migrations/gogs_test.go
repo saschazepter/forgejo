@@ -25,7 +25,7 @@ func TestGogsDownloadRepo(t *testing.T) {
 	resp, err := http.Get("https://try.gogs.io/lunnytest/TESTREPO")
 	if err != nil || resp.StatusCode/100 != 2 {
 		// skip and don't run test
-		t.Skipf("visit test repo failed, ignored")
+		t.Skip("visit test repo failed, ignored")
 		return
 	}
 

@@ -1,11 +1,11 @@
 {
     "repo.pulls.merged_title_desc": {
         "one": "heeft %[1]d commit van <code>%[2]s</code> samengevoegd in <code>%[3]s</code> %[4]s",
-        "other": "heeft %[1]d commits samengevoegd van <code>%[2]s</code> naar <code>%[3]s</code> %[4]s"
+        "other": "heeft %[1]d commits van <code>%[2]s</code> samengevoegd in <code>%[3]s</code> %[4]s"
     },
     "repo.pulls.title_desc": {
         "one": "wil %[1]d commit van <code>%[2]s</code> samenvoegen in <code id=\"%[4]s\">%[3]s</code>",
-        "other": "wil %[1]d commits van <code>%[2]s</code> samenvoegen met <code id=\"%[4]s\">%[3]s</code>"
+        "other": "wil %[1]d commits van <code>%[2]s</code> samenvoegen in <code id=\"%[4]s\">%[3]s</code>"
     },
     "search.milestone_kind": "Zoek mijlpalen…",
     "home.welcome.no_activity": "Geen activiteit",
@@ -13,27 +13,27 @@
     "home.explore_repos": "Verken repositories",
     "home.explore_users": "Verken gebruikers",
     "home.explore_orgs": "Verken organisaties",
-    "incorrect_root_url": "Deze Forgejo-instantie is geconfigureerd om geserveerd te worden op \"%s\". U bekijkt Forgejo momenteel via een andere URL, waardoor onderdelen van de applicatie kunnen breken. De canonieke URL kan worden gewijzigd door Forgejo admins via de ROOT_URL instelling in de app.ini.",
+    "incorrect_root_url": "Deze Forgejo-instantie is geconfigureerd om bereikbaar te zijn op \"%s\". U bekijkt Forgejo momenteel via een andere URL, waardoor onderdelen van de applicatie kunnen breken. De canonieke URL kan worden gewijzigd door Forgejo admins via de ROOT_URL instelling in de app.ini.",
     "themes.names.forgejo-auto": "Forgejo (volg het systeemthema)",
     "themes.names.forgejo-light": "Forgejo licht",
     "themes.names.forgejo-dark": "Forgejo donker",
     "error.not_found.title": "Pagina niet gevonden",
-    "alert.asset_load_failed": "Het laden van asset-bestanden van {path} is mislukt. Controleer of de asset-bestanden toegankelijk zijn.",
-    "install.invalid_lfs_path": "Kan de LFS-root niet aanmaken op het opgegeven pad: %[1]s",
+    "alert.asset_load_failed": "Het laden van hulp-bestanden vanuit {path} is mislukt. Controleer of de hulp-bestanden toegankelijk zijn.",
+    "install.invalid_lfs_path": "Kan de LFS-root niet aanmaken op de opgegeven locatie: %[1]s",
     "alert.range_error": " moet een getal zijn tussen %[1]s en %[2]s.",
     "meta.last_line": "Wist je dat de paprika, behalve in de bekende kleuren rood, geel, oranje en groen, ook in de kleuren wit, paars, lila, muntgroen en bruin voorkomt.",
-    "mail.actions.successful_run_after_failure_subject": "Werkstroom %[1]s hersteld in repository %[2]s",
-    "mail.actions.not_successful_run_subject": "Werkstroom %[1]s mislukt in repository %[2]s",
-    "mail.actions.successful_run_after_failure": "Werkstroom %[1]s hersteld in repository %[2]s",
-    "mail.actions.not_successful_run": "Werkstroom %[1]s mislukt in repository %[2]s",
+    "mail.actions.successful_run_after_failure_subject": "Werkstroom %[1]s hersteld in repositorie %[2]s",
+    "mail.actions.not_successful_run_subject": "Werkstroom %[1]s mislukt in repositorie %[2]s",
+    "mail.actions.successful_run_after_failure": "Werkstroom %[1]s hersteld in repositorie %[2]s",
+    "mail.actions.not_successful_run": "Werkstroom %[1]s mislukt in repositorie %[2]s",
     "mail.actions.run_info_cur_status": "De status van deze run: %[1]s (zojuist bijgewerkt van %[2]s)",
     "mail.actions.run_info_previous_status": "Status vorige run: %[1]s",
     "mail.actions.run_info_ref": "Branch: %[1]s (%[2]s)",
     "mail.actions.run_info_trigger": "Getriggerd omdat: %[1]s door: %[2]s",
-    "discussion.locked": "Deze discussie is gesloten. Commentaar is beperkt tot bijdragers.",
+    "discussion.locked": "Deze discussie is afgesloten. Commentaar is alleen mogelijk voor bijdragers.",
     "relativetime.now": "nu",
     "relativetime.future": "in de toekomst",
-    "repo.form.cannot_create": "Alle spaces waarin u repositories kan maken hebben hun maximum aantal repositories bereikt.",
+    "repo.form.cannot_create": "Alle ruimtes waarin u repositories kan maken hebben hun maximum aantal repositories bereikt.",
     "moderation.report_content": "Meldt content",
     "moderation.report_abuse_form.header": "Meld misbruik bij de beheerder",
     "moderation.report_abuse_form.invalid": "Ongeldige argumenten",
@@ -86,5 +86,11 @@
     "relativetime.hours": {
         "one": "%d uur geleden",
         "other": "%d uren geleden"
-    }
+    },
+    "repo.issue_indexer.title": "Issue indexer",
+    "stars.list.none": "Niemand heeft deze repo een ster gegeven.",
+    "watch.list.none": "Niemand houdt deze repo in de gaten.",
+    "followers.incoming.list.self.none": "Niemand volgt uw profiel.",
+    "followers.incoming.list.none": "Deze gebruiker wordt door niemand gevolgd.",
+    "followers.outgoing.list.self.none": "U volgt niemand."
 }

@@ -326,6 +326,23 @@ func (m msteamsConvertor) Package(p *api.PackagePayload) (MSTeamsPayload, error)
 	), nil
 }
 
+func (m msteamsConvertor) Action(p *api.ActionPayload) (MSTeamsPayload, error) {
+	title, color := getActionPayloadInfo(p, noneLinkFormatter)
+
+	// TODO: is TriggerUser correct here?
+	// if you'd like to test these proprietary services, see the discussion on: https://codeberg.org/forgejo/forgejo/pulls/7508
+	return createMSTeamsPayload(
+		p.Run.Repo,
+		p.Run.TriggerUser,
+		title,
+		"",
+		p.Run.HTMLURL,
+		color,
+		// TODO: does this make any sense?
+		&MSTeamsFact{"Action:", p.Run.Title},
+	), nil
+}
+
 func createMSTeamsPayload(r *api.Repository, s *api.User, title, text, actionTarget string, color int, fact *MSTeamsFact) MSTeamsPayload {
 	facts := make([]MSTeamsFact, 0, 2)
 	if r != nil {

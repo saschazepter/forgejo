@@ -26,6 +26,6 @@ func Test_FollowingRepoValidation(t *testing.T) {
 		URI:              "http://localhost:3000/api/v1/activitypub/repo-id/1",
 	}
 	if res, _ := validation.IsValid(sut); res {
-		t.Errorf("sut should be invalid")
+		t.Error("sut should be invalid")
 	}
 }

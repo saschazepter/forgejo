@@ -408,7 +408,7 @@ local addIssueLabelsOverrides(labels) =
           regex: '',
           type: 'query',
           multi: true,
-          allValue: '.+'
+          allValue: '.+',
         },
       )
       .addTemplate(
@@ -423,7 +423,7 @@ local addIssueLabelsOverrides(labels) =
           regex: '',
           type: 'query',
           multi: true,
-          allValue: '.+'
+          allValue: '.+',
         },
       )
       .addTemplate(

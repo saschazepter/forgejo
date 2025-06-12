@@ -4,21 +4,24 @@
 package integration
 
 import (
+	"fmt"
 	"net/url"
 	"testing"
 
+	auth_model "forgejo.org/models/auth"
 	"forgejo.org/models/db"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/tests"
 
+	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_Cmd_AdminUser(t *testing.T) {
 	onGiteaRun(t, func(*testing.T, *url.URL) {
-		for _, testCase := range []struct {
+		for i, testCase := range []struct {
 			name               string
 			options            []string
 			mustChangePassword bool
@@ -46,7 +49,7 @@ func Test_Cmd_AdminUser(t *testing.T) {
 		} {
 			t.Run(testCase.name, func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
-				name := "testuser"
+				name := fmt.Sprintf("testuser%d", i)
 
 				options := []string{"user", "create", "--username", name, "--password", "password", "--email", name + "@example.com"}
 				options = append(options, testCase.options...)
@@ -145,5 +148,43 @@ func Test_Cmd_AdminFirstUser(t *testing.T) {
 				assert.Equal(t, testCase.isAdmin, user.IsAdmin)
 			})
 		}
+	})
+}
+
+func Test_Cmd_AdminUserResetMFA(t *testing.T) {
+	onGiteaRun(t, func(*testing.T, *url.URL) {
+		name := "testuser"
+
+		options := []string{"user", "create", "--username", name, "--password", "password", "--email", name + "@example.com"}
+		output, err := runMainApp("admin", options...)
+		require.NoError(t, err)
+		assert.Contains(t, output, "has been successfully created")
+		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: name})
+
+		twoFactor := &auth_model.TwoFactor{
+			UID: user.ID,
+		}
+		token := twoFactor.GenerateScratchToken()
+		require.NoError(t, auth_model.NewTwoFactor(t.Context(), twoFactor, token))
+		twoFactor, err = auth_model.GetTwoFactorByUID(t.Context(), user.ID)
+		require.NoError(t, err)
+		require.NotNil(t, twoFactor)
+
+		authn, err := auth_model.CreateCredential(t.Context(), user.ID, "test", &webauthn.Credential{})
+		require.NoError(t, err)
+
+		options = []string{"user", "reset-mfa", "--username", name}
+		output, err = runMainApp("admin", options...)
+		require.NoError(t, err)
+		assert.Contains(t, output, "two-factor authentication settings have been removed")
+
+		_, err = auth_model.GetTwoFactorByUID(t.Context(), user.ID)
+		require.ErrorContains(t, err, "user not enrolled in 2FA")
+
+		_, err = auth_model.GetWebAuthnCredentialByID(t.Context(), authn.ID)
+		require.ErrorContains(t, err, "WebAuthn credential does not exist")
+
+		_, err = runMainApp("admin", "user", "delete", "--username", name)
+		require.NoError(t, err)
 	})
 }

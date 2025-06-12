@@ -4,7 +4,7 @@
 package forgefed
 
 import (
-	"fmt"
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -125,7 +125,7 @@ func Test_UndoLikeUnmarshalJSON(t *testing.T) {
 		"invalid": {
 			item:    []byte(`invalid JSON`),
 			want:    nil,
-			wantErr: fmt.Errorf("cannot parse JSON"),
+			wantErr: errors.New("cannot parse JSON"),
 		},
 	}
 

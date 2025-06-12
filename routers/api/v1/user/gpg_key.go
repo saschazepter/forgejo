@@ -4,6 +4,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -143,7 +144,7 @@ func GetGPGKey(ctx *context.APIContext) {
 // CreateUserGPGKey creates new GPG key to given user by ID.
 func CreateUserGPGKey(ctx *context.APIContext, form api.CreateGPGKeyOption, uid int64) {
 	if user_model.IsFeatureDisabledWithLoginType(ctx.Doer, setting.UserFeatureManageGPGKeys) {
-		ctx.NotFound("Not Found", fmt.Errorf("gpg keys setting is not allowed to be visited"))
+		ctx.NotFound("Not Found", errors.New("gpg keys setting is not allowed to be visited"))
 		return
 	}
 
@@ -298,7 +299,7 @@ func DeleteGPGKey(ctx *context.APIContext) {
 	//     "$ref": "#/responses/notFound"
 
 	if user_model.IsFeatureDisabledWithLoginType(ctx.Doer, setting.UserFeatureManageGPGKeys) {
-		ctx.NotFound("Not Found", fmt.Errorf("gpg keys setting is not allowed to be visited"))
+		ctx.NotFound("Not Found", errors.New("gpg keys setting is not allowed to be visited"))
 		return
 	}
 

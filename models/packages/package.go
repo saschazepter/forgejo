@@ -201,6 +201,15 @@ type Package struct {
 	IsInternal       bool   `xorm:"NOT NULL DEFAULT false"`
 }
 
+func ResolvePackageName(name string, t Type) string {
+	switch t {
+	case TypeMaven:
+		return name
+	default:
+		return strings.ToLower(name)
+	}
+}
+
 // TryInsertPackage inserts a package. If a package exists already, ErrDuplicatePackage is returned
 func TryInsertPackage(ctx context.Context, p *Package) (*Package, error) {
 	e := db.GetEngine(ctx)
@@ -272,7 +281,7 @@ func GetPackageByName(ctx context.Context, ownerID int64, packageType Type, name
 	var cond builder.Cond = builder.Eq{
 		"package.owner_id":    ownerID,
 		"package.type":        packageType,
-		"package.lower_name":  strings.ToLower(name),
+		"package.lower_name":  ResolvePackageName(name, packageType),
 		"package.is_internal": false,
 	}
 

@@ -4,14 +4,13 @@
 package forgejo
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
-	"forgejo.org/services/context"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func TestActions_getLabels(t *testing.T) {
@@ -54,21 +53,21 @@ func TestActions_getLabels(t *testing.T) {
 		},
 	}
 
-	flags := SubcmdActionsRegister(context.Context{}).Flags
+	flags := SubcmdActionsRegister(t.Context()).Flags
 	for _, c := range cases {
 		t.Run(fmt.Sprintf("args: %v", c.args), func(t *testing.T) {
 			// Create a copy of command to test
 			var result *resultType
-			app := cli.NewApp()
+			app := cli.Command{}
 			app.Flags = flags
-			app.Action = func(ctx *cli.Context) error {
+			app.Action = func(_ context.Context, ctx *cli.Command) error {
 				labels, err := getLabels(ctx)
 				result = &resultType{labels, err}
 				return nil
 			}
 
 			// Run it
-			_ = app.Run(c.args)
+			_ = app.Run(t.Context(), c.args)
 
 			// Test the results
 			require.NotNil(t, result)

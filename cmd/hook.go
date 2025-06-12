@@ -21,29 +21,31 @@ import (
 	repo_module "forgejo.org/modules/repository"
 	"forgejo.org/modules/setting"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 const (
 	hookBatchSize = 30
 )
 
-var (
-	// CmdHook represents the available hooks sub-command.
-	CmdHook = &cli.Command{
+// CmdHook represents the available hooks sub-command.
+func cmdHook() *cli.Command {
+	return &cli.Command{
 		Name:        "hook",
 		Usage:       "(internal) Should only be called by Git",
 		Description: "Delegate commands to corresponding Git hooks",
 		Before:      PrepareConsoleLoggerLevel(log.FATAL),
-		Subcommands: []*cli.Command{
-			subcmdHookPreReceive,
-			subcmdHookUpdate,
-			subcmdHookPostReceive,
-			subcmdHookProcReceive,
+		Commands: []*cli.Command{
+			subcmdHookPreReceive(),
+			subcmdHookUpdate(),
+			subcmdHookPostReceive(),
+			subcmdHookProcReceive(),
 		},
 	}
+}
 
-	subcmdHookPreReceive = &cli.Command{
+func subcmdHookPreReceive() *cli.Command {
+	return &cli.Command{
 		Name:        "pre-receive",
 		Usage:       "Delegate pre-receive Git hook",
 		Description: "This command should only be called by Git",
@@ -54,7 +56,10 @@ var (
 			},
 		},
 	}
-	subcmdHookUpdate = &cli.Command{
+}
+
+func subcmdHookUpdate() *cli.Command {
+	return &cli.Command{
 		Name:        "update",
 		Usage:       "Delegate update Git hook",
 		Description: "This command should only be called by Git",
@@ -65,7 +70,10 @@ var (
 			},
 		},
 	}
-	subcmdHookPostReceive = &cli.Command{
+}
+
+func subcmdHookPostReceive() *cli.Command {
+	return &cli.Command{
 		Name:        "post-receive",
 		Usage:       "Delegate post-receive Git hook",
 		Description: "This command should only be called by Git",
@@ -76,8 +84,11 @@ var (
 			},
 		},
 	}
-	// Note: new hook since git 2.29
-	subcmdHookProcReceive = &cli.Command{
+}
+
+// Note: new hook since git 2.29
+func subcmdHookProcReceive() *cli.Command {
+	return &cli.Command{
 		Name:        "proc-receive",
 		Usage:       "Delegate proc-receive Git hook",
 		Description: "This command should only be called by Git",
@@ -88,7 +99,7 @@ var (
 			},
 		},
 	}
-)
+}
 
 type delayWriter struct {
 	internal io.Writer
@@ -161,11 +172,11 @@ func (n *nilWriter) WriteString(s string) (int, error) {
 	return len(s), nil
 }
 
-func runHookPreReceive(c *cli.Context) error {
+func runHookPreReceive(ctx context.Context, c *cli.Command) error {
 	if isInternal, _ := strconv.ParseBool(os.Getenv(repo_module.EnvIsInternal)); isInternal {
 		return nil
 	}
-	ctx, cancel := installSignals()
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	setup(ctx, c.Bool("debug"), true)
@@ -247,7 +258,7 @@ Forgejo or set your environment appropriately.`, "")
 			newCommitIDs[count] = newCommitID
 			refFullNames[count] = refFullName
 			count++
-			fmt.Fprintf(out, "*")
+			fmt.Fprint(out, "*")
 
 			if count >= hookBatchSize {
 				fmt.Fprintf(out, " Checking %d references\n", count)
@@ -263,10 +274,10 @@ Forgejo or set your environment appropriately.`, "")
 				lastline = 0
 			}
 		} else {
-			fmt.Fprintf(out, ".")
+			fmt.Fprint(out, ".")
 		}
 		if lastline >= hookBatchSize {
-			fmt.Fprintf(out, "\n")
+			fmt.Fprint(out, "\n")
 			lastline = 0
 		}
 	}
@@ -283,7 +294,7 @@ Forgejo or set your environment appropriately.`, "")
 			return fail(ctx, extra.UserMsg, "HookPreReceive(last) failed: %v", extra.Error)
 		}
 	} else if lastline > 0 {
-		fmt.Fprintf(out, "\n")
+		fmt.Fprint(out, "\n")
 	}
 
 	fmt.Fprintf(out, "Checked %d references in total\n", total)
@@ -291,13 +302,13 @@ Forgejo or set your environment appropriately.`, "")
 }
 
 // runHookUpdate process the update hook: https://git-scm.com/docs/githooks#update
-func runHookUpdate(c *cli.Context) error {
+func runHookUpdate(ctx context.Context, c *cli.Command) error {
 	// Now if we're an internal don't do anything else
 	if isInternal, _ := strconv.ParseBool(os.Getenv(repo_module.EnvIsInternal)); isInternal {
 		return nil
 	}
 
-	ctx, cancel := installSignals()
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	if c.NArg() != 3 {
@@ -323,8 +334,8 @@ func runHookUpdate(c *cli.Context) error {
 	return fail(ctx, fmt.Sprintf("The modification of %s is skipped as it's an internal reference.", refFullName), "")
 }
 
-func runHookPostReceive(c *cli.Context) error {
-	ctx, cancel := installSignals()
+func runHookPostReceive(ctx context.Context, c *cli.Command) error {
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	setup(ctx, c.Bool("debug"), true)
@@ -399,7 +410,7 @@ Forgejo or set your environment appropriately.`, "")
 			continue
 		}
 
-		fmt.Fprintf(out, ".")
+		fmt.Fprint(out, ".")
 		oldCommitIDs[count] = string(fields[0])
 		newCommitIDs[count] = string(fields[1])
 		refFullNames[count] = git.RefName(fields[2])
@@ -487,8 +498,8 @@ func hookPrintResults(results []private.HookPostReceiveBranchResult) {
 	}
 }
 
-func runHookProcReceive(c *cli.Context) error {
-	ctx, cancel := installSignals()
+func runHookProcReceive(ctx context.Context, c *cli.Command) error {
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	setup(ctx, c.Bool("debug"), true)

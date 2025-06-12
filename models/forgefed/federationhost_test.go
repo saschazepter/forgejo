@@ -35,7 +35,7 @@ func Test_FederationHostValidation(t *testing.T) {
 		HostSchema:     "https",
 	}
 	if res, _ := validation.IsValid(sut); res {
-		t.Errorf("sut should be invalid: HostFqdn empty")
+		t.Error("sut should be invalid: HostFqdn empty")
 	}
 
 	sut = FederationHost{
@@ -48,7 +48,7 @@ func Test_FederationHostValidation(t *testing.T) {
 		HostSchema:     "https",
 	}
 	if res, _ := validation.IsValid(sut); res {
-		t.Errorf("sut should be invalid: HostFqdn too long (len=256)")
+		t.Error("sut should be invalid: HostFqdn too long (len=256)")
 	}
 
 	sut = FederationHost{
@@ -59,7 +59,7 @@ func Test_FederationHostValidation(t *testing.T) {
 		HostSchema:     "https",
 	}
 	if res, _ := validation.IsValid(sut); res {
-		t.Errorf("sut should be invalid: NodeInfo invalid")
+		t.Error("sut should be invalid: NodeInfo invalid")
 	}
 
 	sut = FederationHost{
@@ -72,7 +72,7 @@ func Test_FederationHostValidation(t *testing.T) {
 		HostSchema:     "https",
 	}
 	if res, _ := validation.IsValid(sut); res {
-		t.Errorf("sut should be invalid: Future timestamp")
+		t.Error("sut should be invalid: Future timestamp")
 	}
 
 	sut = FederationHost{
@@ -85,6 +85,6 @@ func Test_FederationHostValidation(t *testing.T) {
 		HostSchema:     "https",
 	}
 	if res, _ := validation.IsValid(sut); res {
-		t.Errorf("sut should be invalid: HostFqdn lower case")
+		t.Error("sut should be invalid: HostFqdn lower case")
 	}
 }

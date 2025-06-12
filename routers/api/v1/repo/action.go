@@ -5,6 +5,7 @@ package repo
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	actions_model "forgejo.org/models/actions"
@@ -693,4 +694,161 @@ func DispatchWorkflow(ctx *context.APIContext) {
 	} else {
 		ctx.JSON(http.StatusNoContent, nil)
 	}
+}
+
+// ListActionRuns return a filtered list of ActionRun
+func ListActionRuns(ctx *context.APIContext) {
+	// swagger:operation GET /repos/{owner}/{repo}/actions/runs repository ListActionRuns
+	// ---
+	// summary: List a repository's action runs
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: owner of the repo
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
+	// - name: page
+	//   in: query
+	//   description: page number of results to return (1-based)
+	//   type: integer
+	// - name: limit
+	//   in: query
+	//   description: page size of results, default maximum page size is 50
+	//   type: integer
+	// - name: event
+	//   in: query
+	//   description: Returns workflow run triggered by the specified events. For example, `push`, `pull_request` or `workflow_dispatch`.
+	//   type: array
+	//   items:
+	//     type: string
+	// - name: status
+	//   in: query
+	//   description: |
+	//     Returns workflow runs with the check run status or conclusion that is specified. For example, a conclusion can be success or a status can be in_progress. Only Forgejo Actions can set a status of waiting, pending, or requested.
+	//   type: array
+	//   items:
+	//     type: string
+	//     enum: [unknown, waiting, running, success, failure, cancelled, skipped, blocked]
+	// - name: run_number
+	//   in: query
+	//   description: |
+	//     Returns the workflow run associated with the run number.
+	//   type: integer
+	//   format: int64
+	// - name: head_sha
+	//   in: query
+	//   description: Only returns workflow runs that are associated with the specified head_sha.
+	//   type: string
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/RepoActionRunList"
+	//   "400":
+	//     "$ref": "#/responses/error"
+	//   "403":
+	//     "$ref": "#/responses/forbidden"
+
+	statusStrs := ctx.FormStrings("status")
+	statuses := make([]actions_model.Status, len(statusStrs))
+	for i, s := range statusStrs {
+		if status, exists := actions_model.StatusFromString(s); exists {
+			statuses[i] = status
+		} else {
+			ctx.Error(http.StatusBadRequest, "StatusFromString", fmt.Sprintf("unknown status: %s", s))
+			return
+		}
+	}
+
+	runs, total, err := db.FindAndCount[actions_model.ActionRun](ctx, &actions_model.FindRunJobOptions{
+		ListOptions: utils.GetListOptions(ctx),
+		OwnerID:     ctx.Repo.Owner.ID,
+		RepoID:      ctx.Repo.Repository.ID,
+		Events:      ctx.FormStrings("event"),
+		Statuses:    statuses,
+		RunNumber:   ctx.FormInt64("run_number"),
+		CommitSHA:   ctx.FormString("head_sha"),
+	})
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "ListActionRuns", err)
+		return
+	}
+
+	res := new(api.ListRepoActionRunResponse)
+	res.TotalCount = total
+
+	res.Entries = make([]*api.RepoActionRun, len(runs))
+	for i, r := range runs {
+		cr, err := convert.ToRepoActionRun(ctx, r)
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, "ToActionRun", err)
+			return
+		}
+		res.Entries[i] = cr
+	}
+
+	ctx.JSON(http.StatusOK, &res)
+}
+
+// GetActionRun get one action instance
+func GetActionRun(ctx *context.APIContext) {
+	// swagger:operation GET /repos/{owner}/{repo}/actions/runs/{run_id} repository ActionRun
+	// ---
+	// summary: Get an action run
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: owner of the repo
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
+	// - name: run_id
+	//   in: path
+	//   description: id of the action run
+	//   type: integer
+	//   format: int64
+	//   required: true
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/RepoActionRun"
+	//   "400":
+	//     "$ref": "#/responses/error"
+	//   "403":
+	//     "$ref": "#/responses/forbidden"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+
+	run, err := actions_model.GetRunByID(ctx, ctx.ParamsInt64(":run_id"))
+	if err != nil {
+		if errors.Is(err, util.ErrNotExist) {
+			ctx.Error(http.StatusNotFound, "GetRunById", err)
+		} else {
+			ctx.Error(http.StatusInternalServerError, "GetRunByID", err)
+		}
+		return
+	}
+
+	if ctx.Repo.Repository.ID != run.RepoID {
+		ctx.Error(http.StatusNotFound, "GetRunById", util.ErrNotExist)
+		return
+	}
+
+	res, err := convert.ToRepoActionRun(ctx, run)
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "ToRepoActionRun", err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, res)
 }

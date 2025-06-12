@@ -4,6 +4,7 @@
 package repo
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -581,7 +582,7 @@ func SubmitPullReview(ctx *context.APIContext) {
 	}
 
 	if review.Type != issues_model.ReviewTypePending {
-		ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("only a pending review can be submitted"))
+		ctx.Error(http.StatusUnprocessableEntity, "", errors.New("only a pending review can be submitted"))
 		return
 	}
 
@@ -593,7 +594,7 @@ func SubmitPullReview(ctx *context.APIContext) {
 
 	// if review stay pending return
 	if reviewType == issues_model.ReviewTypePending {
-		ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("review stay pending"))
+		ctx.Error(http.StatusUnprocessableEntity, "", errors.New("review stay pending"))
 		return
 	}
 
@@ -634,7 +635,7 @@ func preparePullReviewType(ctx *context.APIContext, pr *issues_model.PullRequest
 	case api.ReviewStateApproved:
 		// can not approve your own PR
 		if pr.Issue.IsPoster(ctx.Doer.ID) {
-			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("approve your own pull is not allowed"))
+			ctx.Error(http.StatusUnprocessableEntity, "", errors.New("approve your own pull is not allowed"))
 			return -1, true
 		}
 		reviewType = issues_model.ReviewTypeApprove
@@ -643,7 +644,7 @@ func preparePullReviewType(ctx *context.APIContext, pr *issues_model.PullRequest
 	case api.ReviewStateRequestChanges:
 		// can not reject your own PR
 		if pr.Issue.IsPoster(ctx.Doer.ID) {
-			ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("reject your own pull is not allowed"))
+			ctx.Error(http.StatusUnprocessableEntity, "", errors.New("reject your own pull is not allowed"))
 			return -1, true
 		}
 		reviewType = issues_model.ReviewTypeReject

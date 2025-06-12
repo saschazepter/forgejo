@@ -6,6 +6,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"forgejo.org/models/db"
@@ -72,10 +73,10 @@ func PushCreateRepo(ctx context.Context, authUser, owner *user_model.User, repoN
 			if ok, err := organization.CanCreateOrgRepo(ctx, owner.ID, authUser.ID); err != nil {
 				return nil, err
 			} else if !ok {
-				return nil, fmt.Errorf("cannot push-create repository for org")
+				return nil, errors.New("cannot push-create repository for org")
 			}
 		} else if authUser.ID != owner.ID {
-			return nil, fmt.Errorf("cannot push-create repository for another user")
+			return nil, errors.New("cannot push-create repository for another user")
 		}
 	}
 

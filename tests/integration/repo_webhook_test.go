@@ -337,6 +337,8 @@ func testWebhookFormsShared(t *testing.T, endpoint, name string, session *TestSe
 	resp := session.MakeRequest(t, NewRequest(t, "GET", endpoint+"/"+name+"/new"), http.StatusOK)
 	htmlForm := NewHTMLParser(t, resp.Body).Find(`form[action^="` + endpoint + `/"]`)
 
+	testWebhookFormsSharedChooseEvents(t, htmlForm)
+
 	// fill the form
 	payload := map[string]string{
 		"_csrf":  htmlForm.Find(`input[name="_csrf"]`).AttrOr("value", ""),
@@ -470,5 +472,39 @@ func assertHasFlashMessages(t *testing.T, resp *httptest.ResponseRecorder, expec
 
 	for k, v := range seenKeys {
 		t.Errorf("unexpected flash message %q: %q", k, v)
+	}
+}
+
+func testWebhookFormsSharedChooseEvents(t *testing.T, htmlForm *goquery.Selection) {
+	webhookTypes := []string{
+		"create",
+		"delete",
+		"fork",
+		"push",
+		"repository",
+		"release",
+		"package",
+		"wiki",
+		"issues",
+		"issue_assign",
+		"issue_label",
+		"issue_milestone",
+		"issue_comment",
+		"pull_request",
+		"pull_request_assign",
+		"pull_request_label",
+		"pull_request_milestone",
+		"pull_request_comment",
+		"pull_request_review",
+		"pull_request_sync",
+		"pull_request_review_request",
+		"action_failure",
+		"action_recover",
+		"action_success",
+	}
+
+	// check all types of webhooks are present in the form
+	for _, webhookType := range webhookTypes {
+		assertInput(t, htmlForm, webhookType)
 	}
 }

@@ -6,6 +6,7 @@ package migrations
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -227,7 +228,7 @@ func migrateRepository(_ context.Context, doer *user_model.User, downloader base
 
 		if cloneURL.Scheme == "file" || cloneURL.Scheme == "" {
 			if cloneAddrURL.Scheme != "file" && cloneAddrURL.Scheme != "" {
-				return fmt.Errorf("repo info has changed from external to local filesystem")
+				return errors.New("repo info has changed from external to local filesystem")
 			}
 		}
 

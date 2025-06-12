@@ -90,5 +90,8 @@
     "followers.outgoing.list.self.none": "Du folgst niemanden.",
     "followers.outgoing.list.none": "%s folgt niemanden.",
     "stars.list.none": "Niemand hat dieses Repo favorisiert.",
-    "followers.incoming.list.none": "Niemand folgt diesem Benutzer."
+    "followers.incoming.list.none": "Niemand folgt diesem Benutzer.",
+    "editor.textarea.tab_hint": "Zeile bereits eingerückt. Drücke nochmals <kbd>Tab</kbd> oder <kbd>Escape</kbd> um den Editor zu verlassen.",
+    "editor.textarea.shift_tab_hint": "Keine Einrückung auf dieser Zeile. Drücke nochmals <kbd>Shift</kbd> + <kbd>Tab</kbd> oder <kbd>Escape</kbd> um den Editor zu verlassen.",
+    "admin.dashboard.cleanup_offline_runners": "Aufräumen der offline Runner"
 }

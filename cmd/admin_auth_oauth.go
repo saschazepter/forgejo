@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -11,11 +12,11 @@ import (
 	auth_model "forgejo.org/models/auth"
 	"forgejo.org/services/auth/source/oauth2"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
-var (
-	oauthCLIFlags = []cli.Flag{
+func oauthCLIFlags() []cli.Flag {
+	return []cli.Flag{
 		&cli.StringFlag{
 			Name:  "name",
 			Value: "",
@@ -120,23 +121,27 @@ var (
 			Usage: "Activate automatic team membership removal depending on groups",
 		},
 	}
+}
 
-	microcmdAuthAddOauth = &cli.Command{
+func microcmdAuthAddOauth() *cli.Command {
+	return &cli.Command{
 		Name:   "add-oauth",
 		Usage:  "Add new Oauth authentication source",
 		Action: runAddOauth,
-		Flags:  oauthCLIFlags,
+		Flags:  oauthCLIFlags(),
 	}
+}
 
-	microcmdAuthUpdateOauth = &cli.Command{
+func microcmdAuthUpdateOauth() *cli.Command {
+	return &cli.Command{
 		Name:   "update-oauth",
 		Usage:  "Update existing Oauth authentication source",
 		Action: runUpdateOauth,
-		Flags:  append(oauthCLIFlags[:1], append([]cli.Flag{idFlag}, oauthCLIFlags[1:]...)...),
+		Flags:  append(oauthCLIFlags()[:1], append([]cli.Flag{idFlag()}, oauthCLIFlags()[1:]...)...),
 	}
-)
+}
 
-func parseOAuth2Config(c *cli.Context) *oauth2.Source {
+func parseOAuth2Config(_ context.Context, c *cli.Command) *oauth2.Source {
 	var customURLMapping *oauth2.CustomURLMapping
 	if c.IsSet("use-custom-urls") {
 		customURLMapping = &oauth2.CustomURLMapping{
@@ -168,15 +173,15 @@ func parseOAuth2Config(c *cli.Context) *oauth2.Source {
 	}
 }
 
-func runAddOauth(c *cli.Context) error {
-	ctx, cancel := installSignals()
+func runAddOauth(ctx context.Context, c *cli.Command) error {
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	if err := initDB(ctx); err != nil {
 		return err
 	}
 
-	config := parseOAuth2Config(c)
+	config := parseOAuth2Config(ctx, c)
 	if config.Provider == "openidConnect" {
 		discoveryURL, err := url.Parse(config.OpenIDConnectAutoDiscoveryURL)
 		if err != nil || (discoveryURL.Scheme != "http" && discoveryURL.Scheme != "https") {
@@ -192,12 +197,12 @@ func runAddOauth(c *cli.Context) error {
 	})
 }
 
-func runUpdateOauth(c *cli.Context) error {
+func runUpdateOauth(ctx context.Context, c *cli.Command) error {
 	if !c.IsSet("id") {
 		return errors.New("--id flag is missing")
 	}
 
-	ctx, cancel := installSignals()
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	if err := initDB(ctx); err != nil {

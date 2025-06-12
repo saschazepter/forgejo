@@ -36,6 +36,7 @@ func TestRedirect(t *testing.T) {
 		cleanup()
 		has := resp.Header().Get("Set-Cookie") == "i_like_gitea=dummy"
 		assert.Equal(t, c.keep, has, "url = %q", c.url)
+		assert.Equal(t, http.StatusSeeOther, resp.Code)
 	}
 
 	req, _ = http.NewRequest("GET", "/", nil)
@@ -46,4 +47,25 @@ func TestRedirect(t *testing.T) {
 	cleanup()
 	assert.Equal(t, "/other", resp.Header().Get("HX-Redirect"))
 	assert.Equal(t, http.StatusNoContent, resp.Code)
+}
+
+func TestRedirectOptionalStatus(t *testing.T) {
+	defer test.MockVariableValue(&setting.AppURL, "http://localhost:3000/")()
+	req, _ := http.NewRequest("GET", "/", nil)
+
+	cases := []struct {
+		expected int
+		actual   int
+	}{
+		{expected: 303},
+		{http.StatusTemporaryRedirect, 307},
+		{http.StatusPermanentRedirect, 308},
+	}
+	for _, c := range cases {
+		resp := httptest.NewRecorder()
+		b, cleanup := NewBaseContext(resp, req)
+		b.Redirect("/", c.actual)
+		cleanup()
+		assert.Equal(t, c.expected, resp.Code)
+	}
 }

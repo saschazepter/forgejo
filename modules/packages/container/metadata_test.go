@@ -4,6 +4,7 @@
 package container
 
 import (
+	"io"
 	"strings"
 	"testing"
 
@@ -59,4 +60,50 @@ func TestParseImageConfig(t *testing.T) {
 	assert.ElementsMatch(t, []string{author}, metadata.Authors)
 	assert.Equal(t, projectURL, metadata.ProjectURL)
 	assert.Equal(t, repositoryURL, metadata.RepositoryURL)
+}
+
+func TestParseImageConfigEmptyBlob(t *testing.T) {
+	t.Run("Empty config blob (EOF)", func(t *testing.T) {
+		// Test empty reader (simulates empty config blob common in OCI artifacts)
+		metadata, err := ParseImageConfig(oci.MediaTypeImageManifest, strings.NewReader(""))
+		require.NoError(t, err)
+
+		assert.Equal(t, TypeOCI, metadata.Type)
+		assert.Equal(t, DefaultPlatform, metadata.Platform)
+		assert.Empty(t, metadata.Description)
+		assert.Empty(t, metadata.Authors)
+		assert.Empty(t, metadata.Labels)
+		assert.Empty(t, metadata.Manifests)
+	})
+
+	t.Run("Empty JSON object", func(t *testing.T) {
+		// Test minimal valid JSON config
+		metadata, err := ParseImageConfig(oci.MediaTypeImageManifest, strings.NewReader("{}"))
+		require.NoError(t, err)
+
+		assert.Equal(t, TypeOCI, metadata.Type)
+		assert.Equal(t, DefaultPlatform, metadata.Platform)
+		assert.Empty(t, metadata.Description)
+		assert.Empty(t, metadata.Authors)
+	})
+
+	t.Run("Invalid JSON still returns error", func(t *testing.T) {
+		// Test that actual JSON errors (not EOF) are still returned
+		_, err := ParseImageConfig(oci.MediaTypeImageManifest, strings.NewReader("{invalid json"))
+		require.Error(t, err)
+		assert.NotEqual(t, io.EOF, err)
+	})
+
+	t.Run("OCI artifact with empty config", func(t *testing.T) {
+		// Test OCI artifact scenario with minimal config
+		configOCI := `{"config": {}}`
+		metadata, err := ParseImageConfig(oci.MediaTypeImageManifest, strings.NewReader(configOCI))
+		require.NoError(t, err)
+
+		assert.Equal(t, TypeOCI, metadata.Type)
+		assert.Equal(t, DefaultPlatform, metadata.Platform)
+		assert.Empty(t, metadata.Description)
+		assert.Empty(t, metadata.Authors)
+		assert.Empty(t, metadata.ImageLayers)
+	})
 }

@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -15,75 +16,76 @@ import (
 	"forgejo.org/modules/optional"
 	"forgejo.org/modules/setting"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
-var microcmdUserCreate = &cli.Command{
-	Name:   "create",
-	Usage:  "Create a new user in database",
-	Action: runCreateUser,
-	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:  "name",
-			Usage: "Username. DEPRECATED: use username instead",
+func microcmdUserCreate() *cli.Command {
+	return &cli.Command{
+		Name:   "create",
+		Usage:  "Create a new user in database",
+		Action: runCreateUser,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "name",
+				Usage: "Username. DEPRECATED: use username instead",
+			},
+			&cli.StringFlag{
+				Name:  "username",
+				Usage: "Username",
+			},
+			&cli.StringFlag{
+				Name:  "password",
+				Usage: "User password",
+			},
+			&cli.StringFlag{
+				Name:  "email",
+				Usage: "User email address",
+			},
+			&cli.BoolFlag{
+				Name:  "admin",
+				Usage: "User is an admin",
+			},
+			&cli.BoolFlag{
+				Name:  "random-password",
+				Usage: "Generate a random password for the user",
+			},
+			&cli.BoolFlag{
+				Name:  "must-change-password",
+				Usage: "Set this option to false to prevent forcing the user to change their password after initial login",
+				Value: true,
+			},
+			&cli.IntFlag{
+				Name:  "random-password-length",
+				Usage: "Length of the random password to be generated",
+				Value: 12,
+			},
+			&cli.BoolFlag{
+				Name:  "access-token",
+				Usage: "Generate access token for the user",
+			},
+			&cli.StringFlag{
+				Name:  "access-token-name",
+				Usage: `Name of the generated access token`,
+				Value: "gitea-admin",
+			},
+			&cli.StringFlag{
+				Name:  "access-token-scopes",
+				Usage: `Scopes of the generated access token, comma separated. Examples: "all", "public-only,read:issue", "write:repository,write:user"`,
+				Value: "all",
+			},
+			&cli.BoolFlag{
+				Name:  "restricted",
+				Usage: "Make a restricted user account",
+			},
+			&cli.StringFlag{
+				Name:  "fullname",
+				Usage: `The full, human-readable name of the user`,
+			},
 		},
-		&cli.StringFlag{
-			Name:  "username",
-			Usage: "Username",
-		},
-		&cli.StringFlag{
-			Name:  "password",
-			Usage: "User password",
-		},
-		&cli.StringFlag{
-			Name:  "email",
-			Usage: "User email address",
-		},
-		&cli.BoolFlag{
-			Name:  "admin",
-			Usage: "User is an admin",
-		},
-		&cli.BoolFlag{
-			Name:  "random-password",
-			Usage: "Generate a random password for the user",
-		},
-		&cli.BoolFlag{
-			Name:               "must-change-password",
-			Usage:              "Set this option to false to prevent forcing the user to change their password after initial login",
-			Value:              true,
-			DisableDefaultText: true,
-		},
-		&cli.IntFlag{
-			Name:  "random-password-length",
-			Usage: "Length of the random password to be generated",
-			Value: 12,
-		},
-		&cli.BoolFlag{
-			Name:  "access-token",
-			Usage: "Generate access token for the user",
-		},
-		&cli.StringFlag{
-			Name:  "access-token-name",
-			Usage: `Name of the generated access token`,
-			Value: "gitea-admin",
-		},
-		&cli.StringFlag{
-			Name:  "access-token-scopes",
-			Usage: `Scopes of the generated access token, comma separated. Examples: "all", "public-only,read:issue", "write:repository,write:user"`,
-			Value: "all",
-		},
-		&cli.BoolFlag{
-			Name:  "restricted",
-			Usage: "Make a restricted user account",
-		},
-		&cli.StringFlag{
-			Name:  "fullname",
-			Usage: `The full, human-readable name of the user`,
-		},
-	},
+	}
 }
 
-func runCreateUser(c *cli.Context) error {
+func runCreateUser(ctx context.Context, c *cli.Command) error {
 	// this command highly depends on the many setting options (create org, visibility, etc.), so it must have a full setting load first
 	// duplicate setting loading should be safe at the moment, but it should be refactored & improved in the future.
 	setting.LoadSettings()
@@ -108,10 +110,10 @@ func runCreateUser(c *cli.Context) error {
 		username = c.String("username")
 	} else {
 		username = c.String("name")
-		_, _ = fmt.Fprintf(c.App.ErrWriter, "--name flag is deprecated. Use --username instead.\n")
+		_, _ = fmt.Fprint(c.Root().ErrWriter, "--name flag is deprecated. Use --username instead.\n")
 	}
 
-	ctx, cancel := installSignals()
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	if err := initDB(ctx); err != nil {

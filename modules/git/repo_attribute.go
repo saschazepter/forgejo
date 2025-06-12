@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -116,7 +117,7 @@ func (ca GitAttribute) Bool() optional.Option[bool] {
 // instantiation.
 func (repo *Repository) gitCheckAttrCommand(treeish string, attributes ...string) (*Command, *RunOpts, context.CancelFunc, error) {
 	if len(attributes) == 0 {
-		return nil, nil, nil, fmt.Errorf("no provided attributes to check-attr")
+		return nil, nil, nil, errors.New("no provided attributes to check-attr")
 	}
 
 	env := os.Environ()

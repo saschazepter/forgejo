@@ -6,6 +6,7 @@ package forgejo
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -16,14 +17,14 @@ import (
 	"forgejo.org/modules/setting"
 	private_routers "forgejo.org/routers/private"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func CmdActions(ctx context.Context) *cli.Command {
 	return &cli.Command{
 		Name:  "actions",
 		Usage: "Commands for managing Forgejo Actions",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			SubcmdActionsGenerateRunnerToken(ctx),
 			SubcmdActionsGenerateRunnerSecret(ctx),
 			SubcmdActionsRegister(ctx),
@@ -36,7 +37,7 @@ func SubcmdActionsGenerateRunnerToken(ctx context.Context) *cli.Command {
 		Name:   "generate-runner-token",
 		Usage:  "Generate a new token for a runner to use to register with the server",
 		Before: prepareWorkPathAndCustomConf(ctx),
-		Action: func(cliCtx *cli.Context) error { return RunGenerateActionsRunnerToken(ctx, cliCtx) },
+		Action: RunGenerateActionsRunnerToken,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "scope",
@@ -52,7 +53,7 @@ func SubcmdActionsGenerateRunnerSecret(ctx context.Context) *cli.Command {
 	return &cli.Command{
 		Name:   "generate-secret",
 		Usage:  "Generate a secret suitable for input to the register subcommand",
-		Action: func(cliCtx *cli.Context) error { return RunGenerateSecret(ctx, cliCtx) },
+		Action: RunGenerateSecret,
 	}
 }
 
@@ -61,7 +62,7 @@ func SubcmdActionsRegister(ctx context.Context) *cli.Command {
 		Name:   "register",
 		Usage:  "Idempotent registration of a runner using a shared secret",
 		Before: prepareWorkPathAndCustomConf(ctx),
-		Action: func(cliCtx *cli.Context) error { return RunRegister(ctx, cliCtx) },
+		Action: RunRegister,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "secret",
@@ -105,26 +106,26 @@ func SubcmdActionsRegister(ctx context.Context) *cli.Command {
 	}
 }
 
-func readSecret(ctx context.Context, cliCtx *cli.Context) (string, error) {
-	if cliCtx.IsSet("secret") {
-		return cliCtx.String("secret"), nil
+func readSecret(ctx context.Context, cli *cli.Command) (string, error) {
+	if cli.IsSet("secret") {
+		return cli.String("secret"), nil
 	}
-	if cliCtx.IsSet("secret-stdin") {
+	if cli.IsSet("secret-stdin") {
 		buf, err := io.ReadAll(ContextGetStdin(ctx))
 		if err != nil {
 			return "", err
 		}
 		return string(buf), nil
 	}
-	if cliCtx.IsSet("secret-file") {
-		path := cliCtx.String("secret-file")
+	if cli.IsSet("secret-file") {
+		path := cli.String("secret-file")
 		buf, err := os.ReadFile(path)
 		if err != nil {
 			return "", err
 		}
 		return string(buf), nil
 	}
-	return "", fmt.Errorf("at least one of the --secret, --secret-stdin, --secret-file options is required")
+	return "", errors.New("at least one of the --secret, --secret-stdin, --secret-file options is required")
 }
 
 func validateSecret(secret string) error {
@@ -138,18 +139,18 @@ func validateSecret(secret string) error {
 	return nil
 }
 
-func getLabels(cliCtx *cli.Context) (*[]string, error) {
-	if !cliCtx.Bool("keep-labels") {
-		lblValue := strings.Split(cliCtx.String("labels"), ",")
+func getLabels(cli *cli.Command) (*[]string, error) {
+	if !cli.Bool("keep-labels") {
+		lblValue := strings.Split(cli.String("labels"), ",")
 		return &lblValue, nil
 	}
-	if cliCtx.String("labels") != "" {
-		return nil, fmt.Errorf("--labels and --keep-labels should not be used together")
+	if cli.String("labels") != "" {
+		return nil, errors.New("--labels and --keep-labels should not be used together")
 	}
 	return nil, nil
 }
 
-func RunRegister(ctx context.Context, cliCtx *cli.Context) error {
+func RunRegister(ctx context.Context, cli *cli.Command) error {
 	var cancel context.CancelFunc
 	if !ContextGetNoInit(ctx) {
 		ctx, cancel = installSignals(ctx)
@@ -161,17 +162,17 @@ func RunRegister(ctx context.Context, cliCtx *cli.Context) error {
 	}
 	setting.MustInstalled()
 
-	secret, err := readSecret(ctx, cliCtx)
+	secret, err := readSecret(ctx, cli)
 	if err != nil {
 		return err
 	}
 	if err := validateSecret(secret); err != nil {
 		return err
 	}
-	scope := cliCtx.String("scope")
-	name := cliCtx.String("name")
-	version := cliCtx.String("version")
-	labels, err := getLabels(cliCtx)
+	scope := cli.String("scope")
+	name := cli.String("name")
+	version := cli.String("version")
+	labels, err := getLabels(cli)
 	if err != nil {
 		return err
 	}
@@ -209,7 +210,7 @@ func RunRegister(ctx context.Context, cliCtx *cli.Context) error {
 	return nil
 }
 
-func RunGenerateSecret(ctx context.Context, cliCtx *cli.Context) error {
+func RunGenerateSecret(ctx context.Context, cli *cli.Command) error {
 	runner := actions_model.ActionRunner{}
 	if err := runner.GenerateToken(); err != nil {
 		return err
@@ -220,7 +221,7 @@ func RunGenerateSecret(ctx context.Context, cliCtx *cli.Context) error {
 	return nil
 }
 
-func RunGenerateActionsRunnerToken(ctx context.Context, cliCtx *cli.Context) error {
+func RunGenerateActionsRunnerToken(ctx context.Context, cli *cli.Command) error {
 	if !ContextGetNoInit(ctx) {
 		var cancel context.CancelFunc
 		ctx, cancel = installSignals(ctx)
@@ -229,7 +230,7 @@ func RunGenerateActionsRunnerToken(ctx context.Context, cliCtx *cli.Context) err
 
 	setting.MustInstalled()
 
-	scope := cliCtx.String("scope")
+	scope := cli.String("scope")
 
 	respText, extra := private.GenerateActionsRunnerToken(ctx, scope)
 	if extra.HasError() {

@@ -273,6 +273,12 @@ func (m matrixConvertor) Package(p *api.PackagePayload) (MatrixPayload, error) {
 	return m.newPayload(text)
 }
 
+func (m matrixConvertor) Action(p *api.ActionPayload) (MatrixPayload, error) {
+	text, _ := getActionPayloadInfo(p, htmlLinkFormatter)
+
+	return m.newPayload(text)
+}
+
 var urlRegex = regexp.MustCompile(`<a [^>]*?href="([^">]*?)">(.*?)</a>`)
 
 func getMessageBody(htmlText string) string {

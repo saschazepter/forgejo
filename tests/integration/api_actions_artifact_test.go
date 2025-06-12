@@ -56,7 +56,7 @@ func TestActionsArtifactUploadSingleFile(t *testing.T) {
 		SetHeader("x-actions-results-md5", "XVlf820rMInUi64wmMi6EA==") // base64(md5(body))
 	MakeRequest(t, req, http.StatusOK)
 
-	t.Logf("Create artifact confirm")
+	t.Log("Create artifact confirm")
 
 	// confirm artifact upload
 	req = NewRequest(t, "PATCH", "/api/actions_pipeline/_apis/pipelines/workflows/791/artifacts?artifactName=artifact-single").
@@ -206,7 +206,7 @@ func TestActionsArtifactUploadMultipleFile(t *testing.T) {
 		MakeRequest(t, req, http.StatusOK)
 	}
 
-	t.Logf("Create artifact confirm")
+	t.Log("Create artifact confirm")
 
 	// confirm artifact upload
 	req = NewRequest(t, "PATCH", "/api/actions_pipeline/_apis/pipelines/workflows/791/artifacts?artifactName="+testArtifactName).
@@ -297,7 +297,7 @@ func TestActionsArtifactUploadWithRetentionDays(t *testing.T) {
 		SetHeader("x-actions-results-md5", "1HsSe8LeLWh93ILaw1TEFQ==") // base64(md5(body))
 	MakeRequest(t, req, http.StatusOK)
 
-	t.Logf("Create artifact confirm")
+	t.Log("Create artifact confirm")
 
 	// confirm artifact upload
 	req = NewRequest(t, "PATCH", "/api/actions_pipeline/_apis/pipelines/workflows/791/artifacts?artifactName=artifact-retention-days").

@@ -205,6 +205,12 @@ func (t telegramConvertor) Package(p *api.PackagePayload) (TelegramPayload, erro
 	return createTelegramPayload(text), nil
 }
 
+func (telegramConvertor) Action(p *api.ActionPayload) (TelegramPayload, error) {
+	text, _ := getActionPayloadInfo(p, htmlLinkFormatter)
+
+	return createTelegramPayload(text), nil
+}
+
 func createTelegramPayload(message string) TelegramPayload {
 	return TelegramPayload{
 		Message:           markup.Sanitize(strings.TrimSpace(message)),

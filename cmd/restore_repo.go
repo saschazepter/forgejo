@@ -4,52 +4,55 @@
 package cmd
 
 import (
+	"context"
 	"strings"
 
 	"forgejo.org/modules/private"
 	"forgejo.org/modules/setting"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 // CmdRestoreRepository represents the available restore a repository sub-command.
-var CmdRestoreRepository = &cli.Command{
-	Name:        "restore-repo",
-	Usage:       "Restore the repository from disk",
-	Description: "This is a command for restoring the repository data.",
-	Action:      runRestoreRepository,
-	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:    "repo_dir",
-			Aliases: []string{"r"},
-			Value:   "./data",
-			Usage:   "Repository dir path to restore from",
-		},
-		&cli.StringFlag{
-			Name:  "owner_name",
-			Value: "",
-			Usage: "Restore destination owner name",
-		},
-		&cli.StringFlag{
-			Name:  "repo_name",
-			Value: "",
-			Usage: "Restore destination repository name",
-		},
-		&cli.StringFlag{
-			Name:  "units",
-			Value: "",
-			Usage: `Which items will be restored, one or more units should be separated as comma.
+func cmdRestoreRepository() *cli.Command {
+	return &cli.Command{
+		Name:        "restore-repo",
+		Usage:       "Restore the repository from disk",
+		Description: "This is a command for restoring the repository data.",
+		Action:      runRestoreRepository,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "repo_dir",
+				Aliases: []string{"r"},
+				Value:   "./data",
+				Usage:   "Repository dir path to restore from",
+			},
+			&cli.StringFlag{
+				Name:  "owner_name",
+				Value: "",
+				Usage: "Restore destination owner name",
+			},
+			&cli.StringFlag{
+				Name:  "repo_name",
+				Value: "",
+				Usage: "Restore destination repository name",
+			},
+			&cli.StringFlag{
+				Name:  "units",
+				Value: "",
+				Usage: `Which items will be restored, one or more units should be separated as comma.
 wiki, issues, labels, releases, release_assets, milestones, pull_requests, comments are allowed. Empty means all units.`,
+			},
+			&cli.BoolFlag{
+				Name:  "validation",
+				Usage: "Sanity check the content of the files before trying to load them",
+			},
 		},
-		&cli.BoolFlag{
-			Name:  "validation",
-			Usage: "Sanity check the content of the files before trying to load them",
-		},
-	},
+	}
 }
 
-func runRestoreRepository(c *cli.Context) error {
-	ctx, cancel := installSignals()
+func runRestoreRepository(ctx context.Context, c *cli.Command) error {
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	setting.MustInstalled()

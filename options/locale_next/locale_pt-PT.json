@@ -100,5 +100,6 @@
     "followers.outgoing.list.self.none": "Não está a seguir ninguém.",
     "editor.textarea.tab_hint": "Linha já indentada. Pressione <kbd>Tab</kbd> novamente ou <kbd>Escape</kbd> para sair do editor.",
     "editor.textarea.shift_tab_hint": "Sem indentação nesta linha. Pressione <kbd>Shift</kbd> + <kbd>Tab</kbd> novamente ou <kbd>Escape</kbd> para sair do editor.",
-    "stars.list.none": "Ninguém juntou este repositório aos favoritos."
+    "stars.list.none": "Ninguém juntou este repositório aos favoritos.",
+    "admin.dashboard.cleanup_offline_runners": "Limpeza de executores offline"
 }

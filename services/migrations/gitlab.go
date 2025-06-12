@@ -99,6 +99,7 @@ func NewGitlabDownloader(ctx context.Context, baseURL, repoPath, username, passw
 	// Only use basic auth if token is blank and password is NOT
 	// Basic auth will fail with empty strings, but empty token will allow anonymous public API usage
 	if token == "" && password != "" {
+		//nolint // SA1019 gitlab.NewBasicAuthClient is deprecated: GitLab recommends against using this authentication method
 		gitlabClient, err = gitlab.NewBasicAuthClient(username, password, gitlab.WithBaseURL(baseURL), gitlab.WithHTTPClient(NewMigrationHTTPClient()))
 	}
 
@@ -213,7 +214,7 @@ func (g *GitlabDownloader) GetTopics() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return gr.TagList, err
+	return gr.Topics, err
 }
 
 // GetMilestones returns milestones

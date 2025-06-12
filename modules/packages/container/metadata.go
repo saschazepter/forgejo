@@ -84,6 +84,13 @@ func ParseImageConfig(mt string, r io.Reader) (*Metadata, error) {
 func parseOCIImageConfig(r io.Reader) (*Metadata, error) {
 	var image oci.Image
 	if err := json.NewDecoder(r).Decode(&image); err != nil {
+		// Handle empty config blobs (common in OCI artifacts)
+		if err == io.EOF {
+			return &Metadata{
+				Type:     TypeOCI,
+				Platform: DefaultPlatform,
+			}, nil
+		}
 		return nil, err
 	}
 

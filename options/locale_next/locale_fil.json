@@ -83,5 +83,16 @@
     "moderation.submit_report": "I-submit ang ulat",
     "moderation.reporting_failed": "Hindi ma-submit ang bagong ulat sa pang aabuso: %v",
     "moderation.reported_thank_you": "Salamat sa iyong ulat. Naipaalam na ito sa administrasyon.",
-    "repo.form.cannot_create": "Naabot na ng lahat ng mga espasyo kung saan ka makakagawa ng mga repositoryo ang limitasyon ng mga repositoryo."
+    "repo.form.cannot_create": "Naabot na ng lahat ng mga espasyo kung saan ka makakagawa ng mga repositoryo ang limitasyon ng mga repositoryo.",
+    "stars.list.none": "Wala pang nag-star ng repositoryong ito.",
+    "followers.incoming.list.self.none": "Walang sumusubaybay sa iyong profile.",
+    "repo.issue_indexer.title": "Indexer ng Isyu",
+    "watch.list.none": "Wala pang nanonood sa repositoryong ito.",
+    "followers.incoming.list.none": "Wala pang sumusunod sa user na ito.",
+    "followers.outgoing.list.self.none": "Hindi ka sumusunod ng anumang tao.",
+    "followers.outgoing.list.none": "Hindi sinusundan ni %s ang sinuman.",
+    "editor.textarea.tab_hint": "Naka-indent na ang linya. Pindutin ulit ang <kbd>Tab</kbd> o <kbd>Escape</kbd> para umalis sa editor.",
+    "editor.textarea.shift_tab_hint": "Walang indentation sa linyang ito. Pindutin ang <kbd>Shift</kbd> + <kbd>Tab</kbd> ulit o <kbd>Escape</kbd> para umalis sa editor.",
+    "admin.dashboard.cleanup_offline_runners": "Linisin ang mga offline na runner",
+    "settings.visibility.description": "Maaapektuhan ng visibility ng profile ang kakayahan ng iba na i-access ang iyong mga hindi pribadong repositoryo. <a href=\"%s\" target=\"_blank\">Matuto pa</a>"
 }

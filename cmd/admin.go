@@ -15,56 +15,64 @@ import (
 	"forgejo.org/modules/log"
 	repo_module "forgejo.org/modules/repository"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
-var (
-	// CmdAdmin represents the available admin sub-command.
-	CmdAdmin = &cli.Command{
+// CmdAdmin represents the available admin sub-command.
+func cmdAdmin() *cli.Command {
+	return &cli.Command{
 		Name:  "admin",
 		Usage: "Perform common administrative operations",
-		Subcommands: []*cli.Command{
-			subcmdUser,
-			subcmdRepoSyncReleases,
-			subcmdRegenerate,
-			subcmdAuth,
-			subcmdSendMail,
+		Commands: []*cli.Command{
+			subcmdUser(),
+			subcmdRepoSyncReleases(),
+			subcmdRegenerate(),
+			subcmdAuth(),
+			subcmdSendMail(),
 		},
 	}
+}
 
-	subcmdRepoSyncReleases = &cli.Command{
+func subcmdRepoSyncReleases() *cli.Command {
+	return &cli.Command{
 		Name:   "repo-sync-releases",
 		Usage:  "Synchronize repository releases with tags",
 		Action: runRepoSyncReleases,
 	}
+}
 
-	subcmdRegenerate = &cli.Command{
+func subcmdRegenerate() *cli.Command {
+	return &cli.Command{
 		Name:  "regenerate",
 		Usage: "Regenerate specific files",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			microcmdRegenHooks,
 			microcmdRegenKeys,
 		},
 	}
+}
 
-	subcmdAuth = &cli.Command{
+func subcmdAuth() *cli.Command {
+	return &cli.Command{
 		Name:  "auth",
 		Usage: "Modify external auth providers",
-		Subcommands: []*cli.Command{
-			microcmdAuthAddOauth,
-			microcmdAuthUpdateOauth,
-			microcmdAuthAddLdapBindDn,
-			microcmdAuthUpdateLdapBindDn,
-			microcmdAuthAddLdapSimpleAuth,
-			microcmdAuthUpdateLdapSimpleAuth,
-			microcmdAuthAddSMTP,
-			microcmdAuthUpdateSMTP,
-			microcmdAuthList,
-			microcmdAuthDelete,
+		Commands: []*cli.Command{
+			microcmdAuthAddOauth(),
+			microcmdAuthUpdateOauth(),
+			microcmdAuthAddLdapBindDn(),
+			microcmdAuthUpdateLdapBindDn(),
+			microcmdAuthAddLdapSimpleAuth(),
+			microcmdAuthUpdateLdapSimpleAuth(),
+			microcmdAuthAddSMTP(),
+			microcmdAuthUpdateSMTP(),
+			microcmdAuthList(),
+			microcmdAuthDelete(),
 		},
 	}
+}
 
-	subcmdSendMail = &cli.Command{
+func subcmdSendMail() *cli.Command {
+	return &cli.Command{
 		Name:   "sendmail",
 		Usage:  "Send a message to all users",
 		Action: runSendMail,
@@ -86,15 +94,17 @@ var (
 			},
 		},
 	}
+}
 
-	idFlag = &cli.Int64Flag{
+func idFlag() *cli.Int64Flag {
+	return &cli.Int64Flag{
 		Name:  "id",
 		Usage: "ID of authentication source",
 	}
-)
+}
 
-func runRepoSyncReleases(_ *cli.Context) error {
-	ctx, cancel := installSignals()
+func runRepoSyncReleases(ctx context.Context, _ *cli.Command) error {
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	if err := initDB(ctx); err != nil {

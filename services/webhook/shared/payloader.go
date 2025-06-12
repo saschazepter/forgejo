@@ -36,6 +36,7 @@ type PayloadConvertor[T any] interface {
 	Release(*api.ReleasePayload) (T, error)
 	Wiki(*api.WikiPayload) (T, error)
 	Package(*api.PackagePayload) (T, error)
+	Action(*api.ActionPayload) (T, error)
 }
 
 func convertUnmarshalledJSON[T, P any](convert func(P) (T, error), data []byte) (T, error) {
@@ -86,6 +87,8 @@ func NewPayload[T any](rc PayloadConvertor[T], data []byte, event webhook_module
 		return convertUnmarshalledJSON(rc.Wiki, data)
 	case webhook_module.HookEventPackage:
 		return convertUnmarshalledJSON(rc.Package, data)
+	case webhook_module.HookEventActionRunFailure, webhook_module.HookEventActionRunRecover, webhook_module.HookEventActionRunSuccess:
+		return convertUnmarshalledJSON(rc.Action, data)
 	}
 	var t T
 	return t, fmt.Errorf("newPayload unsupported event: %s", event)

@@ -517,7 +517,7 @@ func Cancel(ctx *context_module.Context) {
 					return err
 				}
 				if n == 0 {
-					return fmt.Errorf("job has changed, try again")
+					return errors.New("job has changed, try again")
 				}
 				continue
 			}

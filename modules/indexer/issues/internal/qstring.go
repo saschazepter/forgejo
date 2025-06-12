@@ -5,6 +5,7 @@ package internal
 
 import (
 	"io"
+	"strconv"
 	"strings"
 )
 
@@ -20,6 +21,14 @@ type Token struct {
 	Term  string
 	Kind  BoolOpt
 	Fuzzy bool
+}
+
+func (tk *Token) ParseIssueReference() (int64, error) {
+	term := tk.Term
+	if term[0] == '#' || term[0] == '!' {
+		term = term[1:]
+	}
+	return strconv.ParseInt(term, 10, 64)
 }
 
 type Tokenizer struct {

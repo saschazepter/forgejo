@@ -92,5 +92,7 @@
     "followers.outgoing.list.self.none": "Du gahst nüms na.",
     "stars.list.none": "Nüms hett up deesem Repositorium eenen Steern sett.",
     "editor.textarea.tab_hint": "Rieg al inschuven. Drück weer <kbd>Tab</kbd> of <kbd>Esc</kbd>, um de Bewarker to verlaten.",
-    "editor.textarea.shift_tab_hint": "Keen Inschuuv in deeser Rieg. Drück weer <kbd>Umschalt</kbd>+<kbd>Tab</kbd> of <kbd>Esc</kbd>, um de Bewarker to verlaten."
+    "editor.textarea.shift_tab_hint": "Keen Inschuuv in deeser Rieg. Drück weer <kbd>Umschalt</kbd>+<kbd>Tab</kbd> of <kbd>Esc</kbd>, um de Bewarker to verlaten.",
+    "admin.dashboard.cleanup_offline_runners": "Nich verbunnen Lopers uprümen",
+    "settings.visibility.description": "De Profil-Sichtbaarkeid maakt daar wat an, of un wo anner Lüü diene nich-privaaten Repositoriums ankieken könen. <a href=\"%s\" target=\"_blank\">Mehr unnerhören</a>"
 }

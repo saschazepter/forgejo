@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"regexp"
+	"runtime/trace"
 	"strings"
 	"time"
 	"unicode"
@@ -397,7 +398,8 @@ func (u *User) SetPassword(passwd string) (err error) {
 }
 
 // ValidatePassword checks if the given password matches the one belonging to the user.
-func (u *User) ValidatePassword(passwd string) bool {
+func (u *User) ValidatePassword(ctx context.Context, passwd string) bool {
+	defer trace.StartRegion(ctx, "Validate user password").End()
 	return hash.Parse(u.PasswdHashAlgo).VerifyPassword(passwd, u.Passwd, u.Salt)
 }
 

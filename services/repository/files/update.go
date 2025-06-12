@@ -193,27 +193,33 @@ func ChangeRepoFiles(ctx context.Context, repo *repo_model.Repository, doer *use
 	}
 
 	if hasOldBranch {
-		// Get the commit of the original branch
-		commit, err := t.GetBranchCommit(opts.OldBranch)
+		// Get the current commit of the original branch
+		actualBaseCommit, err := t.GetBranchCommit(opts.OldBranch)
 		if err != nil {
 			return nil, err // Couldn't get a commit for the branch
 		}
 
-		// Assigned LastCommitID in opts if it hasn't been set
-		if opts.LastCommitID == "" {
-			opts.LastCommitID = commit.ID.String()
-		} else {
-			lastCommitID, err := t.gitRepo.ConvertToGitID(opts.LastCommitID)
+		var lastKnownCommit git.ObjectID // when nil, the sha provided in the opts.Files must match the current blob-sha
+		if opts.OldBranch != opts.NewBranch {
+			// when creating a new branch, ignore if a file has been changed in the meantime
+			// (such changes will visible when doing the merge)
+			lastKnownCommit = actualBaseCommit.ID
+		} else if opts.LastCommitID != "" {
+			lastKnownCommit, err = t.gitRepo.ConvertToGitID(opts.LastCommitID)
 			if err != nil {
 				return nil, fmt.Errorf("ConvertToSHA1: Invalid last commit ID: %w", err)
 			}
-			opts.LastCommitID = lastCommitID.String()
 		}
 
 		for _, file := range opts.Files {
-			if err := handleCheckErrors(file, commit, opts); err != nil {
+			if err := handleCheckErrors(file, actualBaseCommit, lastKnownCommit); err != nil {
 				return nil, err
 			}
+		}
+
+		if opts.LastCommitID == "" {
+			// needed for t.CommitTree
+			opts.LastCommitID = actualBaseCommit.ID.String()
 		}
 	}
 
@@ -277,9 +283,9 @@ func ChangeRepoFiles(ctx context.Context, repo *repo_model.Repository, doer *use
 }
 
 // handles the check for various issues for ChangeRepoFiles
-func handleCheckErrors(file *ChangeRepoFile, commit *git.Commit, opts *ChangeRepoFilesOptions) error {
+func handleCheckErrors(file *ChangeRepoFile, actualBaseCommit *git.Commit, lastKnownCommit git.ObjectID) error {
 	if file.Operation == "update" || file.Operation == "delete" {
-		fromEntry, err := commit.GetTreeEntryByPath(file.Options.fromTreePath)
+		fromEntry, err := actualBaseCommit.GetTreeEntryByPath(file.Options.fromTreePath)
 		if err != nil {
 			return err
 		}
@@ -292,22 +298,22 @@ func handleCheckErrors(file *ChangeRepoFile, commit *git.Commit, opts *ChangeRep
 					CurrentSHA: fromEntry.ID.String(),
 				}
 			}
-		} else if opts.LastCommitID != "" {
-			// If a lastCommitID was given and it doesn't match the commitID of the head of the branch throw
-			// an error, but only if we aren't creating a new branch.
-			if commit.ID.String() != opts.LastCommitID && opts.OldBranch == opts.NewBranch {
-				if changed, err := commit.FileChangedSinceCommit(file.Options.treePath, opts.LastCommitID); err != nil {
+		} else if lastKnownCommit != nil {
+			if actualBaseCommit.ID.String() != lastKnownCommit.String() {
+				// If a lastKnownCommit was given and it doesn't match the actualBaseCommit,
+				// check if the file has been changed in between
+				if changed, err := actualBaseCommit.FileChangedSinceCommit(file.Options.treePath, lastKnownCommit.String()); err != nil {
 					return err
 				} else if changed {
 					return models.ErrCommitIDDoesNotMatch{
-						GivenCommitID:   opts.LastCommitID,
-						CurrentCommitID: opts.LastCommitID,
+						GivenCommitID:   lastKnownCommit.String(),
+						CurrentCommitID: actualBaseCommit.ID.String(),
 					}
 				}
-				// The file wasn't modified, so we are good to delete it
+				// The file wasn't modified, so we are good to update it
 			}
 		} else {
-			// When updating a file, a lastCommitID or SHA needs to be given to make sure other commits
+			// When updating a file, a lastKnownCommit or SHA needs to be given to make sure other commits
 			// haven't been made. We throw an error if one wasn't provided.
 			return models.ErrSHAOrCommitIDNotProvided{}
 		}
@@ -322,7 +328,7 @@ func handleCheckErrors(file *ChangeRepoFile, commit *git.Commit, opts *ChangeRep
 		subTreePath := ""
 		for index, part := range treePathParts {
 			subTreePath = path.Join(subTreePath, part)
-			entry, err := commit.GetTreeEntryByPath(subTreePath)
+			entry, err := actualBaseCommit.GetTreeEntryByPath(subTreePath)
 			if err != nil {
 				if git.IsErrNotExist(err) {
 					// Means there is no item with that name, so we're good

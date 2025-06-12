@@ -430,6 +430,30 @@ func TestAPIExternalAssetRelease(t *testing.T) {
 	assert.Equal(t, "external", attachment.Type)
 }
 
+func TestAPIAllowedAPIURLInRelease(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
+	session := loginUser(t, owner.LowerName)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
+
+	r := createNewReleaseUsingAPI(t, token, owner, repo, "release-tag", "", "Release Tag", "test")
+	internalURL := "https://localhost:3003/api/packages/owner/generic/test/1.0.0/test.txt"
+
+	req := NewRequest(t, http.MethodPost, fmt.Sprintf("/api/v1/repos/%s/%s/releases/%d/assets?name=test-asset&external_url=%s", owner.Name, repo.Name, r.ID, url.QueryEscape(internalURL))).
+		AddTokenAuth(token)
+	resp := MakeRequest(t, req, http.StatusCreated)
+
+	var attachment *api.Attachment
+	DecodeJSON(t, resp, &attachment)
+
+	assert.Equal(t, "test-asset", attachment.Name)
+	assert.EqualValues(t, 0, attachment.Size)
+	assert.Equal(t, internalURL, attachment.DownloadURL)
+	assert.Equal(t, "external", attachment.Type)
+}
+
 func TestAPIDuplicateAssetRelease(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 

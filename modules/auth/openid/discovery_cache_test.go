@@ -30,7 +30,7 @@ func TestTimedDiscoveryCache(t *testing.T) {
 
 	// Make sure we can retrieve them
 	if di := dc.Get("foo"); di == nil {
-		t.Errorf("Expected a result, got nil")
+		t.Error("Expected a result, got nil")
 	} else if di.OpEndpoint() != "opEndpoint" || di.OpLocalID() != "opLocalID" || di.ClaimedID() != "claimedID" {
 		t.Errorf("Expected opEndpoint opLocalID claimedID, got %v %v %v", di.OpEndpoint(), di.OpLocalID(), di.ClaimedID())
 	}
@@ -44,6 +44,6 @@ func TestTimedDiscoveryCache(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	if di := dc.Get("foo"); di != nil {
-		t.Errorf("Expected a nil, got a result")
+		t.Error("Expected a nil, got a result")
 	}
 }

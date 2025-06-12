@@ -5,6 +5,7 @@ package files
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -88,7 +89,7 @@ func CherryPick(ctx context.Context, repo *repo_model.Repository, doer *user_mod
 		}
 
 		if conflict {
-			return nil, fmt.Errorf("failed to merge due to conflicts")
+			return nil, errors.New("failed to merge due to conflicts")
 		}
 	} else {
 		description := fmt.Sprintf("CherryPick %s onto %s", right, opts.OldBranch)
@@ -98,7 +99,7 @@ func CherryPick(ctx context.Context, repo *repo_model.Repository, doer *user_mod
 		}
 
 		if conflict {
-			return nil, fmt.Errorf("failed to merge due to conflicts")
+			return nil, errors.New("failed to merge due to conflicts")
 		}
 
 		treeHash, err = t.WriteTree()

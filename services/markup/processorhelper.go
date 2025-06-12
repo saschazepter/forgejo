@@ -5,7 +5,7 @@ package markup
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"forgejo.org/models/perm/access"
 	"forgejo.org/models/repo"
@@ -55,7 +55,7 @@ func ProcessorHelper() *markup.ProcessorHelper {
 				return nil, err
 			}
 			if !perms.CanRead(unit.TypeCode) {
-				return nil, fmt.Errorf("cannot access repository code")
+				return nil, errors.New("cannot access repository code")
 			}
 
 			gitRepo, err := gitrepo.OpenRepository(ctx, repo)

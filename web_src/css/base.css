@@ -97,6 +97,17 @@ samp,
   font-size: 0.95em; /* compensate for monospace fonts being usually slightly larger */
 }
 
+kbd {
+  padding: 0.15em 0.35em;
+  line-height: 10px;
+  color: var(--color-text-light);
+  vertical-align: middle;
+  background-color: var(--color-markup-code-inline);
+  border: 1px solid var(--color-secondary);
+  border-radius: var(--border-radius);
+  box-shadow: inset 0 -1px 0 var(--color-secondary);
+}
+
 b,
 strong,
 h1,
@@ -1117,41 +1128,6 @@ svg.text.purple,
   display: block;
   width: calc(100% - 1ch);
   padding-left: 1ch;
-}
-
-.lines-escape {
-  width: 0;
-}
-
-.lines-code {
-  padding-left: 5px;
-}
-
-.file-view tr.active {
-  color: inherit !important;
-  background: inherit !important;
-}
-
-.file-view tr.active .lines-num,
-.file-view tr.active .lines-code {
-  background: var(--color-highlight-bg) !important;
-}
-
-.file-view tr.active:last-of-type .lines-code {
-  border-bottom-right-radius: var(--border-radius);
-}
-
-.file-view tr.active .lines-num {
-  position: relative;
-}
-
-.file-view tr.active .lines-num::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  width: 2px;
-  height: 100%;
-  background: var(--color-highlight-fg);
 }
 
 .code-inner {

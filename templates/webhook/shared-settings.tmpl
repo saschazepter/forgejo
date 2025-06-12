@@ -153,6 +153,28 @@
 					<span class="help">{{ctx.Locale.Tr "repo.settings.event_pull_request_review_request_desc"}}</span>
 				</label>
 			</fieldset>
+			<!-- Action Run Events -->
+			<fieldset class="simple-grid grid-2">
+				<legend>{{ctx.Locale.Tr "repo.settings.event_header_action"}}</legend>
+				<!-- Action Run Failure -->
+				<label>
+					<input name="action_failure" type="checkbox" {{if .Webhook.ActionRunFailure}}checked{{end}}>
+					{{ctx.Locale.Tr "repo.settings.event_action_failure"}}
+					<span class="help">{{ctx.Locale.Tr "repo.settings.event_action_failure_desc"}}</span>
+				</label>
+				<!-- Action Run Recover -->
+				<label>
+					<input name="action_recover" type="checkbox" {{if .Webhook.ActionRunRecover}}checked{{end}}>
+					{{ctx.Locale.Tr "repo.settings.event_action_recover"}}
+					<span class="help">{{ctx.Locale.Tr "repo.settings.event_action_recover_desc"}}</span>
+				</label>
+				<!-- Action Run Success -->
+				<label>
+					<input name="action_success" type="checkbox" {{if .Webhook.ActionRunSuccess}}checked{{end}}>
+					{{ctx.Locale.Tr "repo.settings.event_action_success"}}
+					<span class="help">{{ctx.Locale.Tr "repo.settings.event_action_success_desc"}}</span>
+				</label>
+			</fieldset>
 		</fieldset>
 	</fieldset>
 </div>

@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -13,40 +14,42 @@ import (
 	"forgejo.org/modules/setting"
 	user_service "forgejo.org/services/user"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
-var microcmdUserChangePassword = &cli.Command{
-	Name:   "change-password",
-	Usage:  "Change a user's password",
-	Action: runChangePassword,
-	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:    "username",
-			Aliases: []string{"u"},
-			Value:   "",
-			Usage:   "The user to change password for",
+func microcmdUserChangePassword() *cli.Command {
+	return &cli.Command{
+		Name:   "change-password",
+		Usage:  "Change a user's password",
+		Action: runChangePassword,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "username",
+				Aliases: []string{"u"},
+				Value:   "",
+				Usage:   "The user to change password for",
+			},
+			&cli.StringFlag{
+				Name:    "password",
+				Aliases: []string{"p"},
+				Value:   "",
+				Usage:   "New password to set for user",
+			},
+			&cli.BoolFlag{
+				Name:  "must-change-password",
+				Usage: "User must change password",
+				Value: true,
+			},
 		},
-		&cli.StringFlag{
-			Name:    "password",
-			Aliases: []string{"p"},
-			Value:   "",
-			Usage:   "New password to set for user",
-		},
-		&cli.BoolFlag{
-			Name:  "must-change-password",
-			Usage: "User must change password",
-			Value: true,
-		},
-	},
+	}
 }
 
-func runChangePassword(c *cli.Context) error {
+func runChangePassword(ctx context.Context, c *cli.Command) error {
 	if err := argsSet(c, "username", "password"); err != nil {
 		return err
 	}
 
-	ctx, cancel := installSignals()
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	if err := initDB(ctx); err != nil {

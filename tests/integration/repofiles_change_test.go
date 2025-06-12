@@ -294,6 +294,30 @@ func TestChangeRepoFiles(t *testing.T) {
 			assert.Equal(t, expectedFileResponse.Commit.Author.Name, filesResponse.Commit.Author.Name)
 		})
 
+		t.Run("Update with commit ID (without blob sha)", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			opts := getUpdateRepoFilesOptions(repo)
+
+			commit, err := gitRepo.GetBranchCommit(opts.NewBranch)
+			require.NoError(t, err)
+
+			opts.Files[0].SHA = ""
+			opts.LastCommitID = commit.ID.String()
+			filesResponse, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, doer, opts)
+			require.NoError(t, err)
+
+			commit, err = gitRepo.GetBranchCommit(opts.NewBranch)
+			require.NoError(t, err)
+			lastCommit, err := commit.GetCommitByPath(opts.Files[0].TreePath)
+			require.NoError(t, err)
+			expectedFileResponse := getExpectedFileResponseForRepofilesUpdate(commit.ID.String(), opts.Files[0].TreePath, lastCommit.ID.String(), lastCommit.Committer.When)
+			assert.Equal(t, expectedFileResponse.Content, filesResponse.Files[0])
+			assert.Equal(t, expectedFileResponse.Commit.SHA, filesResponse.Commit.SHA)
+			assert.Equal(t, expectedFileResponse.Commit.HTMLURL, filesResponse.Commit.HTMLURL)
+			assert.Equal(t, expectedFileResponse.Commit.Author.Email, filesResponse.Commit.Author.Email)
+			assert.Equal(t, expectedFileResponse.Commit.Author.Name, filesResponse.Commit.Author.Name)
+		})
+
 		t.Run("Update and move", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 			opts := getUpdateRepoFilesOptions(repo)
@@ -412,6 +436,26 @@ func TestChangeRepoFilesErrors(t *testing.T) {
 			assert.Nil(t, filesResponse)
 			require.Error(t, err)
 			expectedError := "sha does not match [given: " + opts.Files[0].SHA + ", expected: " + origSHA + "]"
+			assert.EqualError(t, err, expectedError)
+		})
+
+		t.Run("missing SHA", func(t *testing.T) {
+			opts := getUpdateRepoFilesOptions(repo)
+			opts.Files[0].SHA = ""
+			filesResponse, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, doer, opts)
+			assert.Nil(t, filesResponse)
+			require.Error(t, err)
+			expectedError := "a SHA or commit ID must be provided when updating a file"
+			assert.EqualError(t, err, expectedError)
+		})
+
+		t.Run("bad last commit ID", func(t *testing.T) {
+			opts := getUpdateRepoFilesOptions(repo)
+			opts.LastCommitID = "bad"
+			filesResponse, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, doer, opts)
+			assert.Nil(t, filesResponse)
+			require.Error(t, err)
+			expectedError := "ConvertToSHA1: Invalid last commit ID: object does not exist [id: bad, rel_path: ]"
 			assert.EqualError(t, err, expectedError)
 		})
 

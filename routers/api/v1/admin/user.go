@@ -196,7 +196,7 @@ func EditUser(ctx *context.APIContext) {
 	// If either LoginSource or LoginName is given, the other must be present too.
 	if form.SourceID != nil || form.LoginName != nil {
 		if form.SourceID == nil || form.LoginName == nil {
-			ctx.Error(http.StatusUnprocessableEntity, "LoginSourceAndLoginName", fmt.Errorf("source_id and login_name must be specified together"))
+			ctx.Error(http.StatusUnprocessableEntity, "LoginSourceAndLoginName", errors.New("source_id and login_name must be specified together"))
 			return
 		}
 	}
@@ -304,7 +304,7 @@ func DeleteUser(ctx *context.APIContext) {
 
 	// admin should not delete themself
 	if ctx.ContextUser.ID == ctx.Doer.ID {
-		ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("you cannot delete yourself"))
+		ctx.Error(http.StatusUnprocessableEntity, "", errors.New("you cannot delete yourself"))
 		return
 	}
 

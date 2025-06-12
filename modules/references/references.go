@@ -460,7 +460,8 @@ func findAllIssueReferencesBytes(content []byte, links []string) []*rawReference
 			}
 			parts := strings.Split(u.EscapedPath(), "/")
 			// /user/repo/issues/3
-			if len(parts) != 5 || parts[0] != "" {
+			// /user/repo/pulls/7/files/...
+			if len(parts) < 5 || parts[0] != "" {
 				continue
 			}
 			var sep string

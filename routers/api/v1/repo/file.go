@@ -480,6 +480,8 @@ func ChangeFiles(ctx *context.APIContext) {
 	//     "$ref": "#/responses/error"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "409":
+	//     "$ref": "#/responses/conflict"
 	//   "413":
 	//     "$ref": "#/responses/quotaExceeded"
 	//   "422":
@@ -584,6 +586,8 @@ func CreateFile(ctx *context.APIContext) {
 	//     "$ref": "#/responses/error"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "409":
+	//     "$ref": "#/responses/conflict"
 	//   "413":
 	//     "$ref": "#/responses/quotaExceeded"
 	//   "422":
@@ -684,6 +688,8 @@ func UpdateFile(ctx *context.APIContext) {
 	//     "$ref": "#/responses/error"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
+	//   "409":
+	//     "$ref": "#/responses/conflict"
 	//   "413":
 	//     "$ref": "#/responses/quotaExceeded"
 	//   "422":
@@ -692,7 +698,7 @@ func UpdateFile(ctx *context.APIContext) {
 	//     "$ref": "#/responses/repoArchivedError"
 	apiOpts := web.GetForm(ctx).(*api.UpdateFileOptions)
 	if ctx.Repo.Repository.IsEmpty {
-		ctx.Error(http.StatusUnprocessableEntity, "RepoIsEmpty", fmt.Errorf("repo is empty"))
+		ctx.Error(http.StatusUnprocessableEntity, "RepoIsEmpty", errors.New("repo is empty"))
 		return
 	}
 
@@ -757,9 +763,17 @@ func handleCreateOrUpdateFileError(ctx *context.APIContext, err error) {
 		ctx.Error(http.StatusForbidden, "Access", err)
 		return
 	}
-	if git_model.IsErrBranchAlreadyExists(err) || models.IsErrFilenameInvalid(err) || models.IsErrSHADoesNotMatch(err) ||
-		models.IsErrFilePathInvalid(err) || models.IsErrRepoFileAlreadyExists(err) {
+	if git_model.IsErrBranchAlreadyExists(err) ||
+		models.IsErrFilenameInvalid(err) ||
+		models.IsErrSHAOrCommitIDNotProvided(err) ||
+		models.IsErrFilePathInvalid(err) ||
+		models.IsErrRepoFileAlreadyExists(err) {
 		ctx.Error(http.StatusUnprocessableEntity, "Invalid", err)
+		return
+	}
+	if models.IsErrCommitIDDoesNotMatch(err) ||
+		models.IsErrSHADoesNotMatch(err) {
+		ctx.Error(http.StatusConflict, "Conflict", err)
 		return
 	}
 	if git_model.IsErrBranchNotExist(err) || git.IsErrBranchNotExist(err) {

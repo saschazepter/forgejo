@@ -12,8 +12,6 @@ import (
 	"forgejo.org/modules/timeutil"
 )
 
-var _ GzipBytesProvider = (*vfsgen۰CompressedFileInfo)(nil)
-
 // GlobalModTime provide a global mod time for embedded asset files
 func GlobalModTime(filename string) time.Time {
 	return timeutil.GetExecutableModTime()

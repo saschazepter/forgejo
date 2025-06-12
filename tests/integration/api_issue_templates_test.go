@@ -47,9 +47,7 @@ func TestAPIIssueTemplateList(t *testing.T) {
 			for _, template := range templateCandidates {
 				t.Run(template, func(t *testing.T) {
 					defer tests.PrintCurrentTest(t)()
-					defer func() {
-						deleteFileInBranch(user, repo, template, repo.DefaultBranch)
-					}()
+					defer deleteFileInBranch(user, repo, template, repo.DefaultBranch)
 
 					err := createOrReplaceFileInBranch(user, repo, template, repo.DefaultBranch,
 						`---

@@ -5,6 +5,7 @@ package cron
 
 import (
 	"context"
+	"time"
 
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/setting"
@@ -20,6 +21,7 @@ func initActionsTasks() {
 	registerCancelAbandonedJobs()
 	registerScheduleTasks()
 	registerActionsCleanup()
+	registerOfflineRunnersCleanup()
 }
 
 func registerStopZombieTasks() {
@@ -72,5 +74,24 @@ func registerActionsCleanup() {
 		Schedule:   "@midnight",
 	}, func(ctx context.Context, _ *user_model.User, _ Config) error {
 		return actions_service.Cleanup(ctx)
+	})
+}
+
+func registerOfflineRunnersCleanup() {
+	RegisterTaskFatal("cleanup_offline_runners", &CleanupOfflineRunnersConfig{
+		BaseConfig: BaseConfig{
+			Enabled:    false,
+			RunAtStart: false,
+			Schedule:   "@midnight",
+		},
+		GlobalScopeOnly: true,
+		OlderThan:       time.Hour * 24,
+	}, func(ctx context.Context, _ *user_model.User, cfg Config) error {
+		c := cfg.(*CleanupOfflineRunnersConfig)
+		return actions_service.CleanupOfflineRunners(
+			ctx,
+			c.OlderThan,
+			c.GlobalScopeOnly,
+		)
 	})
 }

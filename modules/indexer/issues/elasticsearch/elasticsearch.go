@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	issueIndexerLatestVersion = 1
+	issueIndexerLatestVersion = 2
 	// multi-match-types, currently only 2 types are used
 	// Reference: https://www.elastic.co/guide/en/elasticsearch/reference/7.0/query-dsl-multi-match-query.html#multi-match-types
 	esMultiMatchTypeBestFields   = "best_fields"
@@ -56,7 +56,8 @@ const (
 			"repo_id": { "type": "long", "index": true },
 			"is_public": { "type": "boolean", "index": true },
 
-			"title": {  "type": "text", "index": true },
+			"index": { "type": "long", "index": true },
+			"title": { "type": "text", "index": true },
 			"content": { "type": "text", "index": true },
 			"comments": { "type" : "text", "index": true },
 
@@ -155,21 +156,25 @@ func (b *Indexer) Search(ctx context.Context, options *internal.SearchOptions) (
 			return nil, err
 		}
 		for _, token := range tokens {
-			innerQ := elastic.NewMultiMatchQuery(token.Term, "title", "content", "comments")
+			innerQ := elastic.NewMultiMatchQuery(token.Term, "content", "comments").FieldWithBoost("title", 2.0).TieBreaker(0.5)
 			if token.Fuzzy {
 				// If the term is not a phrase use fuzziness set to AUTO
 				innerQ = innerQ.Type(esMultiMatchTypeBestFields).Fuzziness(esFuzzyAuto)
 			} else {
 				innerQ = innerQ.Type(esMultiMatchTypePhrasePrefix)
 			}
-
+			var eitherQ elastic.Query = innerQ
+			if issueID, err := token.ParseIssueReference(); err == nil {
+				indexQ := elastic.NewTermQuery("index", issueID).Boost(15.0)
+				eitherQ = elastic.NewDisMaxQuery().Query(indexQ).Query(innerQ).TieBreaker(0.5)
+			}
 			switch token.Kind {
 			case internal.BoolOptMust:
-				q.Must(innerQ)
+				q.Must(eitherQ)
 			case internal.BoolOptShould:
-				q.Should(innerQ)
+				q.Should(eitherQ)
 			case internal.BoolOptNot:
-				q.MustNot(innerQ)
+				q.MustNot(eitherQ)
 			}
 		}
 		query.Must(q)

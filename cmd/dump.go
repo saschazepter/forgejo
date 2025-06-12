@@ -5,6 +5,8 @@
 package cmd
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -22,7 +24,7 @@ import (
 
 	"code.forgejo.org/go-chi/session"
 	"github.com/mholt/archiver/v3"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func addReader(w archiver.Writer, r io.ReadCloser, info os.FileInfo, customName string, verbose bool) error {
@@ -83,6 +85,10 @@ func (o *outputType) Set(value string) error {
 	return fmt.Errorf("allowed values are %s", o.Join())
 }
 
+func (o *outputType) Get() any {
+	return o.String()
+}
+
 func (o outputType) String() string {
 	if o.selected == "" {
 		return o.Default
@@ -96,79 +102,81 @@ var outputTypeEnum = &outputType{
 }
 
 // CmdDump represents the available dump sub-command.
-var CmdDump = &cli.Command{
-	Name:  "dump",
-	Usage: "Dump Forgejo files and database",
-	Description: `Dump compresses all related files and database into zip file.
+func cmdDump() *cli.Command {
+	return &cli.Command{
+		Name:  "dump",
+		Usage: "Dump Forgejo files and database",
+		Description: `Dump compresses all related files and database into zip file.
 It can be used for backup and capture Forgejo server image to send to maintainer`,
-	Action: runDump,
-	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:    "file",
-			Aliases: []string{"f"},
-			Value:   fmt.Sprintf("forgejo-dump-%d.zip", time.Now().Unix()),
-			Usage:   "Name of the dump file which will be created. Supply '-' for stdout. See type for available types.",
+		Action: runDump,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "file",
+				Aliases: []string{"f"},
+				Value:   fmt.Sprintf("forgejo-dump-%d.zip", time.Now().Unix()),
+				Usage:   "Name of the dump file which will be created. Supply '-' for stdout. See type for available types.",
+			},
+			&cli.BoolFlag{
+				Name:    "verbose",
+				Aliases: []string{"V"},
+				Usage:   "Show process details",
+			},
+			&cli.BoolFlag{
+				Name:    "quiet",
+				Aliases: []string{"q"},
+				Usage:   "Only display warnings and errors",
+			},
+			&cli.StringFlag{
+				Name:    "tempdir",
+				Aliases: []string{"t"},
+				Usage:   "Temporary dir path",
+			},
+			&cli.StringFlag{
+				Name:    "database",
+				Aliases: []string{"d"},
+				Usage:   "Specify the database SQL syntax: sqlite3, mysql, postgres",
+			},
+			&cli.BoolFlag{
+				Name:    "skip-repository",
+				Aliases: []string{"R"},
+				Usage:   "Skip repositories",
+			},
+			&cli.BoolFlag{
+				Name:    "skip-log",
+				Aliases: []string{"L"},
+				Usage:   "Skip logs",
+			},
+			&cli.BoolFlag{
+				Name:  "skip-custom-dir",
+				Usage: "Skip custom directory",
+			},
+			&cli.BoolFlag{
+				Name:  "skip-lfs-data",
+				Usage: "Skip LFS data",
+			},
+			&cli.BoolFlag{
+				Name:  "skip-attachment-data",
+				Usage: "Skip attachment data",
+			},
+			&cli.BoolFlag{
+				Name:  "skip-package-data",
+				Usage: "Skip package data",
+			},
+			&cli.BoolFlag{
+				Name:  "skip-index",
+				Usage: "Skip bleve index data",
+			},
+			&cli.BoolFlag{
+				Name:  "skip-repo-archives",
+				Usage: "Skip repository archives",
+			},
+			&cli.GenericFlag{
+				Name:  "type",
+				Value: outputTypeEnum,
+				Usage: fmt.Sprintf("Dump output format: %s", outputTypeEnum.Join()),
+			},
 		},
-		&cli.BoolFlag{
-			Name:    "verbose",
-			Aliases: []string{"V"},
-			Usage:   "Show process details",
-		},
-		&cli.BoolFlag{
-			Name:    "quiet",
-			Aliases: []string{"q"},
-			Usage:   "Only display warnings and errors",
-		},
-		&cli.StringFlag{
-			Name:    "tempdir",
-			Aliases: []string{"t"},
-			Usage:   "Temporary dir path",
-		},
-		&cli.StringFlag{
-			Name:    "database",
-			Aliases: []string{"d"},
-			Usage:   "Specify the database SQL syntax: sqlite3, mysql, postgres",
-		},
-		&cli.BoolFlag{
-			Name:    "skip-repository",
-			Aliases: []string{"R"},
-			Usage:   "Skip repositories",
-		},
-		&cli.BoolFlag{
-			Name:    "skip-log",
-			Aliases: []string{"L"},
-			Usage:   "Skip logs",
-		},
-		&cli.BoolFlag{
-			Name:  "skip-custom-dir",
-			Usage: "Skip custom directory",
-		},
-		&cli.BoolFlag{
-			Name:  "skip-lfs-data",
-			Usage: "Skip LFS data",
-		},
-		&cli.BoolFlag{
-			Name:  "skip-attachment-data",
-			Usage: "Skip attachment data",
-		},
-		&cli.BoolFlag{
-			Name:  "skip-package-data",
-			Usage: "Skip package data",
-		},
-		&cli.BoolFlag{
-			Name:  "skip-index",
-			Usage: "Skip bleve index data",
-		},
-		&cli.BoolFlag{
-			Name:  "skip-repo-archives",
-			Usage: "Skip repository archives",
-		},
-		&cli.GenericFlag{
-			Name:  "type",
-			Value: outputTypeEnum,
-			Usage: fmt.Sprintf("Dump output format: %s", outputTypeEnum.Join()),
-		},
-	},
+	}
 }
 
 func fatal(format string, args ...any) {
@@ -176,7 +184,7 @@ func fatal(format string, args ...any) {
 	log.Fatal(format, args...)
 }
 
-func runDump(ctx *cli.Context) error {
+func runDump(stdCtx context.Context, ctx *cli.Command) error {
 	var file *os.File
 	fileName := ctx.String("file")
 	outType := ctx.String("type")
@@ -212,16 +220,16 @@ func runDump(ctx *cli.Context) error {
 
 	if !setting.InstallLock {
 		log.Error("Is '%s' really the right config path?\n", setting.CustomConf)
-		return fmt.Errorf("forgejo is not initialized")
+		return errors.New("forgejo is not initialized")
 	}
 	setting.LoadSettings() // cannot access session settings otherwise
 
 	verbose := ctx.Bool("verbose")
 	if verbose && ctx.Bool("quiet") {
-		return fmt.Errorf("--quiet and --verbose cannot both be set")
+		return errors.New("--quiet and --verbose cannot both be set")
 	}
 
-	stdCtx, cancel := installSignals()
+	stdCtx, cancel := installSignals(stdCtx)
 	defer cancel()
 
 	err := db.InitEngine(stdCtx)

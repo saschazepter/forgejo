@@ -27,6 +27,7 @@ func TestCountOrganizations(t *testing.T) {
 }
 
 func TestFindOrgs(t *testing.T) {
+	defer unittest.OverrideFixtures("models/organization/TestFindOrgs")()
 	require.NoError(t, unittest.PrepareTestDatabase())
 
 	orgs, err := db.Find[organization.Organization](db.DefaultContext, organization.FindOrgOptions{
@@ -34,8 +35,14 @@ func TestFindOrgs(t *testing.T) {
 		IncludePrivate: true,
 	})
 	require.NoError(t, err)
-	if assert.Len(t, orgs, 1) {
-		assert.EqualValues(t, 3, orgs[0].ID)
+	if assert.Len(t, orgs, 2) {
+		if orgs[0].ID == 22 {
+			assert.EqualValues(t, 22, orgs[0].ID)
+			assert.EqualValues(t, 3, orgs[1].ID)
+		} else {
+			assert.EqualValues(t, 3, orgs[0].ID)
+			assert.EqualValues(t, 22, orgs[1].ID)
+		}
 	}
 
 	orgs, err = db.Find[organization.Organization](db.DefaultContext, organization.FindOrgOptions{
@@ -48,6 +55,14 @@ func TestFindOrgs(t *testing.T) {
 	total, err := db.Count[organization.Organization](db.DefaultContext, organization.FindOrgOptions{
 		UserID:         4,
 		IncludePrivate: true,
+	})
+	require.NoError(t, err)
+	assert.EqualValues(t, 2, total)
+
+	total, err = db.Count[organization.Organization](db.DefaultContext, organization.FindOrgOptions{
+		UserID:         4,
+		IncludePrivate: false,
+		IncludeLimited: true,
 	})
 	require.NoError(t, err)
 	assert.EqualValues(t, 1, total)

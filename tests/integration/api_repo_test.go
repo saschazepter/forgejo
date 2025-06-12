@@ -376,11 +376,11 @@ func TestAPIRepoMigrate(t *testing.T) {
 		cloneURL, repoName string
 		expectedStatus     int
 	}{
-		{ctxUserID: 1, userID: 2, cloneURL: "https://github.com/go-gitea/test_repo.git", repoName: "git-admin", expectedStatus: http.StatusCreated},
-		{ctxUserID: 2, userID: 2, cloneURL: "https://github.com/go-gitea/test_repo.git", repoName: "git-own", expectedStatus: http.StatusCreated},
-		{ctxUserID: 2, userID: 1, cloneURL: "https://github.com/go-gitea/test_repo.git", repoName: "git-bad", expectedStatus: http.StatusForbidden},
-		{ctxUserID: 2, userID: 3, cloneURL: "https://github.com/go-gitea/test_repo.git", repoName: "git-org", expectedStatus: http.StatusCreated},
-		{ctxUserID: 2, userID: 6, cloneURL: "https://github.com/go-gitea/test_repo.git", repoName: "git-bad-org", expectedStatus: http.StatusForbidden},
+		{ctxUserID: 1, userID: 2, cloneURL: "https://code.forgejo.org/forgejo/migration-test.git", repoName: "git-admin", expectedStatus: http.StatusCreated},
+		{ctxUserID: 2, userID: 2, cloneURL: "https://code.forgejo.org/forgejo/migration-test.git", repoName: "git-own", expectedStatus: http.StatusCreated},
+		{ctxUserID: 2, userID: 1, cloneURL: "https://code.forgejo.org/forgejo/migration-test.git", repoName: "git-bad", expectedStatus: http.StatusForbidden},
+		{ctxUserID: 2, userID: 3, cloneURL: "https://code.forgejo.org/forgejo/migration-test.git", repoName: "git-org", expectedStatus: http.StatusCreated},
+		{ctxUserID: 2, userID: 6, cloneURL: "https://code.forgejo.org/forgejo/migration-test.git", repoName: "git-bad-org", expectedStatus: http.StatusForbidden},
 		{ctxUserID: 2, userID: 3, cloneURL: "https://localhost:3000/user/test_repo.git", repoName: "private-ip", expectedStatus: http.StatusUnprocessableEntity},
 		{ctxUserID: 2, userID: 3, cloneURL: "https://10.0.0.1/user/test_repo.git", repoName: "private-ip", expectedStatus: http.StatusUnprocessableEntity},
 	}
@@ -394,22 +394,10 @@ func TestAPIRepoMigrate(t *testing.T) {
 			CloneAddr:   testCase.cloneURL,
 			RepoOwnerID: testCase.userID,
 			RepoName:    testCase.repoName,
+			Wiki:        true,
 		}).AddTokenAuth(token)
 		resp := MakeRequest(t, req, NoExpectedStatus)
-		if resp.Code == http.StatusUnprocessableEntity {
-			respJSON := map[string]string{}
-			DecodeJSON(t, resp, &respJSON)
-			switch respJSON["message"] {
-			case "Remote visit addressed rate limitation.":
-				t.Log("test hit github rate limitation")
-			case "You can not import from disallowed hosts.":
-				assert.Equal(t, "private-ip", testCase.repoName)
-			default:
-				assert.FailNow(t, "unexpected error", "'%v' on url '%s'", respJSON["message"], testCase.cloneURL)
-			}
-		} else {
-			assert.Equal(t, testCase.expectedStatus, resp.Code)
-		}
+		require.Equalf(t, testCase.expectedStatus, resp.Code, "unexpected status (may be due to throttling): '%v' on url '%s'", resp.Body.String(), testCase.cloneURL)
 	}
 }
 
@@ -433,7 +421,7 @@ func testAPIRepoMigrateConflict(t *testing.T, u *url.URL) {
 		require.NoError(t, err)
 		userID := user.ID
 
-		cloneURL := "https://github.com/go-gitea/test_repo.git"
+		cloneURL := "https://code.forgejo.org/forgejo/migration-test.git"
 
 		req := NewRequestWithJSON(t, "POST", "/api/v1/repos/migrate",
 			&api.MigrateRepoOptions{

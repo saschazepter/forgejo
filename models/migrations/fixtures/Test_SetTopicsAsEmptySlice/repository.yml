@@ -1,0 +1,9 @@
+# type Repository struct {
+# 	ID     int64    `xorm:"pk autoincr"`
+# 	Topics []string `xorm:"TEXT JSON"`
+# }
+-
+  id: 1
+-
+  id: 2
+  topics: '["go", "dev"]'

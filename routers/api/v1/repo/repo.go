@@ -5,6 +5,7 @@
 package repo
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -646,7 +647,7 @@ func Edit(ctx *context.APIContext) {
 		return
 	}
 
-	if err := updateRepoUnits(ctx, opts); err != nil {
+	if err := updateRepoUnits(ctx, ctx.Repo.Owner.Name, ctx.Repo.Repository, opts); err != nil {
 		return
 	}
 
@@ -723,7 +724,7 @@ func updateBasicProperties(ctx *context.APIContext, opts api.EditRepoOption) err
 		visibilityChanged = repo.IsPrivate != *opts.Private
 		// when ForcePrivate enabled, you could change public repo to private, but only admin users can change private to public
 		if visibilityChanged && setting.Repository.ForcePrivate && !*opts.Private && !ctx.Doer.IsAdmin {
-			err := fmt.Errorf("cannot change private repository to public")
+			err := errors.New("cannot change private repository to public")
 			ctx.Error(http.StatusUnprocessableEntity, "Force Private enabled", err)
 			return err
 		}
@@ -778,10 +779,7 @@ func updateBasicProperties(ctx *context.APIContext, opts api.EditRepoOption) err
 }
 
 // updateRepoUnits updates repo units: Issue settings, Wiki settings, PR settings
-func updateRepoUnits(ctx *context.APIContext, opts api.EditRepoOption) error {
-	owner := ctx.Repo.Owner
-	repo := ctx.Repo.Repository
-
+func updateRepoUnits(ctx *context.APIContext, owner string, repo *repo_model.Repository, opts api.EditRepoOption) error {
 	var units []repo_model.RepoUnit
 	var deleteUnitTypes []unit_model.Type
 
@@ -794,12 +792,12 @@ func updateRepoUnits(ctx *context.APIContext, opts api.EditRepoOption) error {
 		if newHasIssues && opts.ExternalTracker != nil && !unit_model.TypeExternalTracker.UnitGlobalDisabled() {
 			// Check that values are valid
 			if !validation.IsValidExternalURL(opts.ExternalTracker.ExternalTrackerURL) {
-				err := fmt.Errorf("External tracker URL not valid")
+				err := errors.New("External tracker URL not valid")
 				ctx.Error(http.StatusUnprocessableEntity, "Invalid external tracker URL", err)
 				return err
 			}
 			if len(opts.ExternalTracker.ExternalTrackerFormat) != 0 && !validation.IsValidExternalTrackerURLFormat(opts.ExternalTracker.ExternalTrackerFormat) {
-				err := fmt.Errorf("External tracker URL format not valid")
+				err := errors.New("External tracker URL format not valid")
 				ctx.Error(http.StatusUnprocessableEntity, "Invalid external tracker URL format", err)
 				return err
 			}
@@ -870,7 +868,7 @@ func updateRepoUnits(ctx *context.APIContext, opts api.EditRepoOption) error {
 		if newHasWiki && opts.ExternalWiki != nil && !unit_model.TypeExternalWiki.UnitGlobalDisabled() {
 			// Check that values are valid
 			if !validation.IsValidExternalURL(opts.ExternalWiki.ExternalWikiURL) {
-				err := fmt.Errorf("External wiki URL not valid")
+				err := errors.New("External wiki URL not valid")
 				ctx.Error(http.StatusUnprocessableEntity, "", "Invalid external wiki URL")
 				return err
 			}
@@ -1044,7 +1042,7 @@ func updateRepoUnits(ctx *context.APIContext, opts api.EditRepoOption) error {
 		}
 	}
 
-	log.Trace("Repository advanced settings updated: %s/%s", owner.Name, repo.Name)
+	log.Trace("Repository advanced settings updated: %s/%s", owner, repo.Name)
 	return nil
 }
 
@@ -1054,7 +1052,7 @@ func updateRepoArchivedState(ctx *context.APIContext, opts api.EditRepoOption) e
 	// archive / un-archive
 	if opts.Archived != nil {
 		if repo.IsMirror {
-			err := fmt.Errorf("repo is a mirror, cannot archive/un-archive")
+			err := errors.New("repo is a mirror, cannot archive/un-archive")
 			ctx.Error(http.StatusUnprocessableEntity, err.Error(), err)
 			return err
 		}

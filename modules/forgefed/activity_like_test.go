@@ -4,7 +4,7 @@
 package forgefed
 
 import (
-	"fmt"
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -99,7 +99,7 @@ func Test_LikeUnmarshalJSON(t *testing.T) {
 		"invalid": {
 			item:    []byte(`{"type":"Invalid","actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1","object":"https://codeberg.org/api/activitypub/repository-id/1"`),
 			want:    &ForgeLike{},
-			wantErr: fmt.Errorf("cannot parse JSON"),
+			wantErr: errors.New("cannot parse JSON"),
 		},
 	}
 
@@ -143,7 +143,7 @@ func Test_ForgeLikeValidation(t *testing.T) {
 		"actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1",
 	"object":"https://codeberg.org/api/activitypub/repository-id/1",
 	"startTime": "2014-12-31T23:00:00-08:00"}`))
-	if err := validateAndCheckError(sut, "Value bad-type is not contained in allowed values [Like]"); err != nil {
+	if err := validateAndCheckError(sut, "Field type contains the value bad-type, which is not in allowed subset [Like]"); err != nil {
 		t.Error(err)
 	}
 
@@ -152,14 +152,6 @@ func Test_ForgeLikeValidation(t *testing.T) {
 	  "object":"https://codeberg.org/api/activitypub/repository-id/1",
 	  "startTime": "not a date"}`))
 	if err := validateAndCheckError(sut, "StartTime was invalid."); err != nil {
-		t.Error(err)
-	}
-
-	sut.UnmarshalJSON([]byte(`{"type":"Wrong",
-		"actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1",
-	  "object":"https://codeberg.org/api/activitypub/repository-id/1",
-	  "startTime": "2014-12-31T23:00:00-08:00"}`))
-	if err := validateAndCheckError(sut, "Value Wrong is not contained in allowed values [Like]"); err != nil {
 		t.Error(err)
 	}
 }

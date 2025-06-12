@@ -72,7 +72,7 @@ func (o *repository) upsert(ctx context.Context) f3_id.NodeID {
 	return f3_id.NewNodeID(o.f.Name)
 }
 
-func (o *repository) SetFetchFunc(fetchFunc func(ctx context.Context, destination string, internalRefs []string)) {
+func (o *repository) SetFetchFunc(fetchFunc func(ctx context.Context, destination, internalRef string)) {
 	o.f.FetchFunc = fetchFunc
 }
 
@@ -93,9 +93,15 @@ func (o *repository) GetRepositoryPushURL() string {
 	return o.getURL()
 }
 
-func (o *repository) GetRepositoryInternalRefs() []string {
-	return []string{}
+func (o *repository) GetRepositoryInternalRef() string {
+	return ""
 }
+
+func (o *repository) GetPullRequestBranch(pr *f3.PullRequestBranch) *f3.PullRequestBranch {
+	panic("")
+}
+func (o *repository) CreatePullRequestBranch(pr *f3.PullRequestBranch) {}
+func (o *repository) DeletePullRequestBranch(pr *f3.PullRequestBranch) {}
 
 func newRepository(_ context.Context) generic.NodeDriverInterface {
 	r := &repository{

@@ -35,6 +35,8 @@ type ServeHeaderOptions struct {
 	Filename           string
 	CacheDuration      time.Duration // defaults to 5 minutes
 	LastModified       time.Time
+	AdditionalHeaders  http.Header
+	RedirectStatusCode int
 }
 
 // ServeSetHeaders sets necessary content serve headers
@@ -81,6 +83,12 @@ func ServeSetHeaders(w http.ResponseWriter, opts *ServeHeaderOptions) {
 	if !opts.LastModified.IsZero() {
 		// http.TimeFormat required a UTC time, refer to https://pkg.go.dev/net/http#TimeFormat
 		header.Set("Last-Modified", opts.LastModified.UTC().Format(http.TimeFormat))
+	}
+
+	if opts.AdditionalHeaders != nil {
+		for k, v := range opts.AdditionalHeaders {
+			header[k] = v
+		}
 	}
 }
 

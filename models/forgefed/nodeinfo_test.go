@@ -4,7 +4,7 @@
 package forgefed
 
 import (
-	"fmt"
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -28,7 +28,7 @@ func Test_NodeInfoWellKnownUnmarshalJSON(t *testing.T) {
 		},
 		"empty": {
 			item:    []byte(``),
-			wantErr: fmt.Errorf("cannot parse JSON: cannot parse empty string; unparsed tail: \"\""),
+			wantErr: errors.New("cannot parse JSON: cannot parse empty string; unparsed tail: \"\""),
 		},
 	}
 
@@ -74,7 +74,7 @@ func Test_NewNodeInfoWellKnown(t *testing.T) {
 
 	_, err := NewNodeInfoWellKnown([]byte(`invalid`))
 	if err == nil {
-		t.Errorf("error was expected here")
+		t.Error("error was expected here")
 	}
 }
 
@@ -87,6 +87,6 @@ func Test_NewNodeInfo(t *testing.T) {
 
 	_, err := NewNodeInfo([]byte(`invalid`))
 	if err == nil {
-		t.Errorf("error was expected here")
+		t.Error("error was expected here")
 	}
 }

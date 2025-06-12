@@ -89,5 +89,13 @@
     "moderation.report_remarks": "Remarques",
     "moderation.report_remarks.placeholder": "S'il vous plaît fournissez quelques détails en rapport avec l'abus que vous signalez.",
     "moderation.submit_report": "Soumettre le signalement",
-    "moderation.reporting_failed": "Impossible de soumettre le nouveau signalement : %v"
+    "moderation.reporting_failed": "Impossible de soumettre le nouveau signalement : %v",
+    "followers.incoming.list.self.none": "Personne ne suit votre profile.",
+    "followers.incoming.list.none": "Personne ne suit cet utilisateur.",
+    "followers.outgoing.list.self.none": "Vous ne suivez personne.",
+    "followers.outgoing.list.none": "%s ne vous suit plus.",
+    "repo.issue_indexer.title": "Indexeur de problèmes",
+    "stars.list.none": "Personne n'a mis d'étoiles sur ce dépôt.",
+    "watch.list.none": "Personne ne consulte ce dépôt.",
+    "repo.form.cannot_create": "Tous les espaces dans lesquels vous pouvez créer des dépôts ont atteint la limite de dépôts."
 }

@@ -70,7 +70,7 @@
   num_followers: 2
   num_following: 1
   num_stars: 2
-  num_repos: 17
+  num_repos: 18
   num_teams: 0
   num_members: 0
   visibility: 0
@@ -642,7 +642,7 @@
   num_following: 0
   num_stars: 0
   num_repos: 2
-  num_teams: 3
+  num_teams: 4
   num_members: 4
   visibility: 0
   repo_admin_change_team_access: false

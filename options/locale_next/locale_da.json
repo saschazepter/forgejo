@@ -84,5 +84,13 @@
     "moderation.report_remarks.placeholder": "Angiv venligst nogle detaljer vedrørende det misbrug, du anmelder.",
     "moderation.submit_report": "Indsend rapport",
     "moderation.reporting_failed": "Den nye misbrugsrapport kunne ikke indsendes: %v",
-    "moderation.reported_thank_you": "Tak for din rapport. Administrationen er blevet gjort opmærksom på den."
+    "moderation.reported_thank_you": "Tak for din rapport. Administrationen er blevet gjort opmærksom på den.",
+    "stars.list.none": "Ingen har markeret dette depot med en stjerne.",
+    "watch.list.none": "Ingen ser dette depot.",
+    "followers.incoming.list.self.none": "Ingen følger din profil.",
+    "followers.incoming.list.none": "Ingen følger denne bruger.",
+    "followers.outgoing.list.self.none": "Du følger ikke nogen.",
+    "followers.outgoing.list.none": "%s følger ikke nogen.",
+    "editor.textarea.tab_hint": "Linjen er allerede indrykket. Tryk på <kbd>Tab</kbd> igen eller <kbd>Escape</kbd> for at forlade editoren.",
+    "editor.textarea.shift_tab_hint": "Ingen indrykning på denne linje. Tryk på <kbd>Shift</kbd> + <kbd>Tab</kbd> igen eller <kbd>Escape</kbd> for at forlade editoren."
 }

@@ -4,25 +4,28 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"forgejo.org/modules/private"
 	"forgejo.org/modules/setting"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
-var (
-	// CmdActions represents the available actions sub-commands.
-	CmdActions = &cli.Command{
+// CmdActions represents the available actions sub-commands.
+func cmdActions() *cli.Command {
+	return &cli.Command{
 		Name:  "actions",
 		Usage: "Manage Forgejo Actions",
-		Subcommands: []*cli.Command{
-			subcmdActionsGenRunnerToken,
+		Commands: []*cli.Command{
+			subcmdActionsGenRunnerToken(),
 		},
 	}
+}
 
-	subcmdActionsGenRunnerToken = &cli.Command{
+func subcmdActionsGenRunnerToken() *cli.Command {
+	return &cli.Command{
 		Name:    "generate-runner-token",
 		Usage:   "Generate a new token for a runner to use to register with the server",
 		Action:  runGenerateActionsRunnerToken,
@@ -36,10 +39,10 @@ var (
 			},
 		},
 	}
-)
+}
 
-func runGenerateActionsRunnerToken(c *cli.Context) error {
-	ctx, cancel := installSignals()
+func runGenerateActionsRunnerToken(ctx context.Context, c *cli.Command) error {
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	setting.MustInstalled()

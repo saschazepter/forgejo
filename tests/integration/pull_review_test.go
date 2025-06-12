@@ -6,6 +6,7 @@ package integration
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -19,6 +20,7 @@ import (
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/git"
 	"forgejo.org/modules/gitrepo"
 	repo_module "forgejo.org/modules/repository"
 	"forgejo.org/modules/test"
@@ -93,16 +95,9 @@ func TestPullView_SelfReviewNotification(t *testing.T) {
 		require.NoError(t, err)
 
 		// create a new branch to prepare for pull request
-		_, err = files_service.ChangeRepoFiles(db.DefaultContext, repo, user2, &files_service.ChangeRepoFilesOptions{
-			NewBranch: "codeowner-basebranch",
-			Files: []*files_service.ChangeRepoFile{
-				{
-					Operation:     "update",
-					TreePath:      "README.md",
-					ContentReader: strings.NewReader("# This is a new project\n"),
-				},
-			},
-		})
+		err = updateFileInBranch(user2, repo, "README.md", "codeowner-basebranch",
+			strings.NewReader("# This is a new project\n"),
+		)
 		require.NoError(t, err)
 
 		// Create a pull request.
@@ -366,16 +361,9 @@ func TestPullView_CodeOwner(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
 			// create a new branch to prepare for pull request
-			_, err := files_service.ChangeRepoFiles(db.DefaultContext, repo, user2, &files_service.ChangeRepoFilesOptions{
-				NewBranch: "codeowner-basebranch",
-				Files: []*files_service.ChangeRepoFile{
-					{
-						Operation:     "update",
-						TreePath:      "README.md",
-						ContentReader: strings.NewReader("# This is a new project\n"),
-					},
-				},
-			})
+			err := updateFileInBranch(user2, repo, "README.md", "codeowner-basebranch",
+				strings.NewReader("# This is a new project\n"),
+			)
 			require.NoError(t, err)
 
 			// Create a pull request.
@@ -400,31 +388,18 @@ func TestPullView_CodeOwner(t *testing.T) {
 		})
 
 		// change the default branch CODEOWNERS file to change README.md's codeowner
-		_, err := files_service.ChangeRepoFiles(db.DefaultContext, repo, user2, &files_service.ChangeRepoFilesOptions{
-			Files: []*files_service.ChangeRepoFile{
-				{
-					Operation:     "update",
-					TreePath:      "CODEOWNERS",
-					ContentReader: strings.NewReader("README.md @user8\n"),
-				},
-			},
-		})
+		err := updateFileInBranch(user2, repo, "CODEOWNERS", "",
+			strings.NewReader("README.md @user8\n"),
+		)
 		require.NoError(t, err)
 
 		t.Run("Second Pull Request", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
 			// create a new branch to prepare for pull request
-			_, err = files_service.ChangeRepoFiles(db.DefaultContext, repo, user2, &files_service.ChangeRepoFilesOptions{
-				NewBranch: "codeowner-basebranch2",
-				Files: []*files_service.ChangeRepoFile{
-					{
-						Operation:     "update",
-						TreePath:      "README.md",
-						ContentReader: strings.NewReader("# This is a new project2\n"),
-					},
-				},
-			})
+			err := updateFileInBranch(user2, repo, "README.md", "codeowner-basebranch2",
+				strings.NewReader("# This is a new project2\n"),
+			)
 			require.NoError(t, err)
 
 			// Create a pull request.
@@ -446,16 +421,9 @@ func TestPullView_CodeOwner(t *testing.T) {
 			require.NoError(t, err)
 
 			// create a new branch to prepare for pull request
-			_, err = files_service.ChangeRepoFiles(db.DefaultContext, forkedRepo, user5, &files_service.ChangeRepoFilesOptions{
-				NewBranch: "codeowner-basebranch-forked",
-				Files: []*files_service.ChangeRepoFile{
-					{
-						Operation:     "update",
-						TreePath:      "README.md",
-						ContentReader: strings.NewReader("# This is a new forked project\n"),
-					},
-				},
-			})
+			err = updateFileInBranch(user5, forkedRepo, "README.md", "codeowner-basebranch-forked",
+				strings.NewReader("# This is a new forked project\n"),
+			)
 			require.NoError(t, err)
 
 			session := loginUser(t, "user5")
@@ -761,4 +729,33 @@ func TestPullRequestReplyMail(t *testing.T) {
 			unittest.AssertExistsIf(t, true, &issues_model.Comment{Content: "Notification time 2!", IssueID: 2})
 		})
 	})
+}
+
+func updateFileInBranch(user *user_model.User, repo *repo_model.Repository, treePath, newBranch string, content io.ReadSeeker) error {
+	oldBranch, err := gitrepo.GetDefaultBranch(git.DefaultContext, repo)
+	if err != nil {
+		return err
+	}
+
+	commitID, err := gitrepo.GetBranchCommitID(git.DefaultContext, repo, oldBranch)
+	if err != nil {
+		return err
+	}
+
+	opts := &files_service.ChangeRepoFilesOptions{
+		Files: []*files_service.ChangeRepoFile{
+			{
+				Operation:     "update",
+				TreePath:      treePath,
+				ContentReader: content,
+			},
+		},
+		OldBranch:    oldBranch,
+		NewBranch:    newBranch,
+		Author:       nil,
+		Committer:    nil,
+		LastCommitID: commitID,
+	}
+	_, err = files_service.ChangeRepoFiles(git.DefaultContext, repo, user, opts)
+	return err
 }

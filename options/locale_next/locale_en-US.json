@@ -92,5 +92,7 @@
     "discussion.locked": "This discussion has been locked. Commenting is limited to contributors.",
     "editor.textarea.tab_hint": "Line already indented. Press <kbd>Tab</kbd> again or <kbd>Escape</kbd> to leave the editor.",
     "editor.textarea.shift_tab_hint": "No indentation on this line. Press <kbd>Shift</kbd> + <kbd>Tab</kbd> again or <kbd>Escape</kbd> to leave the editor.",
+    "admin.dashboard.cleanup_offline_runners": "Cleanup offline runners",
+    "settings.visibility.description": "Profile visibility affects others' ability to access your non-private repositories. <a href=\"%s\" target=\"_blank\">Learn more</a>",
     "meta.last_line": "Thank you for translating Forgejo! This line isn't seen by the users but it serves other purposes in the translation management. You can place a fun fact in the translation instead of translating it."
 }

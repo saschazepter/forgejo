@@ -89,7 +89,7 @@ func (o *reaction) Patch(ctx context.Context) {
 }
 
 func (o *reaction) Put(ctx context.Context) f3_id.NodeID {
-	o.Error("%v", o.forgejoReaction.User)
+	o.Trace("%v", o.forgejoReaction.User)
 
 	sess := db.GetEngine(ctx)
 
@@ -110,7 +110,7 @@ func (o *reaction) Put(ctx context.Context) f3_id.NodeID {
 		panic(fmt.Errorf("unexpected type %v", reactionable.GetKind()))
 	}
 
-	o.Error("%v", o.forgejoReaction)
+	o.Trace("%v", o.forgejoReaction)
 
 	if _, err := sess.Insert(o.forgejoReaction); err != nil {
 		panic(err)

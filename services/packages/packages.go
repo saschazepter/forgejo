@@ -127,12 +127,12 @@ func createPackageAndVersion(ctx context.Context, pvci *PackageCreationInfo, all
 		OwnerID:          pvci.Owner.ID,
 		Type:             pvci.PackageType,
 		Name:             pvci.Name,
-		LowerName:        strings.ToLower(pvci.Name),
+		LowerName:        packages_model.ResolvePackageName(pvci.Name, pvci.PackageType),
 		SemverCompatible: pvci.SemverCompatible,
 	}
 	var err error
 	if p, err = packages_model.TryInsertPackage(ctx, p); err != nil {
-		if err == packages_model.ErrDuplicatePackage {
+		if errors.Is(err, packages_model.ErrDuplicatePackage) {
 			packageCreated = false
 		} else {
 			log.Error("Error inserting package: %v", err)
@@ -208,7 +208,7 @@ func AddFileToExistingPackage(ctx context.Context, pvi *PackageInfo, pfci *Packa
 // This method skips quota checks and should only be used for system-managed packages.
 func AddFileToPackageVersionInternal(ctx context.Context, pv *packages_model.PackageVersion, pfci *PackageFileCreationInfo) (*packages_model.PackageFile, error) {
 	return addFileToPackageWrapper(ctx, func(ctx context.Context) (*packages_model.PackageFile, *packages_model.PackageBlob, bool, error) {
-		return addFileToPackageVersionUnchecked(ctx, pv, pfci)
+		return addFileToPackageVersionUnchecked(ctx, pv, pfci, "")
 	})
 }
 
@@ -261,10 +261,10 @@ func addFileToPackageVersion(ctx context.Context, pv *packages_model.PackageVers
 		return nil, nil, false, err
 	}
 
-	return addFileToPackageVersionUnchecked(ctx, pv, pfci)
+	return addFileToPackageVersionUnchecked(ctx, pv, pfci, pvi.PackageType)
 }
 
-func addFileToPackageVersionUnchecked(ctx context.Context, pv *packages_model.PackageVersion, pfci *PackageFileCreationInfo) (*packages_model.PackageFile, *packages_model.PackageBlob, bool, error) {
+func addFileToPackageVersionUnchecked(ctx context.Context, pv *packages_model.PackageVersion, pfci *PackageFileCreationInfo, packageType packages_model.Type) (*packages_model.PackageFile, *packages_model.PackageBlob, bool, error) {
 	log.Trace("Adding package file: %v, %s", pv.ID, pfci.Filename)
 
 	pb, exists, err := packages_model.GetOrInsertBlob(ctx, NewPackageBlob(pfci.Data))
@@ -304,7 +304,7 @@ func addFileToPackageVersionUnchecked(ctx context.Context, pv *packages_model.Pa
 		VersionID:    pv.ID,
 		BlobID:       pb.ID,
 		Name:         pfci.Filename,
-		LowerName:    strings.ToLower(pfci.Filename),
+		LowerName:    packages_model.ResolvePackageName(pfci.Filename, packageType),
 		CompositeKey: pfci.CompositeKey,
 		IsLead:       pfci.IsLead,
 	}

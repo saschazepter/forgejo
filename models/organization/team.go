@@ -292,3 +292,11 @@ func FixInconsistentOwnerTeams(ctx context.Context) (int64, error) {
 
 	return int64(len(teamIDs)), nil
 }
+
+func NewGhostTeam() *Team {
+	return &Team{
+		ID:        -1,
+		Name:      "Ghost team",
+		LowerName: "ghost team",
+	}
+}

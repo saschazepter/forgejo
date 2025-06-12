@@ -69,6 +69,9 @@ func (l *XORMLogBridge) Warn(v ...any) {
 
 // Warnf show warning log
 func (l *XORMLogBridge) Warnf(format string, v ...any) {
+	if format == "Table %s Column %s db default is %s, struct default is %s" || format == "Table %s Column %s db nullable is %v, struct nullable is %v" {
+		return
+	}
 	l.Log(stackLevel, log.WARN, format, v...)
 }
 

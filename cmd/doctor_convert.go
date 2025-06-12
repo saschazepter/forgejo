@@ -4,25 +4,28 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"forgejo.org/models/db"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 // cmdDoctorConvert represents the available convert sub-command.
-var cmdDoctorConvert = &cli.Command{
-	Name:        "convert",
-	Usage:       "Convert the database",
-	Description: "A command to convert an existing MySQL database from utf8 to utf8mb4",
-	Action:      runDoctorConvert,
+func cmdDoctorConvert() *cli.Command {
+	return &cli.Command{
+		Name:        "convert",
+		Usage:       "Convert the database",
+		Description: "A command to convert an existing MySQL database from utf8 to utf8mb4",
+		Action:      runDoctorConvert,
+	}
 }
 
-func runDoctorConvert(ctx *cli.Context) error {
-	stdCtx, cancel := installSignals()
+func runDoctorConvert(stdCtx context.Context, ctx *cli.Command) error {
+	stdCtx, cancel := installSignals(stdCtx)
 	defer cancel()
 
 	if err := initDB(stdCtx); err != nil {

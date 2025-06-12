@@ -66,5 +66,8 @@
     "followers.outgoing.list.self.none": "你没有关注任何人。",
     "followers.outgoing.list.none": "%s 没有关注任何人。",
     "stars.list.none": "没有人点赞这个仓库。",
-    "followers.incoming.list.self.none": "没有人关注你的个人资料。"
+    "followers.incoming.list.self.none": "没有人关注你的个人资料。",
+    "editor.textarea.tab_hint": "此行已缩进。再次按 <kbd>Tab</kbd> 或按 <kbd>Escape</kbd> 退出编辑器。",
+    "editor.textarea.shift_tab_hint": "此行无缩进。再次按 <kbd>Shift</kbd> + <kbd>Tab</kbd> 或按 <kbd>Escape</kbd> 退出编辑器。",
+    "admin.dashboard.cleanup_offline_runners": "清理离线运行器"
 }

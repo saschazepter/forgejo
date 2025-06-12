@@ -43,12 +43,8 @@ type expansion struct {
 var defaultTransformers = []transformer{
 	{Name: "SNAKE", Transform: xstrings.ToSnakeCase},
 	{Name: "KEBAB", Transform: xstrings.ToKebabCase},
-	// as of xstrings v1.5.0 the CAMEL & PASCAL workarounds are no longer necessary
-	// and can be removed https://codeberg.org/forgejo/forgejo/pulls/4050
-	{Name: "CAMEL", Transform: func(str string) string {
-		return xstrings.FirstRuneToLower(xstrings.ToCamelCase(str))
-	}},
-	{Name: "PASCAL", Transform: xstrings.ToCamelCase},
+	{Name: "CAMEL", Transform: xstrings.ToCamelCase},
+	{Name: "PASCAL", Transform: xstrings.ToPascalCase},
 	{Name: "LOWER", Transform: strings.ToLower},
 	{Name: "UPPER", Transform: strings.ToUpper},
 	{Name: "TITLE", Transform: util.ToTitleCase},

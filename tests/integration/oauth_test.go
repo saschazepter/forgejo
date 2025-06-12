@@ -632,6 +632,19 @@ func TestSignInOAuthCallbackPKCE(t *testing.T) {
 	})
 }
 
+func TestWellKnownDocumentIssuerDoesNotEndWithASlash(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	req := NewRequest(t, "GET", "/.well-known/openid-configuration")
+	resp := MakeRequest(t, req, http.StatusOK)
+	type response struct {
+		Issuer string `json:"issuer"`
+	}
+	parsed := new(response)
+
+	DecodeJSON(t, resp, parsed)
+	assert.Equal(t, strings.TrimSuffix(setting.AppURL, "/"), parsed.Issuer)
+}
+
 func TestSignInOAuthCallbackRedirectToEscaping(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
@@ -697,7 +710,7 @@ func setupMockOIDCServer() *httptest.Server {
 		case "/.well-known/openid-configuration":
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`{
-				"issuer": "` + mockServer.URL + `",
+				"issuer": "` + strings.TrimSuffix(mockServer.URL, "/") + `",
 				"authorization_endpoint": "` + mockServer.URL + `/authorize",
 				"token_endpoint": "` + mockServer.URL + `/token",
 				"userinfo_endpoint": "` + mockServer.URL + `/userinfo"

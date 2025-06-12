@@ -126,3 +126,9 @@ func CleanupLogs(ctx context.Context) error {
 	log.Info("Removed %d logs", count)
 	return nil
 }
+
+// CleanupOfflineRunners removes offline runners
+func CleanupOfflineRunners(ctx context.Context, duration time.Duration, globalOnly bool) error {
+	olderThan := timeutil.TimeStampNow().AddDuration(-duration)
+	return actions_model.DeleteOfflineRunners(ctx, olderThan, globalOnly)
+}

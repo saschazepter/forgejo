@@ -191,6 +191,12 @@ func (fc feishuConvertor) Package(p *api.PackagePayload) (FeishuPayload, error) 
 	return newFeishuTextPayload(text), nil
 }
 
+func (fc feishuConvertor) Action(p *api.ActionPayload) (FeishuPayload, error) {
+	text, _ := getActionPayloadInfo(p, noneLinkFormatter)
+
+	return newFeishuTextPayload(text), nil
+}
+
 type feishuConvertor struct{}
 
 var _ shared.PayloadConvertor[FeishuPayload] = feishuConvertor{}

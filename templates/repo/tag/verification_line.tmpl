@@ -9,7 +9,7 @@
 		{{$class = (print $class " isWarning")}}
 	{{end}}
 
-	<div class="ui attached message tw-text-left tw-flex tw-content-center tw-justify-between tag-signature-row tw-flex-wrap {{$class}}">
+	<div class="ui attached message tw-text-left tw-flex tw-mb-4 tw-content-center tw-justify-between tag-signature-row tw-flex-wrap {{$class}}">
 		<div class="tw-flex tw-content-center">
 			{{if $v.Verified}}
 				{{if ne $v.SigningUser.ID 0}}

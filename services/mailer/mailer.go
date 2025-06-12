@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"io"
@@ -176,7 +177,7 @@ func (a *ntlmAuth) Start(server *smtp.ServerInfo) (string, []byte, error) {
 func (a *ntlmAuth) Next(fromServer []byte, more bool) ([]byte, error) {
 	if more {
 		if len(fromServer) == 0 {
-			return nil, fmt.Errorf("ntlm ChallengeMessage is empty")
+			return nil, errors.New("ntlm ChallengeMessage is empty")
 		}
 		authenticateMessage, err := ntlmssp.ProcessChallenge(fromServer, a.username, a.password, a.domainNeeded)
 		return authenticateMessage, err
@@ -264,7 +265,7 @@ func (s *smtpSender) Send(from string, to []string, msg io.WriterTo) error {
 	canAuth, options := client.Extension("AUTH")
 	if len(opts.User) > 0 {
 		if !canAuth {
-			return fmt.Errorf("SMTP server does not support AUTH, but credentials provided")
+			return errors.New("SMTP server does not support AUTH, but credentials provided")
 		}
 
 		var auth smtp.Auth

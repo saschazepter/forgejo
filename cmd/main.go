@@ -14,7 +14,7 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 // cmdHelp is our own help subcommand with more information
@@ -25,18 +25,18 @@ func cmdHelp() *cli.Command {
 		Aliases:   []string{"h"},
 		Usage:     "Shows a list of commands or help for one command",
 		ArgsUsage: "[command]",
-		Action: func(c *cli.Context) (err error) {
-			lineage := c.Lineage() // The order is from child to parent: help, doctor, Gitea, {Command:nil}
+		Action: func(ctx context.Context, c *cli.Command) (err error) {
+			lineage := c.Lineage() // The order is from child to parent: help, doctor, Forgejo
 			targetCmdIdx := 0
-			if c.Command.Name == "help" {
+			if c.Name == "help" {
 				targetCmdIdx = 1
 			}
-			if lineage[targetCmdIdx+1].Command != nil {
-				err = cli.ShowCommandHelp(lineage[targetCmdIdx+1], lineage[targetCmdIdx].Command.Name)
+			if targetCmdIdx+1 < len(lineage) {
+				err = cli.ShowCommandHelp(ctx, lineage[targetCmdIdx+1], lineage[targetCmdIdx].Name)
 			} else {
 				err = cli.ShowAppHelp(c)
 			}
-			_, _ = fmt.Fprintf(c.App.Writer, `
+			_, _ = fmt.Fprintf(c.Root().Writer, `
 DEFAULT CONFIGURATION:
    AppPath:    %s
    WorkPath:   %s
@@ -77,25 +77,25 @@ func appGlobalFlags() []cli.Flag {
 	}
 }
 
-func prepareSubcommandWithConfig(command *cli.Command, globalFlags []cli.Flag) {
-	command.Flags = append(append([]cli.Flag{}, globalFlags...), command.Flags...)
+func prepareSubcommandWithConfig(command *cli.Command, globalFlags func() []cli.Flag) {
+	command.Flags = append(globalFlags(), command.Flags...)
 	command.Action = prepareWorkPathAndCustomConf(command.Action)
 	command.HideHelp = true
 	if command.Name != "help" {
-		command.Subcommands = append(command.Subcommands, cmdHelp())
+		command.Commands = append(command.Commands, cmdHelp())
 	}
-	for i := range command.Subcommands {
-		prepareSubcommandWithConfig(command.Subcommands[i], globalFlags)
+	for i := range command.Commands {
+		prepareSubcommandWithConfig(command.Commands[i], globalFlags)
 	}
 }
 
 // prepareWorkPathAndCustomConf wraps the Action to prepare the work path and custom config
 // It can't use "Before", because each level's sub-command's Before will be called one by one, so the "init" would be done multiple times
-func prepareWorkPathAndCustomConf(action cli.ActionFunc) func(ctx *cli.Context) error {
-	return func(ctx *cli.Context) error {
+func prepareWorkPathAndCustomConf(action cli.ActionFunc) func(_ context.Context, _ *cli.Command) error {
+	return func(ctx context.Context, cli *cli.Command) error {
 		var args setting.ArgWorkPathAndCustomConf
 		// from children to parent, check the global flags
-		for _, curCtx := range ctx.Lineage() {
+		for _, curCtx := range cli.Lineage() {
 			if curCtx.IsSet("work-path") && args.WorkPath == "" {
 				args.WorkPath = curCtx.String("work-path")
 			}
@@ -107,15 +107,15 @@ func prepareWorkPathAndCustomConf(action cli.ActionFunc) func(ctx *cli.Context) 
 			}
 		}
 		setting.InitWorkPathAndCommonConfig(os.Getenv, args)
-		if ctx.Bool("help") || action == nil {
+		if cli.Bool("help") || action == nil {
 			// the default behavior of "urfave/cli": "nil action" means "show help"
-			return cmdHelp().Action(ctx)
+			return cmdHelp().Action(ctx, cli)
 		}
-		return action(ctx)
+		return action(ctx, cli)
 	}
 }
 
-func NewMainApp(version, versionExtra string) *cli.App {
+func NewMainApp(version, versionExtra string) *cli.Command {
 	path, err := os.Executable()
 	if err != nil {
 		panic(err)
@@ -124,7 +124,7 @@ func NewMainApp(version, versionExtra string) *cli.App {
 
 	subCmdsStandalone := make([]*cli.Command, 0, 10)
 	subCmdWithConfig := make([]*cli.Command, 0, 10)
-	globalFlags := make([]cli.Flag, 0, 10)
+	globalFlags := func() []cli.Flag { return []cli.Flag{} }
 
 	//
 	// If the executable is forgejo-cli, provide a Forgejo specific CLI
@@ -133,14 +133,16 @@ func NewMainApp(version, versionExtra string) *cli.App {
 	if executable == "forgejo-cli" {
 		subCmdsStandalone = append(subCmdsStandalone, forgejo.CmdActions(context.Background()))
 		subCmdWithConfig = append(subCmdWithConfig, forgejo.CmdF3(context.Background()))
-		globalFlags = append(globalFlags, []cli.Flag{
-			&cli.BoolFlag{
-				Name: "quiet",
-			},
-			&cli.BoolFlag{
-				Name: "verbose",
-			},
-		}...)
+		globalFlags = func() []cli.Flag {
+			return []cli.Flag{
+				&cli.BoolFlag{
+					Name: "quiet",
+				},
+				&cli.BoolFlag{
+					Name: "verbose",
+				},
+			}
+		}
 	} else {
 		//
 		// Otherwise provide a Gitea compatible CLI which includes Forgejo
@@ -149,55 +151,54 @@ func NewMainApp(version, versionExtra string) *cli.App {
 		// binary and rename it to forgejo if they want.
 		//
 		subCmdsStandalone = append(subCmdsStandalone, forgejo.CmdForgejo(context.Background()))
-		subCmdWithConfig = append(subCmdWithConfig, CmdActions)
+		subCmdWithConfig = append(subCmdWithConfig, cmdActions())
 	}
 
 	return innerNewMainApp(version, versionExtra, subCmdsStandalone, subCmdWithConfig, globalFlags)
 }
 
-func innerNewMainApp(version, versionExtra string, subCmdsStandaloneArgs, subCmdWithConfigArgs []*cli.Command, globalFlagsArgs []cli.Flag) *cli.App {
-	app := cli.NewApp()
-	app.HelpName = "forgejo"
-	app.Name = "Forgejo"
+func innerNewMainApp(version, versionExtra string, subCmdsStandaloneArgs, subCmdWithConfigArgs []*cli.Command, globalFlagsArgs func() []cli.Flag) *cli.Command {
+	app := &cli.Command{}
+	app.Name = "forgejo"
 	app.Usage = "Beyond coding. We forge."
 	app.Description = `By default, forgejo will start serving using the web-server with no argument, which can alternatively be run by running the subcommand "web".`
 	app.Version = version + versionExtra
-	app.EnableBashCompletion = true
+	app.EnableShellCompletion = true
 
 	// these sub-commands need to use config file
 	subCmdWithConfig := []*cli.Command{
 		cmdHelp(), // the "help" sub-command was used to show the more information for "work path" and "custom config"
-		CmdWeb,
-		CmdServ,
-		CmdHook,
-		CmdKeys,
-		CmdDump,
-		CmdAdmin,
-		CmdMigrate,
-		CmdDoctor,
-		CmdManager,
-		CmdEmbedded,
-		CmdMigrateStorage,
-		CmdDumpRepository,
-		CmdRestoreRepository,
+		cmdWeb(),
+		cmdServ(),
+		cmdHook(),
+		cmdKeys(),
+		cmdDump(),
+		cmdAdmin(),
+		cmdMigrate(),
+		cmdDoctor(),
+		cmdManager(),
+		cmdEmbedded(),
+		cmdMigrateStorage(),
+		cmdDumpRepository(),
+		cmdRestoreRepository(),
 	}
 
 	subCmdWithConfig = append(subCmdWithConfig, subCmdWithConfigArgs...)
 
 	// these sub-commands do not need the config file, and they do not depend on any path or environment variable.
 	subCmdStandalone := []*cli.Command{
-		CmdCert,
-		CmdGenerate,
-		CmdDocs,
+		cmdCert(),
+		cmdGenerate(),
 	}
 	subCmdStandalone = append(subCmdStandalone, subCmdsStandaloneArgs...)
 
-	app.DefaultCommand = CmdWeb.Name
+	app.DefaultCommand = cmdWeb().Name
 
-	globalFlags := appGlobalFlags()
-	globalFlags = append(globalFlags, globalFlagsArgs...)
+	globalFlags := func() []cli.Flag {
+		return append(appGlobalFlags(), globalFlagsArgs()...)
+	}
 	app.Flags = append(app.Flags, cli.VersionFlag)
-	app.Flags = append(app.Flags, globalFlags...)
+	app.Flags = append(app.Flags, globalFlags()...)
 	app.HideHelp = true // use our own help action to show helps (with more information like default config)
 	app.Before = PrepareConsoleLoggerLevel(log.INFO)
 	for i := range subCmdWithConfig {
@@ -210,8 +211,8 @@ func innerNewMainApp(version, versionExtra string, subCmdsStandaloneArgs, subCmd
 	return app
 }
 
-func RunMainApp(app *cli.App, args ...string) error {
-	err := app.Run(args)
+func RunMainApp(app *cli.Command, args ...string) error {
+	err := app.Run(context.Background(), args)
 	if err == nil {
 		return nil
 	}
@@ -220,7 +221,7 @@ func RunMainApp(app *cli.App, args ...string) error {
 		cli.OsExiter(1)
 		return err
 	}
-	_, _ = fmt.Fprintf(app.ErrWriter, "Command error: %v\n", err)
+	_, _ = fmt.Fprintf(app.Root().ErrWriter, "Command error: %v\n", err)
 	cli.OsExiter(1)
 	return err
 }

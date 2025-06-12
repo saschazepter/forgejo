@@ -5,7 +5,7 @@ package mirror
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	quota_model "forgejo.org/models/quota"
 	repo_model "forgejo.org/models/repo"
@@ -31,7 +31,7 @@ func doMirrorSync(ctx context.Context, req *SyncRequest) {
 	}
 }
 
-var errLimit = fmt.Errorf("reached limit")
+var errLimit = errors.New("reached limit")
 
 // Update checks and updates mirror repositories.
 func Update(ctx context.Context, pullLimit, pushLimit int) error {
@@ -70,7 +70,7 @@ func Update(ctx context.Context, pullLimit, pushLimit int) error {
 		// Check we've not been cancelled
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("aborted")
+			return errors.New("aborted")
 		default:
 		}
 

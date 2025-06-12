@@ -4,6 +4,7 @@
 package webhook
 
 // HookEvents is a set of web hook events
+// update TestCreateWebhook in models/webhook/webhook_test.go when adding or changing values here
 type HookEvents struct {
 	Create                   bool `json:"create"`
 	Delete                   bool `json:"delete"`
@@ -26,9 +27,12 @@ type HookEvents struct {
 	Repository               bool `json:"repository"`
 	Release                  bool `json:"release"`
 	Package                  bool `json:"package"`
+	ActionRunFailure         bool `json:"action_run_failure"`
+	ActionRunRecover         bool `json:"action_run_recover"`
+	ActionRunSuccess         bool `json:"action_run_success"`
 }
 
-// HookEvent represents events that will delivery hook.
+// HookEvent represents events that will deliver a hook.
 type HookEvent struct {
 	PushOnly       bool   `json:"push_only"`
 	SendEverything bool   `json:"send_everything"`

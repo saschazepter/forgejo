@@ -18,7 +18,7 @@ runs:
     - name: install packages
       run: |
         apt-get update -qq
-        apt-get -q install -qq -y ${PACKAGES}
+        apt-get -q install --allow-downgrades -qq -y ${PACKAGES}
       env:
         PACKAGES: ${{inputs.packages}}
     - name: remove temporary package list to prevent using it in other steps

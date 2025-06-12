@@ -103,7 +103,7 @@ type EventSource struct {
 	Owner      *user_model.User
 }
 
-// handle delivers hook tasks
+// handler delivers hook tasks
 func handler(items ...int64) []int64 {
 	ctx := graceful.GetManager().HammerContext()
 

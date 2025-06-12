@@ -6,6 +6,7 @@ package issues
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 	"regexp"
@@ -804,7 +805,7 @@ func (issue *Issue) MovePin(ctx context.Context, newPosition int) error {
 	}
 
 	if newPosition < 1 {
-		return fmt.Errorf("The Position can't be lower than 1")
+		return errors.New("The Position can't be lower than 1")
 	}
 
 	dbctx, committer, err := db.TxContext(ctx)

@@ -1050,11 +1050,11 @@ func MergePullRequest(ctx *context.APIContext) {
 		if err := repo_service.DeleteBranchAfterMerge(ctx, ctx.Doer, pr, headRepo); err != nil {
 			switch {
 			case errors.Is(err, repo_service.ErrBranchIsDefault):
-				ctx.Error(http.StatusForbidden, "DefaultBranch", fmt.Errorf("the head branch is the default branch"))
+				ctx.Error(http.StatusForbidden, "DefaultBranch", errors.New("the head branch is the default branch"))
 			case errors.Is(err, git_model.ErrBranchIsProtected):
-				ctx.Error(http.StatusForbidden, "IsProtectedBranch", fmt.Errorf("the head branch is protected"))
+				ctx.Error(http.StatusForbidden, "IsProtectedBranch", errors.New("the head branch is protected"))
 			case errors.Is(err, util.ErrPermissionDenied):
-				ctx.Error(http.StatusForbidden, "HeadBranch", fmt.Errorf("insufficient permission to delete head branch"))
+				ctx.Error(http.StatusForbidden, "HeadBranch", errors.New("insufficient permission to delete head branch"))
 			default:
 				ctx.Error(http.StatusInternalServerError, "DeleteBranchAfterMerge", err)
 			}
@@ -1194,10 +1194,17 @@ func parseCompareInfo(ctx *context.APIContext, form api.CreatePullRequestOption)
 		return nil, nil, nil, "", ""
 	}
 
+	baseBranchRef := baseBranch
+	if baseIsBranch {
+		baseBranchRef = git.BranchPrefix + baseBranch
+	} else if baseIsTag {
+		baseBranchRef = git.TagPrefix + baseBranch
+	}
+
 	// Check if head branch is valid.
-	headIsCommit := headGitRepo.IsBranchExist(headBranch)
-	headIsBranch := headGitRepo.IsTagExist(headBranch)
-	headIsTag := headGitRepo.IsCommitExist(baseBranch)
+	headIsCommit := ctx.Repo.GitRepo.IsCommitExist(headBranch)
+	headIsBranch := ctx.Repo.GitRepo.IsBranchExist(headBranch)
+	headIsTag := ctx.Repo.GitRepo.IsTagExist(headBranch)
 	if !headIsCommit && !headIsBranch && !headIsTag {
 		// Check if headBranch is short sha commit hash
 		if headCommit, _ := headGitRepo.GetCommit(headBranch); headCommit != nil {
@@ -1209,18 +1216,7 @@ func parseCompareInfo(ctx *context.APIContext, form api.CreatePullRequestOption)
 		}
 	}
 
-	baseBranchRef := baseBranch
-	if baseIsBranch {
-		baseBranchRef = git.BranchPrefix + baseBranch
-	} else if baseIsTag {
-		baseBranchRef = git.TagPrefix + baseBranch
-	}
 	headBranchRef := headBranch
-	if headIsBranch {
-		headBranchRef = headBranch
-	} else if headIsTag {
-		headBranchRef = headBranch
-	}
 
 	compareInfo, err := headGitRepo.GetCompareInfo(repo_model.RepoPath(baseRepo.Owner.Name, baseRepo.Name), baseBranchRef, headBranchRef, false, false)
 	if err != nil {

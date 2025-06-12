@@ -1,5 +1,97 @@
 {
-    "repo.pulls.merged_title_desc": "sammanfogade %[1]d incheckningar från <code>%[2]s</code> in i <code>%[3]s</code> %[4]s",
-    "repo.pulls.title_desc": "vill sammanfoga %[1]d incheckningar från <code>s[2]s</code> in i <code id=\"%[4]s\">%[3]s</code>",
-    "search.milestone_kind": "Sök milstolpar..."
+    "repo.pulls.merged_title_desc": {
+        "one": "sammanfogade %[1]d incheckning från <code>%[2]s</code> in i <code>%[3]s</code> %[4]s",
+        "other": "sammanfogade %[1]d incheckningar från <code>%[2]s</code> in i <code>%[3]s</code> %[4]s"
+    },
+    "repo.pulls.title_desc": {
+        "one": "vill sammanfoga %[1]d incheckning från <code>s[2]s</code> in i <code id=\"%[4]s\">%[3]s</code>",
+        "other": "vill sammanfoga %[1]d incheckningar från <code>s[2]s</code> in i <code id=\"%[4]s\">%[3]s</code>"
+    },
+    "search.milestone_kind": "Sök milstolpar…",
+    "mail.actions.not_successful_run_subject": "Arbetsflödet %[1]s misslyckades i förrådet %[2]s",
+    "discussion.locked": "Denna diskussion har låsts. Kommentarer är begränsade till bidragsgivare.",
+    "relativetime.now": "nu",
+    "relativetime.1day": "igår",
+    "relativetime.2days": "för två dagar sedan",
+    "relativetime.days": {
+        "one": "%d dag sedan",
+        "other": "%d dagar sedan"
+    },
+    "admin.dashboard.cleanup_offline_runners": "Städa upp offline runners",
+    "repo.issue_indexer.title": "Indexerare för utgåvor",
+    "moderation.reported_thank_you": "Tack för din rapport. Administrationen har gjorts uppmärksam på det.",
+    "themes.names.forgejo-light": "Forgejo ljus",
+    "themes.names.forgejo-dark": "Forgejo mörk",
+    "themes.names.forgejo-auto": "Forgejo (följ systemets tema)",
+    "moderation.submit_report": "Skicka in rapport",
+    "moderation.reporting_failed": "Det gick inte att skicka in den nya övergreppsrapporten: %v",
+    "mail.actions.run_info_cur_status": "Status för denna körning: %[1]s (just uppdaterad från %[2]s)",
+    "mail.actions.run_info_previous_status": "Status för föregående körning: %[1]s",
+    "mail.actions.run_info_ref": "Gren: %[1]s (%[2]s)",
+    "mail.actions.run_info_trigger": "Utlöses på grund av: %[1]s av: %[2]s",
+    "alert.asset_load_failed": "Misslyckades med att läsa in resursfiler från {path}. Kontrollera att resursfilerna är åtkomliga.",
+    "install.invalid_lfs_path": "Det gick inte att skapa LFS-roten på den angivna sökvägen: %[1]s",
+    "alert.range_error": " måste vara ett tal mellan %[1]s och %[2]s.",
+    "stars.list.none": "Ingen har stjärnmarkerat detta förråd.",
+    "watch.list.none": "Ingen tittar på det här förrådet.",
+    "followers.incoming.list.self.none": "Ingen följer din profil.",
+    "followers.incoming.list.none": "Ingen följer den här användaren.",
+    "followers.outgoing.list.self.none": "Du följer inte någon.",
+    "followers.outgoing.list.none": "%s följer inte någon.",
+    "relativetime.future": "i framtiden",
+    "relativetime.1week": "förra veckan",
+    "relativetime.2weeks": "för två veckor sedan",
+    "relativetime.1month": "senaste månaden",
+    "relativetime.2months": "för två månader sedan",
+    "relativetime.1year": "förra året",
+    "relativetime.2years": "för två år sedan",
+    "repo.form.cannot_create": "Alla utrymmen där du kan skapa förråd har nått gränsen för antal förråd.",
+    "incorrect_root_url": "Denna Forgejo-instans är konfigurerad att serveras på \"%s\". Du tittar för närvarande på Forgejo via en annan URL, vilket kan leda till att delar av applikationen bryts. Den kanoniska webbadressen styrs av Forgejo-administratörer via inställningen ROOT_URL i app.ini.",
+    "error.not_found.title": "Sidan hittades inte",
+    "moderation.abuse_category.illegal_content": "Olagligt innehåll",
+    "moderation.abuse_category.other_violations": "Andra överträdelser av plattformsreglerna",
+    "moderation.report_remarks": "Anmärkningar",
+    "moderation.report_remarks.placeholder": "Ge några detaljer om det övergrepp som du rapporterar.",
+    "mail.actions.successful_run_after_failure_subject": "Arbetsflöde %[1]s återställdes i förrådet %[2]s",
+    "mail.actions.successful_run_after_failure": "Arbetsflöde %[1]s återställdes i förrådet %[2]s",
+    "mail.actions.not_successful_run": "Arbetsflödet %[1]s misslyckades i förrådet %[2]s",
+    "editor.textarea.shift_tab_hint": "Ingen indragning på den här raden. Tryck på <kbd>Shift</kbd> + <kbd>Tab</kbd> igen eller <kbd>Escape</kbd> för att lämna redigeringsläget.",
+    "meta.last_line": "Tack för att du översatte Forgejo! Daniel Nylander heter jag. https://www.danielnylander.se",
+    "editor.textarea.tab_hint": "Raden är redan indragen. Tryck på <kbd>Tab</kbd> igen eller <kbd>Escape</kbd> för att lämna redigeringsläget.",
+    "home.welcome.no_activity": "Ingen aktivitet",
+    "home.welcome.activity_hint": "Det finns inget i ditt flöde ännu. Dina åtgärder och aktivitet från förråd som du bevakar kommer att visas här.",
+    "home.explore_repos": "Utforska förråd",
+    "home.explore_users": "Utforska användare",
+    "home.explore_orgs": "Utforska organisationer",
+    "relativetime.mins": {
+        "one": "%d minut sedan",
+        "other": "%d minuter sedan"
+    },
+    "relativetime.hours": {
+        "one": "%d timme sedan",
+        "other": "%d timmar sedan"
+    },
+    "relativetime.weeks": {
+        "one": "%d vecka sedan",
+        "other": "%d veckor sedan"
+    },
+    "relativetime.months": {
+        "one": "%d månad sedan",
+        "other": "%d månader sedan"
+    },
+    "relativetime.years": {
+        "one": "%d år sedan",
+        "other": "%d år sedan"
+    },
+    "admin.config.moderation_config": "Konfiguration av moderering",
+    "moderation.report_abuse": "Rapportera missbruk",
+    "moderation.report_content": "Rapportera innehåll",
+    "moderation.report_abuse_form.header": "Rapportera missbruk till administratör",
+    "moderation.report_abuse_form.details": "Detta formulär ska användas för att rapportera användare som skapar skräpprofiler, förråd, problem, kommentarer eller beter sig olämpligt.",
+    "moderation.report_abuse_form.invalid": "Ogiltiga argument",
+    "moderation.report_abuse_form.already_reported": "Du har redan rapporterat detta innehåll",
+    "moderation.abuse_category": "Kategori",
+    "moderation.abuse_category.placeholder": "Välj en kategori",
+    "moderation.abuse_category.spam": "Skräppost",
+    "moderation.abuse_category.malware": "Skadlig kod"
 }

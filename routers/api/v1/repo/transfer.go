@@ -238,7 +238,7 @@ func acceptOrRejectRepoTransfer(ctx *context.APIContext, accept bool) error {
 
 	if !repoTransfer.CanUserAcceptTransfer(ctx, ctx.Doer) {
 		ctx.Error(http.StatusForbidden, "CanUserAcceptTransfer", nil)
-		return fmt.Errorf("user does not have permissions to do this")
+		return errors.New("user does not have permissions to do this")
 	}
 
 	if accept {

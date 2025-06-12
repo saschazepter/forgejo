@@ -6,6 +6,7 @@
 package cmd
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -20,47 +21,49 @@ import (
 	"strings"
 	"time"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 // CmdCert represents the available cert sub-command.
-var CmdCert = &cli.Command{
-	Name:  "cert",
-	Usage: "Generate self-signed certificate",
-	Description: `Generate a self-signed X.509 certificate for a TLS server.
+func cmdCert() *cli.Command {
+	return &cli.Command{
+		Name:  "cert",
+		Usage: "Generate self-signed certificate",
+		Description: `Generate a self-signed X.509 certificate for a TLS server.
 Outputs to 'cert.pem' and 'key.pem' and will overwrite existing files.`,
-	Action: runCert,
-	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:  "host",
-			Value: "",
-			Usage: "Comma-separated hostnames and IPs to generate a certificate for",
+		Action: runCert,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "host",
+				Value: "",
+				Usage: "Comma-separated hostnames and IPs to generate a certificate for",
+			},
+			&cli.StringFlag{
+				Name:  "ecdsa-curve",
+				Value: "",
+				Usage: "ECDSA curve to use to generate a key. Valid values are P224, P256, P384, P521",
+			},
+			&cli.IntFlag{
+				Name:  "rsa-bits",
+				Value: 3072,
+				Usage: "Size of RSA key to generate. Ignored if --ecdsa-curve is set",
+			},
+			&cli.StringFlag{
+				Name:  "start-date",
+				Value: "",
+				Usage: "Creation date formatted as Jan 1 15:04:05 2011",
+			},
+			&cli.DurationFlag{
+				Name:  "duration",
+				Value: 365 * 24 * time.Hour,
+				Usage: "Duration that certificate is valid for",
+			},
+			&cli.BoolFlag{
+				Name:  "ca",
+				Usage: "whether this cert should be its own Certificate Authority",
+			},
 		},
-		&cli.StringFlag{
-			Name:  "ecdsa-curve",
-			Value: "",
-			Usage: "ECDSA curve to use to generate a key. Valid values are P224, P256, P384, P521",
-		},
-		&cli.IntFlag{
-			Name:  "rsa-bits",
-			Value: 3072,
-			Usage: "Size of RSA key to generate. Ignored if --ecdsa-curve is set",
-		},
-		&cli.StringFlag{
-			Name:  "start-date",
-			Value: "",
-			Usage: "Creation date formatted as Jan 1 15:04:05 2011",
-		},
-		&cli.DurationFlag{
-			Name:  "duration",
-			Value: 365 * 24 * time.Hour,
-			Usage: "Duration that certificate is valid for",
-		},
-		&cli.BoolFlag{
-			Name:  "ca",
-			Usage: "whether this cert should be its own Certificate Authority",
-		},
-	},
+	}
 }
 
 func publicKey(priv any) any {
@@ -89,7 +92,7 @@ func pemBlockForKey(priv any) *pem.Block {
 	}
 }
 
-func runCert(c *cli.Context) error {
+func runCert(ctx context.Context, c *cli.Command) error {
 	if err := argsSet(c, "host"); err != nil {
 		return err
 	}

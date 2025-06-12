@@ -24,6 +24,7 @@ import (
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/base"
 	"forgejo.org/modules/git"
+	"forgejo.org/modules/gitrepo"
 	"forgejo.org/modules/graceful"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/optional"
@@ -408,6 +409,9 @@ func CreateDeclarativeRepoWithOptions(t *testing.T, owner *user_model.User, opts
 		assert.True(t, autoInit, "Files cannot be specified if AutoInit is disabled")
 		files := opts.Files.Value()
 
+		commitID, err := gitrepo.GetBranchCommitID(git.DefaultContext, repo, "main")
+		require.NoError(t, err)
+
 		resp, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, owner, &files_service.ChangeRepoFilesOptions{
 			Files:     files,
 			Message:   "add files",
@@ -425,6 +429,7 @@ func CreateDeclarativeRepoWithOptions(t *testing.T, owner *user_model.User, opts
 				Author:    time.Now(),
 				Committer: time.Now(),
 			},
+			LastCommitID: commitID,
 		})
 		require.NoError(t, err)
 		assert.NotEmpty(t, resp)

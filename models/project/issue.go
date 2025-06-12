@@ -5,7 +5,7 @@ package project
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"forgejo.org/models/db"
 	"forgejo.org/modules/log"
@@ -73,7 +73,7 @@ func MoveIssuesOnProjectColumn(ctx context.Context, column *Column, sortedIssueI
 			return err
 		}
 		if int(count) != len(sortedIssueIDs) {
-			return fmt.Errorf("all issues have to be added to a project first")
+			return errors.New("all issues have to be added to a project first")
 		}
 
 		for sorting, issueID := range sortedIssueIDs {
@@ -88,7 +88,7 @@ func MoveIssuesOnProjectColumn(ctx context.Context, column *Column, sortedIssueI
 
 func (c *Column) moveIssuesToAnotherColumn(ctx context.Context, newColumn *Column) error {
 	if c.ProjectID != newColumn.ProjectID {
-		return fmt.Errorf("columns have to be in the same project")
+		return errors.New("columns have to be in the same project")
 	}
 
 	if c.ID == newColumn.ID {

@@ -5,6 +5,7 @@ package issue
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"forgejo.org/models/db"
@@ -47,7 +48,7 @@ func changeMilestoneAssign(ctx context.Context, doer *user_model.User, issue *is
 			return fmt.Errorf("HasMilestoneByRepoID: %w", err)
 		}
 		if !has {
-			return fmt.Errorf("HasMilestoneByRepoID: issue doesn't exist")
+			return errors.New("HasMilestoneByRepoID: issue doesn't exist")
 		}
 	}
 

@@ -59,7 +59,7 @@ func uploadArtifact(t *testing.T, body string) string {
 	req = NewRequestWithBody(t, "PUT", url, strings.NewReader(body))
 	MakeRequest(t, req, http.StatusCreated)
 
-	t.Logf("Create artifact confirm")
+	t.Log("Create artifact confirm")
 
 	sha := sha256.Sum256([]byte(body))
 
@@ -113,7 +113,7 @@ func TestActionsArtifactV4UploadSingleFileWrongChecksum(t *testing.T) {
 	req = NewRequestWithBody(t, "PUT", url, strings.NewReader(body))
 	MakeRequest(t, req, http.StatusCreated)
 
-	t.Logf("Create artifact confirm")
+	t.Log("Create artifact confirm")
 
 	sha := sha256.Sum256([]byte(strings.Repeat("A", 1024)))
 
@@ -158,7 +158,7 @@ func TestActionsArtifactV4UploadSingleFileWithRetentionDays(t *testing.T) {
 	req = NewRequestWithBody(t, "PUT", url, strings.NewReader(body))
 	MakeRequest(t, req, http.StatusCreated)
 
-	t.Logf("Create artifact confirm")
+	t.Log("Create artifact confirm")
 
 	sha := sha256.Sum256([]byte(body))
 
@@ -221,7 +221,7 @@ func TestActionsArtifactV4UploadSingleFileWithPotentialHarmfulBlockID(t *testing
 	req = NewRequestWithBody(t, "PUT", blockListURL, bytes.NewReader(rawBlockList))
 	MakeRequest(t, req, http.StatusCreated)
 
-	t.Logf("Create artifact confirm")
+	t.Log("Create artifact confirm")
 
 	sha := sha256.Sum256([]byte(body))
 
@@ -286,7 +286,7 @@ func TestActionsArtifactV4UploadSingleFileWithChunksOutOfOrder(t *testing.T) {
 	req = NewRequestWithBody(t, "PUT", blockListURL, bytes.NewReader(rawBlockList))
 	MakeRequest(t, req, http.StatusCreated)
 
-	t.Logf("Create artifact confirm")
+	t.Log("Create artifact confirm")
 
 	sha := sha256.Sum256([]byte(bodya + bodyb))
 

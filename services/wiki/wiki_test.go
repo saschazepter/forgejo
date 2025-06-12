@@ -284,9 +284,9 @@ func TestPrepareWikiFileName(t *testing.T) {
 			}
 			if existence != tt.existence {
 				if existence {
-					t.Errorf("expect to find no escaped file but we detect one")
+					t.Error("expect to find no escaped file but we detect one")
 				} else {
-					t.Errorf("expect to find an escaped file but we could not detect one")
+					t.Error("expect to find an escaped file but we could not detect one")
 				}
 			}
 			assert.Equal(t, tt.wikiPath, newWikiPath)

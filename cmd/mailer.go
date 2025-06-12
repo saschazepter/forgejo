@@ -4,16 +4,17 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"forgejo.org/modules/private"
 	"forgejo.org/modules/setting"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
-func runSendMail(c *cli.Context) error {
-	ctx, cancel := installSignals()
+func runSendMail(ctx context.Context, c *cli.Command) error {
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	setting.MustInstalled()

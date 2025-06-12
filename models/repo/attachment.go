@@ -5,6 +5,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"path"
@@ -232,9 +233,9 @@ func DeleteAttachmentsByComment(ctx context.Context, commentID int64, remove boo
 // UpdateAttachmentByUUID Updates attachment via uuid
 func UpdateAttachmentByUUID(ctx context.Context, attach *Attachment, cols ...string) error {
 	if attach.UUID == "" {
-		return fmt.Errorf("attachment uuid should be not blank")
+		return errors.New("attachment uuid should be not blank")
 	}
-	if attach.ExternalURL != "" && !validation.IsValidExternalURL(attach.ExternalURL) {
+	if attach.ExternalURL != "" && !validation.IsValidReleaseAssetURL(attach.ExternalURL) {
 		return ErrInvalidExternalURL{ExternalURL: attach.ExternalURL}
 	}
 	_, err := db.GetEngine(ctx).Where("uuid=?", attach.UUID).Cols(cols...).Update(attach)
@@ -243,7 +244,7 @@ func UpdateAttachmentByUUID(ctx context.Context, attach *Attachment, cols ...str
 
 // UpdateAttachment updates the given attachment in database
 func UpdateAttachment(ctx context.Context, atta *Attachment) error {
-	if atta.ExternalURL != "" && !validation.IsValidExternalURL(atta.ExternalURL) {
+	if atta.ExternalURL != "" && !validation.IsValidReleaseAssetURL(atta.ExternalURL) {
 		return ErrInvalidExternalURL{ExternalURL: atta.ExternalURL}
 	}
 	sess := db.GetEngine(ctx).Cols("name", "issue_id", "release_id", "comment_id", "download_count")

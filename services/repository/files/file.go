@@ -5,7 +5,7 @@ package files
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/url"
 	"strings"
 	"time"
@@ -50,10 +50,10 @@ func GetFileResponseFromFilesResponse(filesResponse *api.FilesResponse, index in
 // GetFileCommitResponse Constructs a FileCommitResponse from a Commit object
 func GetFileCommitResponse(repo *repo_model.Repository, commit *git.Commit) (*api.FileCommitResponse, error) {
 	if repo == nil {
-		return nil, fmt.Errorf("repo cannot be nil")
+		return nil, errors.New("repo cannot be nil")
 	}
 	if commit == nil {
-		return nil, fmt.Errorf("commit cannot be nil")
+		return nil, errors.New("commit cannot be nil")
 	}
 	commitURL, _ := url.Parse(repo.APIURL() + "/git/commits/" + url.PathEscape(commit.ID.String()))
 	commitTreeURL, _ := url.Parse(repo.APIURL() + "/git/trees/" + url.PathEscape(commit.Tree.ID.String()))

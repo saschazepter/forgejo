@@ -56,7 +56,7 @@ func TestPackageContainer(t *testing.T) {
 		return values
 	}
 
-	images := []string{"test", "te/st"}
+	images := []string{"test", "te/st", "oras-artifact"}
 	tags := []string{"latest", "main"}
 	multiTag := "multi"
 
@@ -175,6 +175,90 @@ func TestPackageContainer(t *testing.T) {
 			AddTokenAuth(userToken)
 		resp := MakeRequest(t, req, http.StatusOK)
 		assert.Equal(t, "registry/2.0", resp.Header().Get("Docker-Distribution-Api-Version"))
+	})
+
+	t.Run("ORAS Artifact Upload", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		image := "oras-artifact"
+		url := fmt.Sprintf("%sv2/%s/%s", setting.AppURL, user.Name, image)
+
+		// Empty config blob (common in ORAS artifacts)
+		emptyConfigDigest := "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		emptyConfigContent := ""
+
+		// Upload empty config blob
+		req := NewRequestWithBody(t, "POST", fmt.Sprintf("%s/blobs/uploads?digest=%s", url, emptyConfigDigest), bytes.NewReader([]byte(emptyConfigContent))).
+			AddTokenAuth(userToken)
+		resp := MakeRequest(t, req, http.StatusCreated)
+		assert.Equal(t, fmt.Sprintf("/v2/%s/%s/blobs/%s", user.Name, image, emptyConfigDigest), resp.Header().Get("Location"))
+		assert.Equal(t, emptyConfigDigest, resp.Header().Get("Docker-Content-Digest"))
+
+		// Verify empty blob exists and has correct Content-Length
+		req = NewRequest(t, "HEAD", fmt.Sprintf("%s/blobs/%s", url, emptyConfigDigest)).
+			AddTokenAuth(userToken)
+		resp = MakeRequest(t, req, http.StatusOK)
+		assert.Equal(t, "0", resp.Header().Get("Content-Length")) // This was the main fix
+		assert.Equal(t, emptyConfigDigest, resp.Header().Get("Docker-Content-Digest"))
+
+		// Upload a small data blob (e.g., artifacthub metadata)
+		artifactData := `{"name":"test-artifact","version":"1.0.0"}`
+		artifactDigest := fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(artifactData)))
+
+		req = NewRequestWithBody(t, "POST", fmt.Sprintf("%s/blobs/uploads?digest=%s", url, artifactDigest), bytes.NewReader([]byte(artifactData))).
+			AddTokenAuth(userToken)
+		resp = MakeRequest(t, req, http.StatusCreated)
+		assert.Equal(t, fmt.Sprintf("/v2/%s/%s/blobs/%s", user.Name, image, artifactDigest), resp.Header().Get("Location"))
+
+		// Create OCI artifact manifest
+		artifactManifest := fmt.Sprintf(`{
+			"schemaVersion": 2,
+			"mediaType": "application/vnd.oci.image.manifest.v1+json",
+			"artifactType": "application/vnd.cncf.artifacthub.config.v1+yaml",
+			"config": {
+				"mediaType": "application/vnd.cncf.artifacthub.config.v1+yaml",
+				"digest": "%s",
+				"size": %d
+			},
+			"layers": [
+				{
+					"mediaType": "application/vnd.cncf.artifacthub.repository-metadata.layer.v1.yaml",
+					"digest": "%s",
+					"size": %d
+				}
+			]
+		}`, emptyConfigDigest, len(emptyConfigContent), artifactDigest, len(artifactData))
+
+		artifactManifestDigest := fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(artifactManifest)))
+
+		// Upload artifact manifest
+		req = NewRequestWithBody(t, "PUT", fmt.Sprintf("%s/manifests/artifact-v1", url), bytes.NewReader([]byte(artifactManifest))).
+			AddTokenAuth(userToken).
+			SetHeader("Content-Type", "application/vnd.oci.image.manifest.v1+json")
+		resp = MakeRequest(t, req, http.StatusCreated)
+		assert.Equal(t, fmt.Sprintf("/v2/%s/%s/manifests/artifact-v1", user.Name, image), resp.Header().Get("Location"))
+		assert.Equal(t, artifactManifestDigest, resp.Header().Get("Docker-Content-Digest"))
+
+		// Verify manifest can be retrieved
+		req = NewRequest(t, "GET", fmt.Sprintf("%s/manifests/artifact-v1", url)).
+			AddTokenAuth(userToken).
+			SetHeader("Accept", "application/vnd.oci.image.manifest.v1+json")
+		resp = MakeRequest(t, req, http.StatusOK)
+		assert.Equal(t, "application/vnd.oci.image.manifest.v1+json", resp.Header().Get("Content-Type"))
+		assert.Equal(t, artifactManifestDigest, resp.Header().Get("Docker-Content-Digest"))
+
+		// Verify package was created with correct metadata
+		pvs, err := packages_model.GetVersionsByPackageType(db.DefaultContext, user.ID, packages_model.TypeContainer)
+		require.NoError(t, err)
+
+		found := false
+		for _, pv := range pvs {
+			if pv.LowerVersion == "artifact-v1" {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "ORAS artifact package should be created")
 	})
 
 	for _, image := range images {
@@ -430,14 +514,19 @@ func TestPackageContainer(t *testing.T) {
 						assert.Equal(t, manifestDigest, resp.Header().Get("Docker-Content-Digest"))
 					})
 
-					t.Run("GetManifest", func(t *testing.T) {
+					t.Run("GetManifest unknown-tag", func(t *testing.T) {
 						defer tests.PrintCurrentTest(t)()
 
 						req := NewRequest(t, "GET", fmt.Sprintf("%s/manifests/unknown-tag", url)).
 							AddTokenAuth(userToken)
 						MakeRequest(t, req, http.StatusNotFound)
+					})
 
-						req = NewRequest(t, "GET", fmt.Sprintf("%s/manifests/%s", url, tag)).
+					t.Run("GetManifest serv indirect", func(t *testing.T) {
+						defer tests.PrintCurrentTest(t)()
+						defer test.MockVariableValue(&setting.Packages.Storage.MinioConfig.ServeDirect, false)()
+
+						req := NewRequest(t, "GET", fmt.Sprintf("%s/manifests/%s", url, tag)).
 							AddTokenAuth(userToken)
 						resp := MakeRequest(t, req, http.StatusOK)
 
@@ -445,6 +534,25 @@ func TestPackageContainer(t *testing.T) {
 						assert.Equal(t, oci.MediaTypeImageManifest, resp.Header().Get("Content-Type"))
 						assert.Equal(t, manifestDigest, resp.Header().Get("Docker-Content-Digest"))
 						assert.Equal(t, manifestContent, resp.Body.String())
+					})
+
+					t.Run("GetManifest serv direct", func(t *testing.T) {
+						if setting.Packages.Storage.Type != setting.MinioStorageType {
+							t.Skip("Test skipped for non-Minio-storage.")
+							return
+						}
+
+						defer tests.PrintCurrentTest(t)()
+						defer test.MockVariableValue(&setting.Packages.Storage.MinioConfig.ServeDirect, true)()
+
+						req := NewRequest(t, "GET", fmt.Sprintf("%s/manifests/%s", url, tag)).
+							AddTokenAuth(userToken)
+						resp := MakeRequest(t, req, http.StatusTemporaryRedirect)
+
+						assert.Empty(t, resp.Header().Get("Content-Length"))
+						assert.NotEmpty(t, resp.Header().Get("Location"))
+						assert.Equal(t, "text/html; charset=utf-8", resp.Header().Get("Content-Type"))
+						assert.Empty(t, resp.Header().Get("Docker-Content-Digest"))
 					})
 				})
 			}
@@ -580,36 +688,76 @@ func TestPackageContainer(t *testing.T) {
 			t.Run("GetTagList", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
-				cases := []struct {
+				var cases []struct {
 					URL          string
 					ExpectedTags []string
 					ExpectedLink string
-				}{
-					{
-						URL:          fmt.Sprintf("%s/tags/list", url),
-						ExpectedTags: []string{"latest", "main", "multi"},
-						ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=multi>; rel="next"`, user.Name, image),
-					},
-					{
-						URL:          fmt.Sprintf("%s/tags/list?n=0", url),
-						ExpectedTags: []string{},
-						ExpectedLink: "",
-					},
-					{
-						URL:          fmt.Sprintf("%s/tags/list?n=2", url),
-						ExpectedTags: []string{"latest", "main"},
-						ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=main&n=2>; rel="next"`, user.Name, image),
-					},
-					{
-						URL:          fmt.Sprintf("%s/tags/list?last=main", url),
-						ExpectedTags: []string{"multi"},
-						ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=multi>; rel="next"`, user.Name, image),
-					},
-					{
-						URL:          fmt.Sprintf("%s/tags/list?n=1&last=latest", url),
-						ExpectedTags: []string{"main"},
-						ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=main&n=1>; rel="next"`, user.Name, image),
-					},
+				}
+
+				if image == "oras-artifact" {
+					cases = []struct {
+						URL          string
+						ExpectedTags []string
+						ExpectedLink string
+					}{
+						{
+							URL:          fmt.Sprintf("%s/tags/list", url),
+							ExpectedTags: []string{"artifact-v1", "latest", "main", "multi"},
+							ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=multi>; rel="next"`, user.Name, image),
+						},
+						{
+							URL:          fmt.Sprintf("%s/tags/list?n=0", url),
+							ExpectedTags: []string{},
+							ExpectedLink: "",
+						},
+						{
+							URL:          fmt.Sprintf("%s/tags/list?n=2", url),
+							ExpectedTags: []string{"artifact-v1", "latest"},
+							ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=latest&n=2>; rel="next"`, user.Name, image),
+						},
+						{
+							URL:          fmt.Sprintf("%s/tags/list?last=main", url),
+							ExpectedTags: []string{"multi"},
+							ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=multi>; rel="next"`, user.Name, image),
+						},
+						{
+							URL:          fmt.Sprintf("%s/tags/list?n=1&last=latest", url),
+							ExpectedTags: []string{"main"},
+							ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=main&n=1>; rel="next"`, user.Name, image),
+						},
+					}
+				} else {
+					cases = []struct {
+						URL          string
+						ExpectedTags []string
+						ExpectedLink string
+					}{
+						{
+							URL:          fmt.Sprintf("%s/tags/list", url),
+							ExpectedTags: []string{"latest", "main", "multi"},
+							ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=multi>; rel="next"`, user.Name, image),
+						},
+						{
+							URL:          fmt.Sprintf("%s/tags/list?n=0", url),
+							ExpectedTags: []string{},
+							ExpectedLink: "",
+						},
+						{
+							URL:          fmt.Sprintf("%s/tags/list?n=2", url),
+							ExpectedTags: []string{"latest", "main"},
+							ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=main&n=2>; rel="next"`, user.Name, image),
+						},
+						{
+							URL:          fmt.Sprintf("%s/tags/list?last=main", url),
+							ExpectedTags: []string{"multi"},
+							ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=multi>; rel="next"`, user.Name, image),
+						},
+						{
+							URL:          fmt.Sprintf("%s/tags/list?n=1&last=latest", url),
+							ExpectedTags: []string{"main"},
+							ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=main&n=1>; rel="next"`, user.Name, image),
+						},
+					}
 				}
 
 				for _, c := range cases {
@@ -636,7 +784,11 @@ func TestPackageContainer(t *testing.T) {
 
 				var apiPackages []*api.Package
 				DecodeJSON(t, resp, &apiPackages)
-				assert.Len(t, apiPackages, 4) // "latest", "main", "multi", "sha256:..."
+				if image == "oras-artifact" {
+					assert.Len(t, apiPackages, 5) // "artifact-v1", "latest", "main", "multi", "sha256:..."
+				} else {
+					assert.Len(t, apiPackages, 4) // "latest", "main", "multi", "sha256:..."
+				}
 			})
 
 			t.Run("Delete", func(t *testing.T) {

@@ -1,10 +1,89 @@
 {
-	"repo.pulls.merged_title_desc": {
-		"one": "сля %[1]d подаване от <code>%[2]s</code> в <code>%[3]s</code> %[4]s",
-		"other": "сля %[1]d подавания от <code>%[2]s</code> в <code>%[3]s</code> %[4]s"
-	},
-	"repo.pulls.title_desc": {
-		"one": "иска да слее %[1]d подаване от <code>%[2]s</code> в <code id=\"%[4]s\">%[3]s</code>",
-		"other": "иска да слее %[1]d подавания от <code>%[2]s</code> в <code id=\"%[4]s\">%[3]s</code>"
-	}
+    "repo.pulls.merged_title_desc": {
+        "one": "сля %[1]d подаване от <code>%[2]s</code> в <code>%[3]s</code> %[4]s",
+        "other": "сля %[1]d подавания от <code>%[2]s</code> в <code>%[3]s</code> %[4]s"
+    },
+    "repo.pulls.title_desc": {
+        "one": "иска да слее %[1]d подаване от <code>%[2]s</code> в <code id=\"%[4]s\">%[3]s</code>",
+        "other": "иска да слее %[1]d подавания от <code>%[2]s</code> в <code id=\"%[4]s\">%[3]s</code>"
+    },
+    "mail.actions.run_info_ref": "Клон: %[1]s (%[2]s)",
+    "mail.actions.run_info_trigger": "Задействано поради: %[1]s от: %[2]s",
+    "meta.last_line": "В България расте най-старото дърво в страната, Байкушевата мура, на възраст над 1300 години.",
+    "relativetime.1day": "вчера",
+    "relativetime.2months": "преди два месеца",
+    "home.explore_repos": "Разглеждане на хранилища",
+    "home.explore_users": "Разглеждане на потребители",
+    "home.explore_orgs": "Разглеждане на организации",
+    "relativetime.mins": {
+        "one": "преди %d минута",
+        "other": "преди %d минути"
+    },
+    "repo.form.cannot_create": "Всички пространства, в които можете да създавате хранилища, са достигнали лимита си на хранилища.",
+    "moderation.report_remarks": "Подробности",
+    "moderation.submit_report": "Изпращане на доклада",
+    "followers.incoming.list.self.none": "Никой не следва вашия профил.",
+    "followers.incoming.list.none": "Никой не следва този потребител.",
+    "relativetime.now": "сега",
+    "home.welcome.no_activity": "Няма дейност",
+    "relativetime.1year": "миналата година",
+    "moderation.abuse_category": "Категория",
+    "moderation.abuse_category.illegal_content": "Незаконно съдържание",
+    "home.welcome.activity_hint": "Все още няма нищо в емисията ви. Вашите действия и дейност от хранилищата, които наблюдавате, ще се появят тук.",
+    "stars.list.none": "Никой не е отбелязал това хранилище със звезда.",
+    "moderation.report_abuse_form.invalid": "Невалидни аргументи",
+    "moderation.report_abuse_form.already_reported": "Вече сте докладвали това съдържание",
+    "moderation.abuse_category.placeholder": "Изберете категория",
+    "moderation.abuse_category.spam": "Спам",
+    "repo.issue_indexer.title": "Индексатор на задачи",
+    "moderation.report_abuse_form.details": "Този формуляр трябва да се използва за докладване на потребители, които създават спам профили, хранилища, задачи, коментари или се държат неподходящо.",
+    "moderation.report_remarks.placeholder": "Моля, предоставете подробности относно злоупотребата, за която докладвате.",
+    "moderation.reporting_failed": "Не може да се изпрати новият доклад за злоупотреба: %v",
+    "moderation.reported_thank_you": "Благодарим ви за доклада. Администрацията е уведомена.",
+    "error.not_found.title": "Страницата не е намерена",
+    "incorrect_root_url": "Тази инстанция на Forgejo е конфигурирана да се сервира на \"%s\". В момента разглеждате Forgejo през друг URL адрес, което може да доведе до неправилно функциониране на части от приложението. Каноничният URL адрес се контролира от администраторите на Forgejo чрез настройката ROOT_URL в app.ini.",
+    "themes.names.forgejo-dark": "Forgejo тъмна",
+    "themes.names.forgejo-auto": "Forgejo (следване на системната тема)",
+    "themes.names.forgejo-light": "Forgejo светла",
+    "watch.list.none": "Никой не наблюдава това хранилище.",
+    "followers.outgoing.list.self.none": "Не следвате никого.",
+    "followers.outgoing.list.none": "%s не следва никого.",
+    "relativetime.future": "в бъдеще",
+    "relativetime.2days": "преди два дни",
+    "relativetime.1week": "миналата седмица",
+    "relativetime.2weeks": "преди две седмици",
+    "relativetime.1month": "миналия месец",
+    "relativetime.2years": "преди две години",
+    "moderation.report_abuse_form.header": "Докладване на злоупотреба до администратора",
+    "moderation.abuse_category.malware": "Зловреден софтуер",
+    "moderation.abuse_category.other_violations": "Други нарушения на правилата на платформата",
+    "alert.asset_load_failed": "Неуспешно зареждане на файлове с ресурси от {path}. Моля, уверете се, че файловете с ресурси са достъпни.",
+    "alert.range_error": " трябва да бъде число между %[1]s и %[2]s.",
+    "install.invalid_lfs_path": "Не може да се създаде LFS корен в посочения път: %[1]s",
+    "search.milestone_kind": "Търсене на етапи…",
+    "admin.config.moderation_config": "Конфигурация на модерацията",
+    "moderation.report_abuse": "Докладване на злоупотреба",
+    "moderation.report_content": "Докладване на съдържание",
+    "relativetime.hours": {
+        "one": "преди %d час",
+        "other": "преди %d часа"
+    },
+    "relativetime.days": {
+        "one": "преди %d ден",
+        "other": "преди %d дни"
+    },
+    "relativetime.weeks": {
+        "one": "преди %d седмица",
+        "other": "преди %d седмици"
+    },
+    "relativetime.months": {
+        "one": "преди %d месец",
+        "other": "преди %d месеца"
+    },
+    "relativetime.years": {
+        "one": "преди %d година",
+        "other": "преди %d години"
+    },
+    "editor.textarea.tab_hint": "Редът вече е с отстъп. Натиснете отново <kbd>Tab</kbd> или <kbd>Escape</kbd>, за да излезете от редактора.",
+    "editor.textarea.shift_tab_hint": "Няма отстъп на този ред. Натиснете отново <kbd>Shift</kbd> + <kbd>Tab</kbd> или <kbd>Escape</kbd>, за да излезете от редактора."
 }

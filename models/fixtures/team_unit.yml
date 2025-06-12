@@ -329,3 +329,10 @@
   team_id: 22
   type: 3
   access_mode: 1
+
+-
+  id: 84
+  org_id: 17
+  team_id: 25
+  type: 3
+  access_mode: 3

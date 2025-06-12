@@ -6,6 +6,7 @@ package webhook
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -218,7 +219,7 @@ func Init() error {
 
 	hookQueue = queue.CreateUniqueQueue(graceful.GetManager().ShutdownContext(), "webhook_sender", handler)
 	if hookQueue == nil {
-		return fmt.Errorf("unable to create webhook_sender queue")
+		return errors.New("unable to create webhook_sender queue")
 	}
 	go graceful.GetManager().RunWithCancel(hookQueue)
 

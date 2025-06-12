@@ -6,10 +6,12 @@ import (
 	"encoding/binary"
 	"fmt"
 	"testing"
+	"time"
 
 	auth_model "forgejo.org/models/auth"
 	"forgejo.org/models/db"
 	"forgejo.org/models/unittest"
+	"forgejo.org/modules/timeutil"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -72,4 +74,69 @@ func TestDeleteRunner(t *testing.T) {
 		idAsBinary[1], idAsBinary[2], idAsBinary[3], idAsBinary[4], idAsBinary[5],
 		idAsBinary[6], idAsBinary[7])
 	assert.Equal(t, idAsHexadecimal, after.UUID[19:])
+}
+
+func TestDeleteOfflineRunnersRunnerGlobalOnly(t *testing.T) {
+	baseTime := time.Date(2024, 5, 19, 7, 40, 32, 0, time.UTC)
+	timeutil.MockSet(baseTime)
+	defer timeutil.MockUnset()
+
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	olderThan := timeutil.TimeStampNow().Add(-timeutil.Hour)
+
+	require.NoError(t, DeleteOfflineRunners(db.DefaultContext, olderThan, true))
+
+	// create at test base time
+	unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: 12345678})
+	// last_online test base time
+	unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: 10000001})
+	// created one month ago but a repo
+	unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: 10000002})
+	// last online one hour ago
+	unittest.AssertNotExistsBean(t, &ActionRunner{ID: 10000003})
+	// last online 10 seconds ago
+	unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: 10000004})
+	// created 1 month ago
+	unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: 10000005})
+	// created 1 hour ago
+	unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: 10000006})
+	// last online 1 hour ago
+	unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: 10000007})
+}
+
+func TestDeleteOfflineRunnersAll(t *testing.T) {
+	baseTime := time.Date(2024, 5, 19, 7, 40, 32, 0, time.UTC)
+	timeutil.MockSet(baseTime)
+	defer timeutil.MockUnset()
+
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	olderThan := timeutil.TimeStampNow().Add(-timeutil.Hour)
+
+	require.NoError(t, DeleteOfflineRunners(db.DefaultContext, olderThan, false))
+
+	// create at test base time
+	unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: 12345678})
+	// last_online test base time
+	unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: 10000001})
+	// created one month ago
+	unittest.AssertNotExistsBean(t, &ActionRunner{ID: 10000002})
+	// last online one hour ago
+	unittest.AssertNotExistsBean(t, &ActionRunner{ID: 10000003})
+	// last online 10 seconds ago
+	unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: 10000004})
+	// created 1 month ago
+	unittest.AssertNotExistsBean(t, &ActionRunner{ID: 10000005})
+	// created 1 hour ago
+	unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: 10000006})
+	// last online 1 hour ago
+	unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: 10000007})
+}
+
+func TestDeleteOfflineRunnersErrorOnInvalidOlderThanValue(t *testing.T) {
+	baseTime := time.Date(2024, 5, 19, 7, 40, 32, 0, time.UTC)
+	timeutil.MockSet(baseTime)
+	defer timeutil.MockUnset()
+	require.Error(t, DeleteOfflineRunners(db.DefaultContext, timeutil.TimeStampNow(), false))
 }

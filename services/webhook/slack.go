@@ -142,6 +142,7 @@ func SlackLinkToRef(repoURL, ref string) string {
 	return SlackLinkFormatter(url, refName)
 }
 
+// TODO: fix spelling to Converter
 // Create implements payloadConvertor Create method
 func (s slackConvertor) Create(p *api.CreatePayload) (SlackPayload, error) {
 	refLink := SlackLinkToRef(p.Repo.HTMLURL, p.Ref)
@@ -307,6 +308,12 @@ func (s slackConvertor) Repository(p *api.RepositoryPayload) (SlackPayload, erro
 	case api.HookRepoDeleted:
 		text = fmt.Sprintf("[%s] Repository deleted by %s", repoLink, p.Sender.UserName)
 	}
+
+	return s.createPayload(text, nil), nil
+}
+
+func (s slackConvertor) Action(p *api.ActionPayload) (SlackPayload, error) {
+	text, _ := getActionPayloadInfo(p, SlackLinkFormatter)
 
 	return s.createPayload(text, nil), nil
 }

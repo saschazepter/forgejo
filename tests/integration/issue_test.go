@@ -1438,6 +1438,47 @@ func TestIssueCount(t *testing.T) {
 	assert.Contains(t, allCount, "2\u00a0All")
 }
 
+func TestIssueDefaultValues(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	links := []string{"/user2/repo1/issues", "/user2/repo1/pulls"}
+	values := []url.Values{
+		{
+			"type": {"created_by"},
+		},
+		{
+			"poster": {"1"},
+		},
+		{
+			"sort": {"latest"},
+		},
+		{
+			"type":   {"all"},
+			"sort":   {"latest"},
+			"poster": {"1"},
+		},
+		{
+			"type":   {"assigned"},
+			"sort":   {"oldest"},
+			"poster": {"1"},
+		},
+	}
+
+	for _, link := range links {
+		t.Run(link[13:], func(t *testing.T) {
+			for _, value := range values {
+				req := NewRequestf(t, "GET", "%s?%s", link, value.Encode())
+				resp := MakeRequest(t, req, http.StatusOK)
+
+				htmlDoc := NewHTMLParser(t, resp.Body)
+				for name := range value {
+					assert.Equal(t, value.Get(name), htmlDoc.GetInputValueByName(name))
+				}
+			}
+		})
+	}
+}
+
 func TestIssuePostersSearch(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 

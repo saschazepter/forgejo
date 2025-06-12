@@ -33,7 +33,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/kballard/go-shellquote"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 const (
@@ -41,20 +41,22 @@ const (
 )
 
 // CmdServ represents the available serv sub-command.
-var CmdServ = &cli.Command{
-	Name:        "serv",
-	Usage:       "(internal) Should only be called by SSH shell",
-	Description: "Serv provides access auth for repositories",
-	Before:      PrepareConsoleLoggerLevel(log.FATAL),
-	Action:      runServ,
-	Flags: []cli.Flag{
-		&cli.BoolFlag{
-			Name: "enable-pprof",
+func cmdServ() *cli.Command {
+	return &cli.Command{
+		Name:        "serv",
+		Usage:       "(internal) Should only be called by SSH shell",
+		Description: "Serv provides access auth for repositories",
+		Before:      PrepareConsoleLoggerLevel(log.FATAL),
+		Action:      runServ,
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name: "enable-pprof",
+			},
+			&cli.BoolFlag{
+				Name: "debug",
+			},
 		},
-		&cli.BoolFlag{
-			Name: "debug",
-		},
-	},
+	}
 }
 
 func setup(ctx context.Context, debug, gitNeeded bool) {
@@ -131,8 +133,8 @@ func handleCliResponseExtra(extra private.ResponseExtra) error {
 	return nil
 }
 
-func runServ(c *cli.Context) error {
-	ctx, cancel := installSignals()
+func runServ(ctx context.Context, c *cli.Command) error {
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	// FIXME: This needs to internationalised
@@ -194,7 +196,7 @@ func runServ(c *cli.Context) error {
 		if git.CheckGitVersionAtLeast("2.29") == nil {
 			// for AGit Flow
 			if cmd == "ssh_info" {
-				fmt.Print(`{"type":"gitea","version":1}`)
+				fmt.Print(`{"type":"agit","version":1}`)
 				return nil
 			}
 		}

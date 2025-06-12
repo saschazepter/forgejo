@@ -207,6 +207,12 @@ func (dc dingtalkConvertor) Package(p *api.PackagePayload) (DingtalkPayload, err
 	return createDingtalkPayload(text, text, "view package", p.Package.HTMLURL), nil
 }
 
+func (dc dingtalkConvertor) Action(p *api.ActionPayload) (DingtalkPayload, error) {
+	text, _ := getActionPayloadInfo(p, noneLinkFormatter)
+
+	return createDingtalkPayload(text, text, "view action", p.Run.HTMLURL), nil
+}
+
 func createDingtalkPayload(title, text, singleTitle, singleURL string) DingtalkPayload {
 	return DingtalkPayload{
 		MsgType: "actionCard",

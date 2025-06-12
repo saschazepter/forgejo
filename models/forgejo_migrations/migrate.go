@@ -5,6 +5,7 @@ package forgejo_migrations //nolint:revive
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -98,6 +99,10 @@ var migrations = []*Migration{
 	NewMigration("Add public key information to `FederatedUser` and `FederationHost`", AddPublicKeyInformationForFederation),
 	// v29 -> v30
 	NewMigration("Migrate `User.NormalizedFederatedURI` column to extract port & schema into FederatedHost", MigrateNormalizedFederatedURI),
+	// v30 -> v31
+	NewMigration("Normalize repository.topics to empty slice instead of null", SetTopicsAsEmptySlice),
+	// v31 -> v32
+	NewMigration("Migrate maven package name concatenation", ChangeMavenArtifactConcatenation),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.
@@ -130,7 +135,7 @@ func EnsureUpToDate(x *xorm.Engine) error {
 	}
 
 	if currentDB < 0 {
-		return fmt.Errorf("database has not been initialized")
+		return errors.New("database has not been initialized")
 	}
 
 	expected := ExpectedVersion()

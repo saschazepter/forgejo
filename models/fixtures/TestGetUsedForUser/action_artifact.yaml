@@ -1,0 +1,17 @@
+-
+  id: 1001
+  run_id: 792
+  runner_id: 1
+  repo_id: 4
+  owner_id: 1
+  commit_sha: c2d72f548424103f01ee1dc02889c1e2bff816b0
+  storage_path: "27/5/1730330775594233150.chunk"
+  file_size: 693147180559
+  file_compressed_size: 693147180559
+  content_encoding: "application/zip"
+  artifact_path: "big-file.zip"
+  artifact_name: "big-file"
+  status: 4
+  created_unix: 1730330775
+  updated_unix: 1730330775
+  expired_unix: 1738106775

@@ -5,6 +5,7 @@ package actions
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	actions_model "forgejo.org/models/actions"
@@ -183,7 +184,7 @@ func UpdateTaskByState(ctx context.Context, runnerID int64, state *runnerv1.Task
 	} else if !has {
 		return nil, util.ErrNotExist
 	} else if runnerID != task.RunnerID {
-		return nil, fmt.Errorf("invalid runner for task")
+		return nil, errors.New("invalid runner for task")
 	}
 
 	if task.Status.IsDone() {

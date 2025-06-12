@@ -25,7 +25,7 @@ import (
 	f3_tests "code.forgejo.org/f3/gof3/v3/tree/tests/f3"
 	f3_tests_forge "code.forgejo.org/f3/gof3/v3/tree/tests/f3/forge"
 	"github.com/stretchr/testify/require"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func runApp(ctx context.Context, args ...string) (string, error) {
@@ -33,10 +33,10 @@ func runApp(ctx context.Context, args ...string) (string, error) {
 	ctx = f3_logger.ContextSetLogger(ctx, l)
 	ctx = forgejo.ContextSetNoInit(ctx, true)
 
-	app := cli.NewApp()
+	app := cli.Command{}
 
-	app.Writer = l.GetBuffer()
-	app.ErrWriter = l.GetBuffer()
+	app.Root().Writer = l.GetBuffer()
+	app.Root().ErrWriter = l.GetBuffer()
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -48,7 +48,7 @@ func runApp(ctx context.Context, args ...string) (string, error) {
 	app.Commands = []*cli.Command{
 		forgejo.SubcmdF3Mirror(ctx),
 	}
-	err := app.Run(args)
+	err := app.Run(ctx, args)
 
 	fmt.Println(l.String())
 

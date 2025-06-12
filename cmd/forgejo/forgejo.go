@@ -16,7 +16,7 @@ import (
 	"forgejo.org/modules/private"
 	"forgejo.org/modules/setting"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 type key int
@@ -34,7 +34,7 @@ func CmdForgejo(ctx context.Context) *cli.Command {
 		Name:  "forgejo-cli",
 		Usage: "Forgejo CLI",
 		Flags: []cli.Flag{},
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			CmdActions(ctx),
 			CmdF3(ctx),
 		},
@@ -147,12 +147,12 @@ func handleCliResponseExtra(ctx context.Context, extra private.ResponseExtra) er
 	return cli.Exit(extra.Error, 1)
 }
 
-func prepareWorkPathAndCustomConf(ctx context.Context) func(c *cli.Context) error {
-	return func(c *cli.Context) error {
+func prepareWorkPathAndCustomConf(ctx context.Context) func(ctx context.Context, cli *cli.Command) (context.Context, error) {
+	return func(ctx context.Context, cli *cli.Command) (context.Context, error) {
 		if !ContextGetNoInit(ctx) {
 			var args setting.ArgWorkPathAndCustomConf
 			// from children to parent, check the global flags
-			for _, curCtx := range c.Lineage() {
+			for _, curCtx := range cli.Lineage() {
 				if curCtx.IsSet("work-path") && args.WorkPath == "" {
 					args.WorkPath = curCtx.String("work-path")
 				}
@@ -165,6 +165,6 @@ func prepareWorkPathAndCustomConf(ctx context.Context) func(c *cli.Context) erro
 			}
 			setting.InitWorkPathAndCommonConfig(os.Getenv, args)
 		}
-		return nil
+		return ctx, nil
 	}
 }

@@ -90,7 +90,7 @@ func logPrinter(logger log.Logger) func(trigger Event, record *requestRecord) {
 			status = v.WrittenStatus()
 		}
 		logf := logger.Info
-		if strings.HasPrefix(req.RequestURI, "/assets/") {
+		if strings.HasPrefix(req.RequestURI, "/assets/") || req.RequestURI == "/api/actions/runner.v1.RunnerService/FetchTask" || req.RequestURI == "/api/actions/runner.v1.RunnerService/UpdateLog" {
 			logf = logger.Trace
 		}
 		message := completedMessage

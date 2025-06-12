@@ -98,5 +98,7 @@
     "followers.incoming.list.none": "Ninguém está seguindo este perfil.",
     "followers.outgoing.list.none": "%s não está seguindo ninguém.",
     "stars.list.none": "Ninguém favoritou este repositório.",
-    "followers.outgoing.list.self.none": "Você não está seguindo ninguém."
+    "followers.outgoing.list.self.none": "Você não está seguindo ninguém.",
+    "editor.textarea.tab_hint": "Linha já indentada. Pressione <kbd>Tab</kbd> novamente ou <kbd>Esc</kbd> para sair do editor.",
+    "editor.textarea.shift_tab_hint": "Sem indentação nesta linha. Pressione <kbd>Shift</kbd> + <kbd>Tab</kbd> novamente ou <kbd>Esc</kbd> para sair do editor."
 }

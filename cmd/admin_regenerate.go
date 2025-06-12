@@ -4,11 +4,13 @@
 package cmd
 
 import (
+	"context"
+
 	asymkey_model "forgejo.org/models/asymkey"
 	"forgejo.org/modules/graceful"
 	repo_service "forgejo.org/services/repository"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 var (
@@ -25,8 +27,8 @@ var (
 	}
 )
 
-func runRegenerateHooks(_ *cli.Context) error {
-	ctx, cancel := installSignals()
+func runRegenerateHooks(ctx context.Context, _ *cli.Command) error {
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	if err := initDB(ctx); err != nil {
@@ -35,8 +37,8 @@ func runRegenerateHooks(_ *cli.Context) error {
 	return repo_service.SyncRepositoryHooks(graceful.GetManager().ShutdownContext())
 }
 
-func runRegenerateKeys(_ *cli.Context) error {
-	ctx, cancel := installSignals()
+func runRegenerateKeys(ctx context.Context, _ *cli.Command) error {
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	if err := initDB(ctx); err != nil {

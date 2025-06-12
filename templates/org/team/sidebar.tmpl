@@ -42,11 +42,8 @@
 						<li>{{ctx.Locale.Tr "org.teams.can_create_org_repo"}}</li>
 					{{end}}
 				</ul>
-				{{if (eq .Team.AccessMode 2)}}
-					<h3>{{ctx.Locale.Tr "org.settings.permission"}}</h3>
-					{{ctx.Locale.Tr "org.teams.write_permission_desc"}}
-				{{else if (eq .Team.AccessMode 3)}}
-					<h3>{{ctx.Locale.Tr "org.settings.permission"}}</h3>
+				<h3>{{ctx.Locale.Tr "org.settings.permission"}}</h3>
+				{{if (eq .Team.AccessMode 3)}}
 					{{ctx.Locale.Tr "org.teams.admin_permission_desc"}}
 				{{else}}
 					<table class="ui table">

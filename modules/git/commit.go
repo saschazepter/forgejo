@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"os/exec"
 	"strconv"
@@ -386,7 +385,7 @@ func parseSubmoduleContent(bs []byte) (*ObjectCache, error) {
 	}
 	submoduleCache := newObjectCache()
 	if len(cfg.Submodules) == 0 {
-		return nil, fmt.Errorf("no submodules found")
+		return nil, errors.New("no submodules found")
 	}
 	for _, subModule := range cfg.Submodules {
 		submoduleCache.Set(subModule.Path, subModule.URL)

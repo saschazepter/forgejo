@@ -54,6 +54,8 @@ type FindRunJobOptions struct {
 	CommitSHA     string
 	Statuses      []Status
 	UpdatedBefore timeutil.TimeStamp
+	Events        []string // []webhook_module.HookEventType
+	RunNumber     int64
 }
 
 func (opts FindRunJobOptions) ToConds() builder.Cond {
@@ -75,6 +77,12 @@ func (opts FindRunJobOptions) ToConds() builder.Cond {
 	}
 	if opts.UpdatedBefore > 0 {
 		cond = cond.And(builder.Lt{"updated": opts.UpdatedBefore})
+	}
+	if len(opts.Events) > 0 {
+		cond = cond.And(builder.In("event", opts.Events))
+	}
+	if opts.RunNumber > 0 {
+		cond = cond.And(builder.Eq{"`index`": opts.RunNumber})
 	}
 	return cond
 }

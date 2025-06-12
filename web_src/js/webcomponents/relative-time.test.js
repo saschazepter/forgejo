@@ -23,6 +23,7 @@ test('CalculateRelativeTimes', () => {
     'relativetime.years': ['%d year ago', '%d years ago'],
   };
   const mock = document.createElement('relative-time');
+  document.body.append(mock);
 
   const now = Date.parse('2024-10-27T04:05:30+01:00');  // One hour after DST switchover, CET.
 

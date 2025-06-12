@@ -414,7 +414,7 @@ func IsErrSHAOrCommitIDNotProvided(err error) bool {
 }
 
 func (err ErrSHAOrCommitIDNotProvided) Error() string {
-	return "a SHA or commit ID must be proved when updating a file"
+	return "a SHA or commit ID must be provided when updating a file"
 }
 
 // ErrInvalidMergeStyle represents an error if merging with disabled merge strategy

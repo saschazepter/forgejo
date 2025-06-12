@@ -49,10 +49,10 @@ func (o *treeDriver) Factory(ctx context.Context, kind f3_kind.Kind) generic.Nod
 		return newComments()
 	case f3_tree.KindComment:
 		return newComment()
-	case f3_tree.KindAssets:
-		return newAssets()
-	case f3_tree.KindAsset:
-		return newAsset()
+	case f3_tree.KindAttachments:
+		return newAttachments()
+	case f3_tree.KindAttachment:
+		return newAttachment()
 	case f3_tree.KindLabels:
 		return newLabels()
 	case f3_tree.KindLabel:

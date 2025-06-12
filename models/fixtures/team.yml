@@ -239,3 +239,15 @@
   num_members: 2
   includes_all_repositories: false
   can_create_org_repo: false
+
+-
+  id: 25
+  org_id: 17
+  lower_name: super-user
+  name: super-user
+  description: ""
+  authorize: 3
+  num_repos: 0
+  num_members: 0
+  includes_all_repositories: 0
+  can_create_org_repo: 0

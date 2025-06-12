@@ -16,6 +16,7 @@ import (
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/shared/types"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/log"
 	"forgejo.org/modules/optional"
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/translation"
@@ -352,4 +353,54 @@ func FixRunnersWithoutBelongingRepo(ctx context.Context) (int64, error) {
 		return 0, err
 	}
 	return res.RowsAffected()
+}
+
+func DeleteOfflineRunners(ctx context.Context, olderThan timeutil.TimeStamp, globalOnly bool) error {
+	log.Info("Doing: DeleteOfflineRunners")
+
+	if olderThan.AsTime().After(timeutil.TimeStampNow().AddDuration(-RunnerOfflineTime).AsTime()) {
+		return fmt.Errorf("invalid `cron.cleanup_offline_runners.older_than`value: must be at least %q", RunnerOfflineTime)
+	}
+
+	cond := builder.Or(
+		// never online
+		builder.And(builder.Eq{"last_online": 0}, builder.Lt{"created": olderThan}),
+		// was online but offline
+		builder.And(builder.Gt{"last_online": 0}, builder.Lt{"last_online": olderThan}),
+	)
+
+	if globalOnly {
+		cond = builder.And(cond, builder.Eq{"owner_id": 0}, builder.Eq{"repo_id": 0})
+	}
+
+	if err := db.Iterate(
+		ctx,
+		cond,
+		func(ctx context.Context, r *ActionRunner) error {
+			if err := DeleteRunner(ctx, r); err != nil {
+				return fmt.Errorf("DeleteOfflineRunners: %w", err)
+			}
+			lastOnline := r.LastOnline.AsTime()
+			olderThanTime := olderThan.AsTime()
+			if !lastOnline.IsZero() && lastOnline.Before(olderThanTime) {
+				log.Info(
+					"Deleted runner [ID: %d, Name: %s], last online %s ago",
+					r.ID, r.Name, olderThanTime.Sub(lastOnline).String(),
+				)
+			} else {
+				log.Info(
+					"Deleted runner [ID: %d, Name: %s], unused since %s ago",
+					r.ID, r.Name, olderThanTime.Sub(r.Created.AsTime()).String(),
+				)
+			}
+
+			return nil
+		},
+	); err != nil {
+		return err
+	}
+
+	log.Info("Finished: DeleteOfflineRunners")
+
+	return nil
 }

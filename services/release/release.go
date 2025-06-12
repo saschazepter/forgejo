@@ -161,17 +161,17 @@ func CreateRelease(gitRepo *git.Repository, rel *repo_model.Release, msg string,
 
 	for _, attachmentChange := range attachmentChanges {
 		if attachmentChange.Action != "add" {
-			return fmt.Errorf("can only create new attachments when creating release")
+			return errors.New("can only create new attachments when creating release")
 		}
 		switch attachmentChange.Type {
 		case "attachment":
 			if attachmentChange.UUID == "" {
-				return fmt.Errorf("new attachment should have a uuid")
+				return errors.New("new attachment should have a uuid")
 			}
 			addAttachmentUUIDs.Add(attachmentChange.UUID)
 		case "external":
 			if attachmentChange.Name == "" || attachmentChange.ExternalURL == "" {
-				return fmt.Errorf("new external attachment should have a name and external url")
+				return errors.New("new external attachment should have a name and external url")
 			}
 
 			_, err = attachment.NewExternalAttachment(gitRepo.Ctx, &repo_model.Attachment{
@@ -186,7 +186,7 @@ func CreateRelease(gitRepo *git.Repository, rel *repo_model.Release, msg string,
 			}
 		default:
 			if attachmentChange.Type == "" {
-				return fmt.Errorf("missing attachment type")
+				return errors.New("missing attachment type")
 			}
 			return fmt.Errorf("unknown attachment type: '%q'", attachmentChange.Type)
 		}
@@ -280,7 +280,7 @@ func UpdateRelease(ctx context.Context, doer *user_model.User, gitRepo *git.Repo
 				addAttachmentUUIDs.Add(attachmentChange.UUID)
 			case "external":
 				if attachmentChange.Name == "" || attachmentChange.ExternalURL == "" {
-					return fmt.Errorf("new external attachment should have a name and external url")
+					return errors.New("new external attachment should have a name and external url")
 				}
 				_, err := attachment.NewExternalAttachment(ctx, &repo_model.Attachment{
 					Name:        attachmentChange.Name,
@@ -294,13 +294,13 @@ func UpdateRelease(ctx context.Context, doer *user_model.User, gitRepo *git.Repo
 				}
 			default:
 				if attachmentChange.Type == "" {
-					return fmt.Errorf("missing attachment type")
+					return errors.New("missing attachment type")
 				}
 				return fmt.Errorf("unknown attachment type: %q", attachmentChange.Type)
 			}
 		case "delete":
 			if attachmentChange.UUID == "" {
-				return fmt.Errorf("attachment deletion should have a uuid")
+				return errors.New("attachment deletion should have a uuid")
 			}
 			delAttachmentUUIDs.Add(attachmentChange.UUID)
 		case "update":
@@ -308,7 +308,7 @@ func UpdateRelease(ctx context.Context, doer *user_model.User, gitRepo *git.Repo
 			updateAttachments.Add(attachmentChange)
 		default:
 			if attachmentChange.Action == "" {
-				return fmt.Errorf("missing attachment action")
+				return errors.New("missing attachment action")
 			}
 			return fmt.Errorf("unknown attachment action: %q", attachmentChange.Action)
 		}

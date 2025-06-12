@@ -1,0 +1,281 @@
+- id: 1
+  package_id: 1
+  creator_id: 1
+  version: 1.0-SNAPSHOT
+  lower_version: 1.0-snapshot
+  created_unix: 1746256357
+  is_internal: 0
+  metadata_json: '{"group_id":"com.example","artifact_id":"parent-project","name":"Example :: Parent "}'
+  download_count: 0
+- id: 2
+  package_id: 2
+  creator_id: 1
+  version: 1.0-SNAPSHOT
+  lower_version: 1.0-snapshot
+  created_unix: 1746256358
+  is_internal: 0
+  metadata_json: '{"group_id":"com.example","artifact_id":"sub-module","name":"Example :: SubModule ","dependencies":[{"group_id":"junit","artifact_id":"junit","version":"3.8.1"}]}'
+  download_count: 0
+- id: 3
+  package_id: 1
+  creator_id: 1
+  version: 7.0.0
+  lower_version: 7.0.0
+  created_unix: 1746256360
+  is_internal: 0
+  metadata_json: '{"group_id":"com.example","artifact_id":"parent-project","name":"Example :: Parent "}'
+  download_count: 0
+- id: 4
+  package_id: 2
+  creator_id: 1
+  version: 7.0.0
+  lower_version: 7.0.0
+  created_unix: 1746256361
+  is_internal: 0
+  metadata_json: '{"artifact_id":"sub-module","name":"Example :: SubModule ","dependencies":[{"group_id":"junit","artifact_id":"junit","version":"3.8.1"}]}'
+  download_count: 0
+- id: 5
+  package_id: 3
+  creator_id: 1
+  version: 7.0.0
+  lower_version: 7.0.0
+  created_unix: 1746256364
+  is_internal: 0
+  metadata_json: '{"group_id":"com.example","artifact_id":"parent-project","name":"Example :: Parent "}'
+  download_count: 0
+- id: 6
+  package_id: 4
+  creator_id: 1
+  version: 7.0.0
+  lower_version: 7.0.0
+  created_unix: 1746256365
+  is_internal: 0
+  metadata_json: '{"artifact_id":"sub-module","name":"Example :: SubModule ","dependencies":[{"group_id":"junit","artifact_id":"junit","version":"3.8.1"}]}'
+  download_count: 0
+- id: 7
+  package_id: 5
+  creator_id: 1
+  version: 1.0-SNAPSHOT
+  lower_version: 1.0-snapshot
+  created_unix: 1746256367
+  is_internal: 0
+  metadata_json: '{"group_id":"foo","artifact_id":"-bar","name":"Example :: Parent "}'
+  download_count: 0
+- id: 8
+  package_id: 5
+  creator_id: 1
+  version: 7.0.0
+  lower_version: 7.0.0
+  created_unix: 1746256370
+  is_internal: 0
+  metadata_json: '{"group_id":"foo","artifact_id":"-bar","name":"Example :: Parent "}'
+  download_count: 0
+- id: 9
+  package_id: 1
+  creator_id: 1
+  version: 8.0.0
+  lower_version: 8.0.0
+  created_unix: 1746256389
+  is_internal: 0
+  metadata_json: '{"group_id":"com.example","artifact_id":"parent-project","name":"Example :: Parent "}'
+  download_count: 0
+- id: 10
+  package_id: 2
+  creator_id: 1
+  version: 8.0.0
+  lower_version: 8.0.0
+  created_unix: 1746256390
+  is_internal: 0
+  metadata_json: '{"artifact_id":"sub-module","name":"Example :: SubModule ","dependencies":[{"group_id":"junit","artifact_id":"junit","version":"3.8.1"}]}'
+  download_count: 0
+- id: 11
+  package_id: 3
+  creator_id: 1
+  version: 8.0.0
+  lower_version: 8.0.0
+  created_unix: 1746256393
+  is_internal: 0
+  metadata_json: '{"group_id":"com.example","artifact_id":"parent-project","name":"Example :: Parent "}'
+  download_count: 0
+- id: 12
+  package_id: 4
+  creator_id: 1
+  version: 8.0.0
+  lower_version: 8.0.0
+  created_unix: 1746256394
+  is_internal: 0
+  metadata_json: '{"artifact_id":"sub-module","name":"Example :: SubModule ","dependencies":[{"group_id":"junit","artifact_id":"junit","version":"3.8.1"}]}'
+  download_count: 0
+- id: 13
+  package_id: 5
+  creator_id: 1
+  version: 8.0.0
+  lower_version: 8.0.0
+  created_unix: 1746256399
+  is_internal: 0
+  metadata_json: '{"group_id":"foo","artifact_id":"-bar","name":"Example :: Parent "}'
+  download_count: 0
+- id: 14
+  package_id: 1
+  creator_id: 1
+  version: 9.0.0
+  lower_version: 9.0.0
+  created_unix: 1746256419
+  is_internal: 0
+  metadata_json: '{"group_id":"com.example","artifact_id":"parent-project","name":"Example :: Parent "}'
+  download_count: 0
+- id: 15
+  package_id: 2
+  creator_id: 1
+  version: 9.0.0
+  lower_version: 9.0.0
+  created_unix: 1746256420
+  is_internal: 0
+  metadata_json: '{"artifact_id":"sub-module","name":"Example :: SubModule ","dependencies":[{"group_id":"junit","artifact_id":"junit","version":"3.8.1"}]}'
+  download_count: 0
+- id: 16
+  package_id: 3
+  creator_id: 1
+  version: 9.0.0
+  lower_version: 9.0.0
+  created_unix: 1746256423
+  is_internal: 0
+  metadata_json: '{"group_id":"com.example","artifact_id":"parent-project","name":"Example :: Parent "}'
+  download_count: 0
+- id: 17
+  package_id: 4
+  creator_id: 1
+  version: 9.0.0
+  lower_version: 9.0.0
+  created_unix: 1746256424
+  is_internal: 0
+  metadata_json: '{"artifact_id":"sub-module","name":"Example :: SubModule ","dependencies":[{"group_id":"junit","artifact_id":"junit","version":"3.8.1"}]}'
+  download_count: 0
+- id: 18
+  package_id: 5
+  creator_id: 1
+  version: 9.0.0
+  lower_version: 9.0.0
+  created_unix: 1746256429
+  is_internal: 0
+  metadata_json: '{"group_id":"foo","artifact_id":"-bar","name":"Example :: Parent "}'
+  download_count: 0
+- id: 19
+  package_id: 1
+  creator_id: 1
+  version: 10.0.0
+  lower_version: 10.0.0
+  created_unix: 1746256449
+  is_internal: 0
+  metadata_json: '{"group_id":"com.example","artifact_id":"parent-project","name":"Example :: Parent "}'
+  download_count: 0
+- id: 20
+  package_id: 2
+  creator_id: 1
+  version: 10.0.0
+  lower_version: 10.0.0
+  created_unix: 1746256450
+  is_internal: 0
+  metadata_json: '{"group_id":"com.example","artifact_id":"sub-module","name":"Example :: SubModule ","dependencies":[{"group_id":"junit","artifact_id":"junit","version":"3.8.1"}]}'
+  download_count: 0
+- id: 21
+  package_id: 3
+  creator_id: 1
+  version: 10.0.0
+  lower_version: 10.0.0
+  created_unix: 1746256452
+  is_internal: 0
+  metadata_json: '{"group_id":"com.example","artifact_id":"parent-project","name":"Example :: Parent "}'
+  download_count: 0
+- id: 22
+  package_id: 4
+  creator_id: 1
+  version: 10.0.0
+  lower_version: 10.0.0
+  created_unix: 1746256453
+  is_internal: 0
+  metadata_json: '{"group_id":"com.example","artifact_id":"sub-module","name":"Example :: SubModule ","dependencies":[{"group_id":"junit","artifact_id":"junit","version":"3.8.1"}]}'
+  download_count: 0
+- id: 23
+  package_id: 5
+  creator_id: 1
+  version: 10.0.0
+  lower_version: 10.0.0
+  created_unix: 1746256459
+  is_internal: 0
+  metadata_json: '{"group_id":"foo","artifact_id":"-bar","name":"Example :: Parent "}'
+  download_count: 0
+- id: 24
+  package_id: 1
+  creator_id: 1
+  version: 11.0.0
+  lower_version: 11.0.0
+  created_unix: 1746256478
+  is_internal: 0
+  metadata_json: '{"group_id":"com.example","artifact_id":"parent-project","name":"Example :: Parent "}'
+  download_count: 0
+- id: 25
+  package_id: 2
+  creator_id: 1
+  version: 11.0.0
+  lower_version: 11.0.0
+  created_unix: 1746256479
+  is_internal: 0
+  metadata_json: '{"group_id":"com.example","artifact_id":"sub-module","name":"Example :: SubModule ","dependencies":[{"group_id":"junit","artifact_id":"junit","version":"3.8.1"}]}'
+  download_count: 0
+- id: 26
+  package_id: 3
+  creator_id: 1
+  version: 11.0.0
+  lower_version: 11.0.0
+  created_unix: 1746256482
+  is_internal: 0
+  metadata_json: '{"group_id":"com.example","artifact_id":"parent-project","name":"Example :: Parent "}'
+  download_count: 0
+- id: 27
+  package_id: 4
+  creator_id: 1
+  version: 11.0.0
+  lower_version: 11.0.0
+  created_unix: 1746256483
+  is_internal: 0
+  metadata_json: '{"group_id":"com.example","artifact_id":"sub-module","name":"Example :: SubModule ","dependencies":[{"group_id":"junit","artifact_id":"junit","version":"3.8.1"}]}'
+  download_count: 0
+- id: 28
+  package_id: 5
+  creator_id: 1
+  version: 11.0.0
+  lower_version: 11.0.0
+  created_unix: 1746256488
+  is_internal: 0
+  metadata_json: '{"group_id":"foo","artifact_id":"-bar","name":"Example :: Parent "}'
+  download_count: 0
+# broken uploads
+- id: 29
+  package_id: 7
+  creator_id: 6
+  version: 1.2.4
+  lower_version: 1.2.4
+  created_unix: 1746256488
+  is_internal: 0
+  metadata_json: '{"group_id":"com.broken","artifact_id":"br-root","name":"Foo"}'
+  download_count: 0
+- id: 30
+  package_id: 6
+  creator_id: 6
+  version: 1.2.4
+  lower_version: 1.2.4
+  created_unix: 1746256488
+  is_internal: 0
+  metadata_json: '{"artifact_id":"br-rest-webmvc","name":"Foo :: REST :: Web MVC","dependencies":[{"group_id":"com.broken","artifact_id":"br-base"},{"group_id":"jakarta.servlet","artifact_id":"jakarta.servlet-api"},{"group_id":"jakarta.validation","artifact_id":"jakarta.validation-api"},{"group_id":"org.springframework","artifact_id":"spring-webmvc"},{"group_id":"org.springframework.hateoas","artifact_id":"spring-hateoas"},{"group_id":"org.springframework.boot","artifact_id":"spring-boot-starter-test"},{"group_id":"com.broken","artifact_id":"br-test"},{"group_id":"com.broken","artifact_id":"br-repo-in-memory"},{"group_id":"org.hibernate.validator","artifact_id":"hibernate-validator"},{"group_id":"org.glassfish.expressly","artifact_id":"expressly"}]}'
+  download_count: 0
+# collision
+- id: 31
+  package_id: 8
+  creator_id: 1
+  version: 11.0.0
+  lower_version: 11.0.0
+  created_unix: 1746256488
+  is_internal: 0
+  metadata_json: '{"group_id":"group-bar","artifact_id":"art","name":"Example :: Parent "}'
+  download_count: 0

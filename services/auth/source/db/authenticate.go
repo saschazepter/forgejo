@@ -50,7 +50,7 @@ func Authenticate(ctx context.Context, user *user_model.User, login, password st
 
 	if !user.IsPasswordSet() {
 		return nil, ErrUserPasswordNotSet{UID: user.ID, Name: user.Name}
-	} else if !user.ValidatePassword(password) {
+	} else if !user.ValidatePassword(ctx, password) {
 		return nil, ErrUserPasswordInvalid{UID: user.ID, Name: user.Name}
 	}
 

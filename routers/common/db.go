@@ -5,7 +5,7 @@ package common
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"time"
 
 	"forgejo.org/models/db"
@@ -24,7 +24,7 @@ func InitDBEngine(ctx context.Context) (err error) {
 	for i := 0; i < setting.Database.DBConnectRetries; i++ {
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("Aborted due to shutdown:\nin retry ORM engine initialization")
+			return errors.New("Aborted due to shutdown:\nin retry ORM engine initialization")
 		default:
 		}
 		log.Info("ORM engine initialization attempt #%d/%d...", i+1, setting.Database.DBConnectRetries)

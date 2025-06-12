@@ -94,6 +94,14 @@ func reqReview(t int64, name string, delReq bool) *issue_model.Comment {
 	return c
 }
 
+func ghostReqReview(t, id int64) *issue_model.Comment {
+	c := testComment(t)
+	c.Type = issue_model.CommentTypeReviewRequest
+	c.AssigneeTeam = organization.NewGhostTeam()
+	c.AssigneeTeamID = id
+	return c
+}
+
 func reqReviewList(t int64, del bool, names ...string) *issue_model.Comment {
 	req := []issue_model.RequestReviewTarget{}
 	for _, name := range names {
@@ -179,7 +187,7 @@ func (kase *testCase) doTest(t *testing.T) {
 
 	if len(after) != len(issue.Comments) {
 		t.Logf("Expected %v comments, got %v", len(after), len(issue.Comments))
-		t.Logf("Comments got after combination:")
+		t.Log("Comments got after combination:")
 		for c := 0; c < len(issue.Comments); c++ {
 			cmt := issue.Comments[c]
 			t.Logf("%v %v %v\n", cmt.Type, cmt.CreatedUnix, cmt.Content)
@@ -586,6 +594,27 @@ func TestCombineReviewRequests(t *testing.T) {
 			afterCombined: []*issue_model.Comment{
 				reqReviewList(1, false, "titi", "toto-team"),
 				reqReviewList(121, true, "titi", "toto-team"),
+			},
+		},
+
+		// Ghost.
+		{
+			name: "ghost reviews",
+			beforeCombined: []*issue_model.Comment{
+				reqReview(1, "titi", false),
+				ghostReqReview(2, 50),
+				ghostReqReview(3, 51),
+				ghostReqReview(4, 50),
+			},
+			afterCombined: []*issue_model.Comment{
+				{
+					PosterID:    1,
+					Type:        issue_model.CommentTypeReviewRequest,
+					CreatedUnix: timeutil.TimeStamp(1),
+					AddedRequestReview: []issue_model.RequestReviewTarget{
+						createReqReviewTarget("titi"), {Team: organization.NewGhostTeam()},
+					},
+				},
 			},
 		},
 	}

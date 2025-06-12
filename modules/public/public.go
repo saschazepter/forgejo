@@ -6,6 +6,7 @@ package public
 import (
 	"bytes"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path"
@@ -59,7 +60,7 @@ func setWellKnownContentType(w http.ResponseWriter, file string) {
 	}
 }
 
-func handleRequest(w http.ResponseWriter, req *http.Request, fs http.FileSystem, file string) {
+func handleRequest(w http.ResponseWriter, req *http.Request, fs fs.FS, file string) {
 	// actually, fs (http.FileSystem) is designed to be a safe interface, relative paths won't bypass its parent directory, it's also fine to do a clean here
 	f, err := fs.Open(util.PathJoinRelX(file))
 	if err != nil {
@@ -86,33 +87,31 @@ func handleRequest(w http.ResponseWriter, req *http.Request, fs http.FileSystem,
 		return
 	}
 
-	serveContent(w, req, fi, fi.ModTime(), f)
+	serveContent(w, req, fi.Name(), fi.ModTime(), f.(io.ReadSeeker))
 }
 
-type GzipBytesProvider interface {
-	GzipBytes() []byte
+type ZstdBytesProvider interface {
+	ZstdBytes() []byte
 }
 
 // serveContent serve http content
-func serveContent(w http.ResponseWriter, req *http.Request, fi os.FileInfo, modtime time.Time, content io.ReadSeeker) {
-	setWellKnownContentType(w, fi.Name())
+func serveContent(w http.ResponseWriter, req *http.Request, name string, modtime time.Time, content io.ReadSeeker) {
+	setWellKnownContentType(w, name)
 
 	encodings := parseAcceptEncoding(req.Header.Get("Accept-Encoding"))
-	if encodings.Contains("gzip") {
-		// try to provide gzip content directly from bindata (provided by vfsgen۰CompressedFileInfo)
-		if compressed, ok := fi.(GzipBytesProvider); ok {
-			rdGzip := bytes.NewReader(compressed.GzipBytes())
-			// all gzipped static files (from bindata) are managed by Gitea, so we can make sure every file has the correct ext name
-			// then we can get the correct Content-Type, we do not need to do http.DetectContentType on the decompressed data
+	if encodings.Contains("zstd") {
+		// If the file was compressed, use the bytes directly.
+		if compressed, ok := content.(ZstdBytesProvider); ok {
+			rdZstd := bytes.NewReader(compressed.ZstdBytes())
 			if w.Header().Get("Content-Type") == "" {
 				w.Header().Set("Content-Type", "application/octet-stream")
 			}
-			w.Header().Set("Content-Encoding", "gzip")
-			httpcache.ServeContentWithCacheControl(w, req, fi.Name(), modtime, rdGzip)
+			w.Header().Set("Content-Encoding", "zstd")
+			httpcache.ServeContentWithCacheControl(w, req, name, modtime, rdZstd)
 			return
 		}
 	}
 
-	httpcache.ServeContentWithCacheControl(w, req, fi.Name(), modtime, content)
+	httpcache.ServeContentWithCacheControl(w, req, name, modtime, content)
 	return
 }

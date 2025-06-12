@@ -23,16 +23,16 @@ func TestLookup(t *testing.T) {
 	d := FromAlias("beer")
 
 	if !reflect.DeepEqual(a, b) {
-		t.Errorf("a and b should equal")
+		t.Error("a and b should equal")
 	}
 	if !reflect.DeepEqual(b, c) {
-		t.Errorf("b and c should equal")
+		t.Error("b and c should equal")
 	}
 	if !reflect.DeepEqual(c, d) {
-		t.Errorf("c and d should equal")
+		t.Error("c and d should equal")
 	}
 	if !reflect.DeepEqual(a, d) {
-		t.Errorf("a and d should equal")
+		t.Error("a and d should equal")
 	}
 
 	m := FromCode("\U0001f44d")
@@ -40,13 +40,13 @@ func TestLookup(t *testing.T) {
 	o := FromAlias("+1")
 
 	if !reflect.DeepEqual(m, n) {
-		t.Errorf("m and n should equal")
+		t.Error("m and n should equal")
 	}
 	if !reflect.DeepEqual(n, o) {
-		t.Errorf("n and o should equal")
+		t.Error("n and o should equal")
 	}
 	if !reflect.DeepEqual(m, o) {
-		t.Errorf("m and o should equal")
+		t.Error("m and o should equal")
 	}
 }
 

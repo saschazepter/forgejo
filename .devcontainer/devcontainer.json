@@ -6,7 +6,7 @@
     "ghcr.io/devcontainers/features/node:1": {
       "version": "22"
     },
-    "ghcr.io/devcontainers/features/git-lfs:1.2.3": {},
+    "ghcr.io/devcontainers/features/git-lfs:1.2.4": {},
     "ghcr.io/warrenbuckley/codespace-features/sqlite:1": {}
   },
   "customizations": {

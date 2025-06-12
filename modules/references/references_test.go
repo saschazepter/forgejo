@@ -133,6 +133,30 @@ func TestFindAllIssueReferences(t *testing.T) {
 			},
 		},
 		{
+			"This http://gitea.com:3000/user4/repo5/pulls/202#x yes.",
+			[]testResult{
+				{202, "user4", "repo5", "202", true, XRefActionNone, nil, nil, ""},
+			},
+		},
+		{
+			"This http://gitea.com:3000/user4/repo5/pulls/202/commits yes.",
+			[]testResult{
+				{202, "user4", "repo5", "202", true, XRefActionNone, nil, nil, ""},
+			},
+		},
+		{
+			"This http://gitea.com:3000/user4/repo5/pulls/202/files yes.",
+			[]testResult{
+				{202, "user4", "repo5", "202", true, XRefActionNone, nil, nil, ""},
+			},
+		},
+		{
+			"This http://gitea.com:3000/user4/repo5/pulls/202/files#diff- yes.",
+			[]testResult{
+				{202, "user4", "repo5", "202", true, XRefActionNone, nil, nil, ""},
+			},
+		},
+		{
 			"This http://GiTeA.COM:3000/user4/repo6/pulls/205 yes.",
 			[]testResult{
 				{205, "user4", "repo6", "205", true, XRefActionNone, nil, nil, ""},

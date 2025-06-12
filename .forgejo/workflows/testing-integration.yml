@@ -1,0 +1,71 @@
+#
+# Additional integration tests designed to run once a day when
+# `mirror.yml` pushes to https://codeberg.org/forgejo-integration/forgejo
+# and send a notification via email should they fail.
+#
+# For debug purposes:
+#
+# - uncomment [on].pull_request
+# - swap 'forgejo-integration' and 'forgejo-coding'
+# - open a pull request at https://codeberg.org/forgejo/forgejo and fix things
+# - swap 'forgejo-integration' and 'forgejo-coding'
+# - comment [on].pull_request
+#
+
+name: testing-integration
+
+on:
+#  pull_request:
+  push:
+    tags: 'v[0-9]+.[0-9]+.*'
+    branches:
+      - 'forgejo'
+      - 'v*/forgejo'
+
+jobs:
+  test-unit:
+#    if: vars.ROLE == 'forgejo-coding'
+    if: vars.ROLE == 'forgejo-integration'
+    runs-on: docker
+    container:
+      image: 'data.forgejo.org/oci/node:22-bookworm'
+      options: --tmpfs /tmp:exec,noatime
+    steps:
+      - uses: https://data.forgejo.org/actions/checkout@v4
+      - uses: ./.forgejo/workflows-composite/setup-env
+      - name: install git 2.30
+        uses: ./.forgejo/workflows-composite/apt-install-from
+        with:
+          packages: git/bullseye git-lfs/bullseye
+          release: bullseye
+      - uses: ./.forgejo/workflows-composite/build-backend
+      - run: |
+          su forgejo -c 'make test-backend test-check'
+        timeout-minutes: 120
+        env:
+          RACE_ENABLED: 'true'
+          TAGS: bindata
+  test-sqlite:
+#    if: vars.ROLE == 'forgejo-coding'
+    if: vars.ROLE == 'forgejo-integration'
+    runs-on: docker
+    container:
+      image: 'data.forgejo.org/oci/node:22-bookworm'
+      options: --tmpfs /tmp:exec,noatime
+    steps:
+      - uses: https://data.forgejo.org/actions/checkout@v4
+      - uses: ./.forgejo/workflows-composite/setup-env
+      - name: install git 2.30
+        uses: ./.forgejo/workflows-composite/apt-install-from
+        with:
+          packages: git/bullseye git-lfs/bullseye
+          release: bullseye
+      - uses: ./.forgejo/workflows-composite/build-backend
+      - run: |
+          su forgejo -c 'make test-sqlite-migration test-sqlite'
+        timeout-minutes: 120
+        env:
+          TAGS: sqlite sqlite_unlock_notify
+          RACE_ENABLED: true
+          TEST_TAGS: sqlite sqlite_unlock_notify
+          USE_REPO_TEST_DIR: 1

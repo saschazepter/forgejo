@@ -100,5 +100,7 @@
     "stars.list.none": "Ніхто не додав цей репозиторій в обрані.",
     "watch.list.none": "Ніхто не спостерігає за цим репозиторієм.",
     "editor.textarea.tab_hint": "У рядку вже є відступ. Натисніть <kbd>Tab</kbd> ще раз або <kbd>Esc</kbd>, щоб вийти з редактора.",
-    "editor.textarea.shift_tab_hint": "У цьому рядку немає відступів. Натисніть <kbd>Shift</kbd> + <kbd>Tab</kbd> ще раз або <kbd>Esc</kbd>, щоб вийти з редактора."
+    "editor.textarea.shift_tab_hint": "У цьому рядку немає відступів. Натисніть <kbd>Shift</kbd> + <kbd>Tab</kbd> ще раз або <kbd>Esc</kbd>, щоб вийти з редактора.",
+    "admin.dashboard.cleanup_offline_runners": "Очистити неактивні раннери",
+    "settings.visibility.description": "Видимість профілю впливає на можливість інших користувачів отримати доступ до ваших неприватних репозиторіїв. <a href=\"%s\" target=\"_blank\">Дізнатися більше</a>"
 }

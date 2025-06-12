@@ -304,6 +304,25 @@ func getPackagePayloadInfo(p *api.PackagePayload, linkFormatter linkFormatter, w
 	return text, color
 }
 
+func getActionPayloadInfo(p *api.ActionPayload, linkFormatter linkFormatter) (text string, color int) {
+	runLink := linkFormatter(p.Run.HTMLURL, p.Run.Title)
+	repoLink := linkFormatter(p.Run.Repo.HTMLURL, p.Run.Repo.FullName)
+
+	switch p.Action {
+	case api.HookActionFailure:
+		text = fmt.Sprintf("%s Action Failed in %s %s", runLink, repoLink, p.Run.PrettyRef)
+		color = redColor
+	case api.HookActionRecover:
+		text = fmt.Sprintf("%s Action Recovered in %s %s", runLink, repoLink, p.Run.PrettyRef)
+		color = greenColor
+	case api.HookActionSuccess:
+		text = fmt.Sprintf("%s Action Succeeded in %s %s", runLink, repoLink, p.Run.PrettyRef)
+		color = greenColor
+	}
+
+	return text, color
+}
+
 // ToHook convert models.Webhook to api.Hook
 // This function is not part of the convert package to prevent an import cycle
 func ToHook(repoLink string, w *webhook_model.Webhook) (*api.Hook, error) {

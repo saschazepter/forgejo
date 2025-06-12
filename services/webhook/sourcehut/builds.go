@@ -190,6 +190,10 @@ func (pc sourcehutConvertor) Package(_ *api.PackagePayload) (graphqlPayload[buil
 	return graphqlPayload[buildsVariables]{}, shared.ErrPayloadTypeNotSupported
 }
 
+func (pc sourcehutConvertor) Action(_ *api.ActionPayload) (graphqlPayload[buildsVariables], error) {
+	return graphqlPayload[buildsVariables]{}, shared.ErrPayloadTypeNotSupported
+}
+
 // newPayload opens and adjusts the manifest to submit to the builds service
 //
 // in case of an error the Error field will be set, to be visible by the end-user under recent deliveries

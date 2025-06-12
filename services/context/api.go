@@ -6,6 +6,7 @@ package context
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -365,12 +366,12 @@ func RepoRefForAPI(next http.Handler) http.Handler {
 		ctx := GetAPIContext(req)
 
 		if ctx.Repo.Repository.IsEmpty {
-			ctx.NotFound(fmt.Errorf("repository is empty"))
+			ctx.NotFound(errors.New("repository is empty"))
 			return
 		}
 
 		if ctx.Repo.GitRepo == nil {
-			ctx.InternalServerError(fmt.Errorf("no open git repo"))
+			ctx.InternalServerError(errors.New("no open git repo"))
 			return
 		}
 

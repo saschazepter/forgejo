@@ -24,6 +24,6 @@ func Test_FederatedUserValidation(t *testing.T) {
 		FederationHostID: 1,
 	}
 	if res, _ := validation.IsValid(sut); res {
-		t.Errorf("sut should be invalid")
+		t.Error("sut should be invalid")
 	}
 }

@@ -10,3 +10,4 @@
   is_private: true
   status: 0
   lfs_size: 8192
+  topics: '[]'

@@ -20,7 +20,7 @@ import (
 	f3_cmd "code.forgejo.org/f3/gof3/v3/cmd"
 	f3_logger "code.forgejo.org/f3/gof3/v3/logger"
 	f3_util "code.forgejo.org/f3/gof3/v3/util"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func CmdF3(ctx context.Context) *cli.Command {
@@ -28,21 +28,21 @@ func CmdF3(ctx context.Context) *cli.Command {
 	return &cli.Command{
 		Name:  "f3",
 		Usage: "F3",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			SubcmdF3Mirror(ctx),
 		},
 	}
 }
 
 func SubcmdF3Mirror(ctx context.Context) *cli.Command {
-	mirrorCmd := f3_cmd.CreateCmdMirror(ctx)
+	mirrorCmd := f3_cmd.CreateCmdMirror()
 	mirrorCmd.Before = prepareWorkPathAndCustomConf(ctx)
 	f3Action := mirrorCmd.Action
-	mirrorCmd.Action = func(c *cli.Context) error { return runMirror(ctx, c, f3Action) }
+	mirrorCmd.Action = func(ctx context.Context, cli *cli.Command) error { return runMirror(ctx, cli, f3Action) }
 	return mirrorCmd
 }
 
-func runMirror(ctx context.Context, c *cli.Context, action cli.ActionFunc) error {
+func runMirror(ctx context.Context, c *cli.Command, action cli.ActionFunc) error {
 	setting.LoadF3Setting()
 	if !setting.F3.Enabled {
 		return errors.New("F3 is disabled, it is not ready to be used and is only present for development purposes")
@@ -69,7 +69,7 @@ func runMirror(ctx context.Context, c *cli.Context, action cli.ActionFunc) error
 		}
 	}
 
-	err := action(c)
+	err := action(ctx, c)
 	if panicError, ok := err.(f3_util.PanicError); ok {
 		log.Debug("F3 Stack trace\n%s", panicError.Stack())
 	}

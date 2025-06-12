@@ -11,7 +11,7 @@ import (
 	"forgejo.org/services/doctor"
 
 	"github.com/stretchr/testify/require"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func TestDoctorRun(t *testing.T) {
@@ -22,12 +22,12 @@ func TestDoctorRun(t *testing.T) {
 
 		SkipDatabaseInitialization: true,
 	})
-	app := cli.NewApp()
-	app.Commands = []*cli.Command{cmdDoctorCheck}
-	err := app.Run([]string{"./gitea", "check", "--run", "test-check"})
+	app := cli.Command{}
+	app.Commands = []*cli.Command{cmdDoctorCheck()}
+	err := app.Run(t.Context(), []string{"./gitea", "check", "--run", "test-check"})
 	require.NoError(t, err)
-	err = app.Run([]string{"./gitea", "check", "--run", "no-such"})
+	err = app.Run(t.Context(), []string{"./gitea", "check", "--run", "no-such"})
 	require.ErrorContains(t, err, `unknown checks: "no-such"`)
-	err = app.Run([]string{"./gitea", "check", "--run", "test-check,no-such"})
+	err = app.Run(t.Context(), []string{"./gitea", "check", "--run", "test-check,no-such"})
 	require.ErrorContains(t, err, `unknown checks: "no-such"`)
 }

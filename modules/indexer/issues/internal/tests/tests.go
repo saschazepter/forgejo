@@ -550,6 +550,55 @@ var cases = []*testIndexerCase{
 		},
 	},
 	{
+		Name: "Index",
+		SearchOptions: &internal.SearchOptions{
+			Keyword: "13",
+			SortBy:  internal.SortByScore,
+			RepoIDs: []int64{5},
+		},
+		ExpectedIDs:   []int64{93}, // 93 = #13 in repo 5
+		ExpectedTotal: 1,
+	},
+	{
+		Name: "Index with prefix",
+		SearchOptions: &internal.SearchOptions{
+			Keyword: "#13",
+			SortBy:  internal.SortByScore,
+			RepoIDs: []int64{5},
+		},
+		ExpectedIDs:   []int64{93},
+		ExpectedTotal: 1,
+	},
+	{
+		Name: "Index and title boost",
+		ExtraData: []*internal.IndexerData{
+			{ID: 1001, Title: "re #13", RepoID: 5},
+			{ID: 1002, Title: "re #1001", Content: "leave 13 alone. - 13", RepoID: 5},
+		},
+		SearchOptions: &internal.SearchOptions{
+			Keyword: "!13",
+			SortBy:  internal.SortByScore,
+			RepoIDs: []int64{5},
+		},
+		ExpectedIDs:   []int64{93, 1001, 1002},
+		ExpectedTotal: 3,
+	},
+	{
+		Name: "Index exclude",
+		ExtraData: []*internal.IndexerData{
+			{ID: 1001, Index: 101, Title: "Brrr", RepoID: 5},
+			{ID: 1002, Index: 102, Title: "Brrr", Content: "Brrr", RepoID: 5},
+			{ID: 1003, Index: 103, Title: "Brrr", RepoID: 5},
+			{ID: 1004, Index: 104, Title: "Brrr", RepoID: 5},
+		},
+		SearchOptions: &internal.SearchOptions{
+			Keyword: "Brrr -101 -103",
+			SortBy:  internal.SortByScore,
+		},
+		ExpectedIDs:   []int64{1002, 1004},
+		ExpectedTotal: 2,
+	},
+	{
 		Name: "SortByCreatedDesc",
 		SearchOptions: &internal.SearchOptions{
 			Paginator: &db.ListOptionsAll,
@@ -741,6 +790,7 @@ func generateDefaultIndexerData() []*internal.IndexerData {
 
 			data = append(data, &internal.IndexerData{
 				ID:                 id,
+				Index:              issueIndex,
 				RepoID:             repoID,
 				IsPublic:           repoID%2 == 0,
 				Title:              fmt.Sprintf("issue%d of repo%d", issueIndex, repoID),

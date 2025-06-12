@@ -27,6 +27,10 @@ import (
 
 func forEachObjectFormat(t *testing.T, f func(t *testing.T, objectFormat git.ObjectFormat)) {
 	for _, objectFormat := range []git.ObjectFormat{git.Sha256ObjectFormat, git.Sha1ObjectFormat} {
+		if !git.SupportHashSha256 && objectFormat == git.Sha256ObjectFormat {
+			continue
+		}
+
 		t.Run(objectFormat.Name(), func(t *testing.T) {
 			f(t, objectFormat)
 		})

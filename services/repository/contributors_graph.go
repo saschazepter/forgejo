@@ -111,7 +111,7 @@ func GetContributorStats(ctx context.Context, cache cache.Cache, repo *repo_mode
 		var cachedStats map[string]*ContributorData
 		return cachedStats, json.Unmarshal([]byte(v), &cachedStats)
 	default:
-		return nil, fmt.Errorf("unexpected type in cache detected")
+		return nil, errors.New("unexpected type in cache detected")
 	}
 }
 

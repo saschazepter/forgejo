@@ -5,10 +5,10 @@ package assetfs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
-	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -25,7 +25,7 @@ import (
 // Layer represents a layer in a layered asset file-system. It has a name and works like http.FileSystem
 type Layer struct {
 	name      string
-	fs        http.FileSystem
+	fs        fs.FS
 	localPath string
 }
 
@@ -34,8 +34,16 @@ func (l *Layer) Name() string {
 }
 
 // Open opens the named file. The caller is responsible for closing the file.
-func (l *Layer) Open(name string) (http.File, error) {
+func (l *Layer) Open(name string) (fs.File, error) {
 	return l.fs.Open(name)
+}
+
+func (l *Layer) ReadDir(name string) ([]fs.DirEntry, error) {
+	dirEntries, err := fs.ReadDir(l.fs, name)
+	if err != nil && errors.Is(err, fs.ErrNotExist) {
+		err = nil
+	}
+	return dirEntries, err
 }
 
 // Local returns a new Layer with the given name, it serves files from the given local path.
@@ -48,11 +56,18 @@ func Local(name, base string, sub ...string) *Layer {
 		panic(fmt.Sprintf("Unable to get absolute path for %q: %v", base, err))
 	}
 	root := util.FilePathJoinAbs(base, sub...)
-	return &Layer{name: name, fs: http.Dir(root), localPath: root}
+	fsRoot, err := os.OpenRoot(root)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+		panic(fmt.Sprintf("Unable to open layer %q", err))
+	}
+	return &Layer{name: name, fs: fsRoot.FS(), localPath: root}
 }
 
 // Bindata returns a new Layer with the given name, it serves files from the given bindata asset.
-func Bindata(name string, fs http.FileSystem) *Layer {
+func Bindata(name string, fs fs.FS) *Layer {
 	return &Layer{name: name, fs: fs}
 }
 
@@ -65,11 +80,11 @@ type LayeredFS struct {
 
 // Layered returns a new LayeredFS with the given layers. The first layer is the top layer.
 func Layered(layers ...*Layer) *LayeredFS {
-	return &LayeredFS{layers: layers}
+	return &LayeredFS{layers: slices.DeleteFunc(layers, func(layer *Layer) bool { return layer == nil })}
 }
 
 // Open opens the named file. The caller is responsible for closing the file.
-func (l *LayeredFS) Open(name string) (http.File, error) {
+func (l *LayeredFS) Open(name string) (fs.File, error) {
 	for _, layer := range l.layers {
 		f, err := layer.Open(name)
 		if err == nil || !os.IsNotExist(err) {
@@ -102,27 +117,16 @@ func (l *LayeredFS) ReadLayeredFile(elems ...string) ([]byte, string, error) {
 	return nil, "", fs.ErrNotExist
 }
 
-func shouldInclude(info fs.FileInfo, fileMode ...bool) bool {
+func shouldInclude(info fs.DirEntry, fileMode ...bool) bool {
 	if util.CommonSkip(info.Name()) {
 		return false
 	}
 	if len(fileMode) == 0 {
 		return true
 	} else if len(fileMode) == 1 {
-		return fileMode[0] == !info.Mode().IsDir()
+		return fileMode[0] == !info.IsDir()
 	}
 	panic("too many arguments for fileMode in shouldInclude")
-}
-
-func readDir(layer *Layer, name string) ([]fs.FileInfo, error) {
-	f, err := layer.Open(name)
-	if os.IsNotExist(err) {
-		return nil, nil
-	} else if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	return f.Readdir(-1)
 }
 
 // ListFiles lists files/directories in the given directory. The fileMode controls the returned files.
@@ -133,7 +137,7 @@ func readDir(layer *Layer, name string) ([]fs.FileInfo, error) {
 func (l *LayeredFS) ListFiles(name string, fileMode ...bool) ([]string, error) {
 	fileSet := make(container.Set[string])
 	for _, layer := range l.layers {
-		infos, err := readDir(layer, name)
+		infos, err := layer.ReadDir(name)
 		if err != nil {
 			return nil, err
 		}
@@ -162,7 +166,7 @@ func listAllFiles(layers []*Layer, name string, fileMode ...bool) ([]string, err
 	var list func(dir string) error
 	list = func(dir string) error {
 		for _, layer := range layers {
-			infos, err := readDir(layer, dir)
+			infos, err := layer.ReadDir(dir)
 			if err != nil {
 				return err
 			}

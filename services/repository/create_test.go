@@ -147,3 +147,13 @@ func TestIncludesAllRepositoriesTeams(t *testing.T) {
 	}
 	require.NoError(t, organization.DeleteOrganization(db.DefaultContext, org), "DeleteOrganization")
 }
+
+func TestCreateRepository(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+
+	r, err := CreateRepositoryDirectly(db.DefaultContext, user, user, CreateRepoOptions{Name: "repo-last"})
+	require.NoError(t, err)
+	require.NotNil(t, r.Topics)
+	require.Empty(t, r.Topics)
+}

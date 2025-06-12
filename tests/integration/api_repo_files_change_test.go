@@ -214,7 +214,7 @@ func TestAPIChangeFiles(t *testing.T) {
 		changeFilesOptions.Files[0].SHA = "badsha"
 		req = NewRequestWithJSON(t, "POST", url, &changeFilesOptions).
 			AddTokenAuth(token2)
-		resp = MakeRequest(t, req, http.StatusUnprocessableEntity)
+		resp = MakeRequest(t, req, http.StatusConflict)
 		expectedAPIError := context.APIError{
 			Message: "sha does not match [given: " + changeFilesOptions.Files[0].SHA + ", expected: " + correctSHA + "]",
 			URL:     setting.API.SwaggerURL,

@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -19,23 +20,25 @@ import (
 	"forgejo.org/modules/util"
 
 	"github.com/gobwas/glob"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 // CmdEmbedded represents the available extract sub-command.
-var (
-	CmdEmbedded = &cli.Command{
+func cmdEmbedded() *cli.Command {
+	return &cli.Command{
 		Name:        "embedded",
 		Usage:       "Extract embedded resources",
 		Description: "A command for extracting embedded resources, like templates and images",
-		Subcommands: []*cli.Command{
-			subcmdList,
-			subcmdView,
-			subcmdExtract,
+		Commands: []*cli.Command{
+			subcmdList(),
+			subcmdView(),
+			subcmdExtract(),
 		},
 	}
+}
 
-	subcmdList = &cli.Command{
+func subcmdList() *cli.Command {
+	return &cli.Command{
 		Name:   "list",
 		Usage:  "List files matching the given pattern",
 		Action: runList,
@@ -47,8 +50,10 @@ var (
 			},
 		},
 	}
+}
 
-	subcmdView = &cli.Command{
+func subcmdView() *cli.Command {
+	return &cli.Command{
 		Name:   "view",
 		Usage:  "View a file matching the given pattern",
 		Action: runView,
@@ -60,8 +65,10 @@ var (
 			},
 		},
 	}
+}
 
-	subcmdExtract = &cli.Command{
+func subcmdExtract() *cli.Command {
+	return &cli.Command{
 		Name:   "extract",
 		Usage:  "Extract resources",
 		Action: runExtract,
@@ -90,9 +97,9 @@ var (
 			},
 		},
 	}
+}
 
-	matchedAssetFiles []assetFile
-)
+var matchedAssetFiles []assetFile
 
 type assetFile struct {
 	fs   *assetfs.LayeredFS
@@ -100,7 +107,7 @@ type assetFile struct {
 	path string
 }
 
-func initEmbeddedExtractor(c *cli.Context) error {
+func initEmbeddedExtractor(_ context.Context, c *cli.Command) error {
 	setupConsoleLogger(log.ERROR, log.CanColorStderr, os.Stderr)
 
 	patterns, err := compileCollectPatterns(c.Args().Slice())
@@ -115,32 +122,32 @@ func initEmbeddedExtractor(c *cli.Context) error {
 	return nil
 }
 
-func runList(c *cli.Context) error {
-	if err := runListDo(c); err != nil {
+func runList(ctx context.Context, c *cli.Command) error {
+	if err := runListDo(ctx, c); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		return err
 	}
 	return nil
 }
 
-func runView(c *cli.Context) error {
-	if err := runViewDo(c); err != nil {
+func runView(ctx context.Context, c *cli.Command) error {
+	if err := runViewDo(ctx, c); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		return err
 	}
 	return nil
 }
 
-func runExtract(c *cli.Context) error {
-	if err := runExtractDo(c); err != nil {
+func runExtract(ctx context.Context, c *cli.Command) error {
+	if err := runExtractDo(ctx, c); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		return err
 	}
 	return nil
 }
 
-func runListDo(c *cli.Context) error {
-	if err := initEmbeddedExtractor(c); err != nil {
+func runListDo(ctx context.Context, c *cli.Command) error {
+	if err := initEmbeddedExtractor(ctx, c); err != nil {
 		return err
 	}
 
@@ -151,8 +158,8 @@ func runListDo(c *cli.Context) error {
 	return nil
 }
 
-func runViewDo(c *cli.Context) error {
-	if err := initEmbeddedExtractor(c); err != nil {
+func runViewDo(ctx context.Context, c *cli.Command) error {
+	if err := initEmbeddedExtractor(ctx, c); err != nil {
 		return err
 	}
 
@@ -174,8 +181,8 @@ func runViewDo(c *cli.Context) error {
 	return nil
 }
 
-func runExtractDo(c *cli.Context) error {
-	if err := initEmbeddedExtractor(c); err != nil {
+func runExtractDo(ctx context.Context, c *cli.Command) error {
+	if err := initEmbeddedExtractor(ctx, c); err != nil {
 		return err
 	}
 
@@ -271,7 +278,7 @@ func extractAsset(d string, a assetFile, overwrite, rename bool) error {
 	return nil
 }
 
-func collectAssetFilesByPattern(c *cli.Context, globs []glob.Glob, path string, layer *assetfs.Layer) {
+func collectAssetFilesByPattern(c *cli.Command, globs []glob.Glob, path string, layer *assetfs.Layer) {
 	fs := assetfs.Layered(layer)
 	files, err := fs.ListAllFiles(".", true)
 	if err != nil {

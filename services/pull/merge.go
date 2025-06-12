@@ -6,6 +6,7 @@ package pull
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"forgejo.org/models"
 	"forgejo.org/models/db"
@@ -166,6 +168,41 @@ func expandDefaultMergeMessage(template string, vars map[string]string) (message
 // GetDefaultMergeMessage returns default message used when merging pull request
 func GetDefaultMergeMessage(ctx context.Context, baseGitRepo *git.Repository, pr *issues_model.PullRequest, mergeStyle repo_model.MergeStyle) (message, body string, err error) {
 	return getMergeMessage(ctx, baseGitRepo, pr, mergeStyle, nil)
+}
+
+func AddCommitMessageTrailer(message, tailerKey, tailerValue string) string {
+	trailerLine := tailerKey + ": " + tailerValue
+	message = strings.ReplaceAll(message, "\r\n", "\n")
+	message = strings.ReplaceAll(message, "\r", "\n")
+	if strings.Contains(message, "\n"+trailerLine+"\n") || strings.HasSuffix(message, "\n"+trailerLine) {
+		return message
+	}
+
+	if !strings.HasSuffix(message, "\n") {
+		message += "\n"
+	}
+	lastNewLine := strings.LastIndexByte(message[:len(message)-1], '\n')
+	keyEnd := -1
+	if lastNewLine != -1 {
+		keyEnd = strings.IndexByte(message[lastNewLine:], ':')
+		if keyEnd != -1 {
+			keyEnd += lastNewLine
+		}
+	}
+	var lastLineKey string
+	if lastNewLine != -1 && keyEnd != -1 {
+		lastLineKey = message[lastNewLine+1 : keyEnd]
+	}
+
+	isLikelyTrailerLine := lastLineKey != "" && unicode.IsUpper(rune(lastLineKey[0])) && strings.Contains(message, "-")
+	for i := 0; isLikelyTrailerLine && i < len(lastLineKey); i++ {
+		r := rune(lastLineKey[i])
+		isLikelyTrailerLine = unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-'
+	}
+	if !strings.HasSuffix(message, "\n\n") && !isLikelyTrailerLine {
+		message += "\n"
+	}
+	return message + trailerLine
 }
 
 // Merge merges pull request to base repository.
@@ -518,13 +555,13 @@ func MergedManually(ctx context.Context, pr *issues_model.PullRequest, doer *use
 
 		objectFormat := git.ObjectFormatFromName(pr.BaseRepo.ObjectFormatName)
 		if len(commitID) != objectFormat.FullLength() {
-			return fmt.Errorf("Wrong commit ID")
+			return errors.New("Wrong commit ID")
 		}
 
 		commit, err := baseGitRepo.GetCommit(commitID)
 		if err != nil {
 			if git.IsErrNotExist(err) {
-				return fmt.Errorf("Wrong commit ID")
+				return errors.New("Wrong commit ID")
 			}
 			return err
 		}
@@ -535,7 +572,7 @@ func MergedManually(ctx context.Context, pr *issues_model.PullRequest, doer *use
 			return err
 		}
 		if !ok {
-			return fmt.Errorf("Wrong commit ID")
+			return errors.New("Wrong commit ID")
 		}
 
 		pr.MergedCommitID = commitID
@@ -548,7 +585,7 @@ func MergedManually(ctx context.Context, pr *issues_model.PullRequest, doer *use
 		if merged, err = pr.SetMerged(ctx); err != nil {
 			return err
 		} else if !merged {
-			return fmt.Errorf("SetMerged failed")
+			return errors.New("SetMerged failed")
 		}
 		return nil
 	}); err != nil {

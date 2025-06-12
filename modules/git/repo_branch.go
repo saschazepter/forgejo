@@ -41,7 +41,7 @@ type Branch struct {
 // GetHEADBranch returns corresponding branch of HEAD.
 func (repo *Repository) GetHEADBranch() (*Branch, error) {
 	if repo == nil {
-		return nil, fmt.Errorf("nil repo")
+		return nil, errors.New("nil repo")
 	}
 	stdout, _, err := NewCommand(repo.Ctx, "symbolic-ref", "HEAD").RunStdString(&RunOpts{Dir: repo.Path})
 	if err != nil {

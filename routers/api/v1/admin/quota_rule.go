@@ -4,7 +4,7 @@
 package admin
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 
 	quota_model "forgejo.org/models/quota"
@@ -83,7 +83,7 @@ func CreateQuotaRule(ctx *context.APIContext) {
 	form := web.GetForm(ctx).(*api.CreateQuotaRuleOptions)
 
 	if form.Limit == nil {
-		ctx.Error(http.StatusUnprocessableEntity, "quota_model.ParseLimitSubject", fmt.Errorf("[Limit]: Required"))
+		ctx.Error(http.StatusUnprocessableEntity, "quota_model.ParseLimitSubject", errors.New("[Limit]: Required"))
 		return
 	}
 

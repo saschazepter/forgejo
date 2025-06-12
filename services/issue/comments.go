@@ -5,6 +5,7 @@ package issue
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"forgejo.org/models/db"
@@ -18,7 +19,7 @@ import (
 // CreateRefComment creates a commit reference comment to issue.
 func CreateRefComment(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, issue *issues_model.Issue, content, commitSHA string) error {
 	if len(commitSHA) == 0 {
-		return fmt.Errorf("cannot create reference with empty commit SHA")
+		return errors.New("cannot create reference with empty commit SHA")
 	}
 
 	// Check if same reference from same commit has already existed.

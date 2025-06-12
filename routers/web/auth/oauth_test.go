@@ -51,6 +51,7 @@ func TestNewAccessTokenResponse_OIDCToken(t *testing.T) {
 
 	// Scopes: openid
 	oidcToken := createAndParseToken(t, grants[0])
+	assert.Equal(t, "https://try.gitea.io", oidcToken.RegisteredClaims.Issuer)
 	assert.Empty(t, oidcToken.Name)
 	assert.Empty(t, oidcToken.PreferredUsername)
 	assert.Empty(t, oidcToken.Profile)
@@ -67,6 +68,7 @@ func TestNewAccessTokenResponse_OIDCToken(t *testing.T) {
 
 	// Scopes: openid profile email
 	oidcToken = createAndParseToken(t, grants[0])
+	assert.Equal(t, "https://try.gitea.io", oidcToken.RegisteredClaims.Issuer)
 	assert.Equal(t, "User Five", oidcToken.Name)
 	assert.Equal(t, "user5", oidcToken.PreferredUsername)
 	assert.Equal(t, "https://try.gitea.io/user5", oidcToken.Profile)

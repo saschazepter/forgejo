@@ -250,7 +250,7 @@ func (b *Base) PlainText(status int, text string) {
 // Redirect redirects the request
 func (b *Base) Redirect(location string, status ...int) {
 	code := http.StatusSeeOther
-	if len(status) == 1 {
+	if len(status) == 1 && status[0] > 0 {
 		code = status[0]
 	}
 

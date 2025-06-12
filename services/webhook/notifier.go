@@ -6,6 +6,7 @@ package webhook
 import (
 	"context"
 
+	actions_model "forgejo.org/models/actions"
 	issues_model "forgejo.org/models/issues"
 	packages_model "forgejo.org/models/packages"
 	"forgejo.org/models/perm"
@@ -885,6 +886,38 @@ func (m *webhookNotifier) PackageCreate(ctx context.Context, doer *user_model.Us
 
 func (m *webhookNotifier) PackageDelete(ctx context.Context, doer *user_model.User, pd *packages_model.PackageDescriptor) {
 	notifyPackage(ctx, doer, pd, api.HookPackageDeleted)
+}
+
+func (m *webhookNotifier) ActionRunNowDone(ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status, lastRun *actions_model.ActionRun) {
+	source := EventSource{
+		Repository: run.Repo,
+		Owner:      run.TriggerUser,
+	}
+
+	payload := &api.ActionPayload{
+		Run:         convert.ToActionRun(ctx, run),
+		LastRun:     convert.ToActionRun(ctx, lastRun),
+		PriorStatus: priorStatus.String(),
+	}
+
+	if run.Status.IsSuccess() {
+		payload.Action = api.HookActionSuccess
+		if err := PrepareWebhooks(ctx, source, webhook_module.HookEventActionRunSuccess, payload); err != nil {
+			log.Error("PrepareWebhooks: %v", err)
+		}
+		// send another event when this is a recover
+		if lastRun != nil && !lastRun.Status.IsSuccess() {
+			payload.Action = api.HookActionRecover
+			if err := PrepareWebhooks(ctx, source, webhook_module.HookEventActionRunRecover, payload); err != nil {
+				log.Error("PrepareWebhooks: %v", err)
+			}
+		}
+	} else {
+		payload.Action = api.HookActionFailure
+		if err := PrepareWebhooks(ctx, source, webhook_module.HookEventActionRunFailure, payload); err != nil {
+			log.Error("PrepareWebhooks: %v", err)
+		}
+	}
 }
 
 func notifyPackage(ctx context.Context, sender *user_model.User, pd *packages_model.PackageDescriptor, action api.HookPackageAction) {

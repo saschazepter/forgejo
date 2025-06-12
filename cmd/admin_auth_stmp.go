@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -11,11 +12,11 @@ import (
 	"forgejo.org/modules/util"
 	"forgejo.org/services/auth/source/smtp"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
-var (
-	smtpCLIFlags = []cli.Flag{
+func smtpCLIFlags() []cli.Flag {
+	return []cli.Flag{
 		&cli.StringFlag{
 			Name:  "name",
 			Value: "",
@@ -71,23 +72,27 @@ var (
 			Value: true,
 		},
 	}
+}
 
-	microcmdAuthAddSMTP = &cli.Command{
+func microcmdAuthAddSMTP() *cli.Command {
+	return &cli.Command{
 		Name:   "add-smtp",
 		Usage:  "Add new SMTP authentication source",
 		Action: runAddSMTP,
-		Flags:  smtpCLIFlags,
+		Flags:  smtpCLIFlags(),
 	}
+}
 
-	microcmdAuthUpdateSMTP = &cli.Command{
+func microcmdAuthUpdateSMTP() *cli.Command {
+	return &cli.Command{
 		Name:   "update-smtp",
 		Usage:  "Update existing SMTP authentication source",
 		Action: runUpdateSMTP,
-		Flags:  append(smtpCLIFlags[:1], append([]cli.Flag{idFlag}, smtpCLIFlags[1:]...)...),
+		Flags:  append(smtpCLIFlags()[:1], append([]cli.Flag{idFlag()}, smtpCLIFlags()[1:]...)...),
 	}
-)
+}
 
-func parseSMTPConfig(c *cli.Context, conf *smtp.Source) error {
+func parseSMTPConfig(c *cli.Command, conf *smtp.Source) error {
 	if c.IsSet("auth-type") {
 		conf.Auth = c.String("auth-type")
 		validAuthTypes := []string{"PLAIN", "LOGIN", "CRAM-MD5"}
@@ -123,8 +128,8 @@ func parseSMTPConfig(c *cli.Context, conf *smtp.Source) error {
 	return nil
 }
 
-func runAddSMTP(c *cli.Context) error {
-	ctx, cancel := installSignals()
+func runAddSMTP(ctx context.Context, c *cli.Command) error {
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	if err := initDB(ctx); err != nil {
@@ -163,12 +168,12 @@ func runAddSMTP(c *cli.Context) error {
 	})
 }
 
-func runUpdateSMTP(c *cli.Context) error {
+func runUpdateSMTP(ctx context.Context, c *cli.Command) error {
 	if !c.IsSet("id") {
 		return errors.New("--id flag is missing")
 	}
 
-	ctx, cancel := installSignals()
+	ctx, cancel := installSignals(ctx)
 	defer cancel()
 
 	if err := initDB(ctx); err != nil {

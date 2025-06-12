@@ -26,6 +26,7 @@ type SearchOrganizationsOptions struct {
 type FindOrgOptions struct {
 	db.ListOptions
 	UserID         int64
+	IncludeLimited bool
 	IncludePrivate bool
 }
 
@@ -43,7 +44,11 @@ func (opts FindOrgOptions) ToConds() builder.Cond {
 		cond = cond.And(builder.In("`user`.`id`", queryUserOrgIDs(opts.UserID, opts.IncludePrivate)))
 	}
 	if !opts.IncludePrivate {
-		cond = cond.And(builder.Eq{"`user`.visibility": structs.VisibleTypePublic})
+		if !opts.IncludeLimited {
+			cond = cond.And(builder.Eq{"`user`.visibility": structs.VisibleTypePublic})
+		} else {
+			cond = cond.And(builder.In("`user`.visibility", structs.VisibleTypePublic, structs.VisibleTypeLimited))
+		}
 	}
 	return cond
 }

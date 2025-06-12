@@ -471,3 +471,64 @@
   need_approval: 0
   approved_by: 0
   event_payload: '{"head_commit":{"id":"5f22f7d0d95d614d25a5b68592adb345a4b5c7fd"}}'
+
+
+# GET action run(s) test
+-
+  id: 892
+  title: "successful push run"
+  repo_id: 63
+  owner_id: 2
+  workflow_id: "success.yaml"
+  index: 1
+  trigger_user_id: 2
+  ref: "refs/heads/main"
+  commit_sha: "97f29ee599c373c729132a5c46a046978311e0ee"
+  event: "push"
+  is_fork_pull_request: 0
+  status: 1 # success
+  started: 1683636528
+  stopped: 1683636626
+  created: 1683636108
+  updated: 1683636626
+  need_approval: 0
+  approved_by: 0
+
+-
+  id: 893
+  title: "failed pull_request run"
+  repo_id: 63
+  owner_id: 2
+  workflow_id: "failed.yaml"
+  index: 2
+  trigger_user_id: 2
+  ref: "refs/heads/bugfix-1"
+  commit_sha: "35c5cddfc19397501ec8f4f7bb808a7c8f04445f"
+  event: "pull_request"
+  is_fork_pull_request: 0
+  status: 2 # failure
+  started: 1683636528
+  stopped: 1683636626
+  created: 1683636108
+  updated: 1683636626
+  need_approval: 0
+  approved_by: 0
+
+-
+  id: 894
+  title: "running workflow_dispatch run"
+  repo_id: 63
+  owner_id: 2
+  workflow_id: "running.yaml"
+  index: 3
+  trigger_user_id: 2
+  ref: "refs/heads/main"
+  commit_sha: "97f29ee599c373c729132a5c46a046978311e0ee"
+  event: "workflow_dispatch"
+  is_fork_pull_request: 0
+  status: 6 # running
+  started: 1683636528
+  created: 1683636108
+  updated: 1683636626
+  need_approval: 0
+  approved_by: 0

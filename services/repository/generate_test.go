@@ -65,3 +65,30 @@ func TestFileNameSanitize(t *testing.T) {
 	assert.Equal(t, "_", fileNameSanitize("\u0000"))
 	assert.Equal(t, "目标", fileNameSanitize("目标"))
 }
+
+func TestTransformers(t *testing.T) {
+	input := "Foo_Forgejo-BAR"
+
+	tests := []struct {
+		name     string
+		expected string
+	}{
+		{"SNAKE", "foo_forgejo_bar"},
+		{"KEBAB", "foo-forgejo-bar"},
+		{"CAMEL", "fooForgejoBar"},
+		{"PASCAL", "FooForgejoBar"},
+		{"LOWER", "foo_forgejo-bar"},
+		{"UPPER", "FOO_FORGEJO-BAR"},
+		{"TITLE", "Foo_forgejo-Bar"},
+	}
+
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tranform := defaultTransformers[i]
+			assert.Equal(t, tt.name, tranform.Name)
+
+			got := tranform.Transform(input)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}

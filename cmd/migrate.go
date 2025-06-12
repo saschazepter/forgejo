@@ -11,19 +11,21 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 // CmdMigrate represents the available migrate sub-command.
-var CmdMigrate = &cli.Command{
-	Name:        "migrate",
-	Usage:       "Migrate the database",
-	Description: "This is a command for migrating the database, so that you can run 'forgejo admin user create' before starting the server.",
-	Action:      runMigrate,
+func cmdMigrate() *cli.Command {
+	return &cli.Command{
+		Name:        "migrate",
+		Usage:       "Migrate the database",
+		Description: "This is a command for migrating the database, so that you can run 'forgejo admin user create' before starting the server.",
+		Action:      runMigrate,
+	}
 }
 
-func runMigrate(ctx *cli.Context) error {
-	stdCtx, cancel := installSignals()
+func runMigrate(stdCtx context.Context, ctx *cli.Command) error {
+	stdCtx, cancel := installSignals(stdCtx)
 	defer cancel()
 
 	if err := initDB(stdCtx); err != nil {

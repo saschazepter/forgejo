@@ -87,8 +87,8 @@ func GetFileForVersionByID(ctx context.Context, versionID, fileID int64) (*Packa
 	return pf, nil
 }
 
-// GetFileForVersionByName gets a file of a version by name
-func GetFileForVersionByName(ctx context.Context, versionID int64, name, key string) (*PackageFile, error) {
+// GetFileForVersionByNameMatchCase gets a file of a version by name
+func GetFileForVersionByNameMatchCase(ctx context.Context, versionID int64, name, key string) (*PackageFile, error) {
 	if name == "" {
 		return nil, ErrPackageFileNotExist
 	}
@@ -97,7 +97,7 @@ func GetFileForVersionByName(ctx context.Context, versionID int64, name, key str
 
 	has, err := db.GetEngine(ctx).Where(builder.Eq{
 		"version_id":    versionID,
-		"lower_name":    strings.ToLower(name),
+		"lower_name":    name,
 		"composite_key": key,
 	}).Get(pf)
 	if err != nil {
@@ -107,6 +107,11 @@ func GetFileForVersionByName(ctx context.Context, versionID int64, name, key str
 		return nil, ErrPackageFileNotExist
 	}
 	return pf, nil
+}
+
+// GetFileForVersionByName gets a file of a version by name
+func GetFileForVersionByName(ctx context.Context, versionID int64, name, key string) (*PackageFile, error) {
+	return GetFileForVersionByNameMatchCase(ctx, versionID, strings.ToLower(name), key)
 }
 
 // DeleteFileByID deletes a file

@@ -5,6 +5,7 @@ package db
 
 import (
 	"context"
+	"strconv"
 
 	"forgejo.org/models/db"
 	issue_model "forgejo.org/models/issues"
@@ -71,6 +72,17 @@ func (i *Indexer) Search(ctx context.Context, options *internal.SearchOptions) (
 				)),
 			),
 		)
+
+		term := options.Keyword
+		if term[0] == '#' || term[0] == '!' {
+			term = term[1:]
+		}
+		if issueID, err := strconv.ParseInt(term, 10, 64); err == nil {
+			cond = builder.Or(
+				builder.Eq{"`index`": issueID},
+				cond,
+			)
+		}
 	}
 
 	opt, err := ToDBOptions(ctx, options)

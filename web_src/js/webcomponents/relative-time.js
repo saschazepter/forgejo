@@ -130,21 +130,42 @@ export function DoUpdateRelativeTime(object, now) {
   return HALF_MINUTE;
 }
 
-/** Update the displayed text of one relative-time DOM element with its human-readable, localized relative time string. */
-function UpdateRelativeTime(object) {
-  const next = DoUpdateRelativeTime(object);
-  if (next !== null) setTimeout(() => { UpdateRelativeTime(object) }, next);
-}
+window.customElements.define('relative-time', class extends HTMLElement {
+  static observedAttributes = ['datetime'];
 
-/** Update the displayed text of all relative-time DOM elements with their respective human-readable, localized relative time string. */
-function UpdateAllRelativeTimes() {
-  for (const object of document.querySelectorAll('relative-time')) UpdateRelativeTime(object);
-}
+  alive = false;
+  contentSpan = null;
 
-document.addEventListener('DOMContentLoaded', () => {
-  UpdateAllRelativeTimes();
-  // Also update relative-time DOM elements after htmx swap events.
-  document.body.addEventListener('htmx:afterSwap', () => {
-    for (const object of document.querySelectorAll('relative-time')) DoUpdateRelativeTime(object);
-  });
+  update = (recurring) => {
+    if (!this.alive) return;
+
+    if (!this.shadowRoot) {
+      this.attachShadow({mode: 'open'});
+      this.contentSpan = document.createElement('span');
+      this.shadowRoot.append(this.contentSpan);
+    }
+
+    const next = DoUpdateRelativeTime(this);
+    if (recurring && next !== null) setTimeout(() => { this.update(true) }, next);
+  };
+
+  connectedCallback() {
+    this.alive = true;
+    this.update(true);
+  }
+
+  disconnectedCallback() {
+    this.alive = false;
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === 'datetime' && oldValue !== newValue) this.update(false);
+  }
+
+  set textContent(value) {
+    if (this.contentSpan) this.contentSpan.textContent = value;
+  }
+  get textContent() {
+    return this.contentSpan?.textContent;
+  }
 });

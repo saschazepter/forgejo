@@ -105,6 +105,10 @@ func TestSyncConfigGPGFormat(t *testing.T) {
 	})
 
 	t.Run("SSH format", func(t *testing.T) {
+		if CheckGitVersionAtLeast("2.34.0") != nil {
+			t.SkipNow()
+		}
+
 		r, err := os.OpenRoot(t.TempDir())
 		require.NoError(t, err)
 		f, err := r.OpenFile("ssh-keygen", os.O_CREATE|os.O_TRUNC, 0o700)

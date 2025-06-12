@@ -46,6 +46,13 @@ type CleanupHookTaskConfig struct {
 	NumberToKeep int
 }
 
+// CleanupOfflineRunnersConfig represents a cron task with settings to clean up offline-runner
+type CleanupOfflineRunnersConfig struct {
+	BaseConfig
+	OlderThan       time.Duration
+	GlobalScopeOnly bool
+}
+
 // GetSchedule returns the schedule for the base config
 func (b *BaseConfig) GetSchedule() string {
 	return b.Schedule

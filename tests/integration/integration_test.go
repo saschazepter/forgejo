@@ -109,6 +109,9 @@ func runMainAppWithStdin(stdin io.Reader, subcommand string, args ...string) (st
 		"GITEA_WORK_DIR="+setting.AppWorkPath)
 	cmd.Stdin = stdin
 	out, err := cmd.Output()
+	if ee, ok := err.(*exec.ExitError); ok {
+		log.Error("%s %v exit on error %s", os.Args[0], args, ee.Stderr)
+	}
 	return string(out), err
 }
 

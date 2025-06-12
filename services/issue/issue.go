@@ -6,6 +6,7 @@ package issue
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -345,13 +346,13 @@ func SetIssueUpdateDate(ctx context.Context, issue *issues_model.Issue, updated 
 		return err
 	}
 	if !perm.IsAdmin() && !perm.IsOwner() {
-		return fmt.Errorf("user needs to have admin or owner right")
+		return errors.New("user needs to have admin or owner right")
 	}
 
 	// A simple guard against potential inconsistent calls
 	updatedUnix := timeutil.TimeStamp(updated.Unix())
 	if updatedUnix < issue.CreatedUnix || updatedUnix > timeutil.TimeStampNow() {
-		return fmt.Errorf("unallowed update date")
+		return errors.New("unallowed update date")
 	}
 
 	issue.UpdatedUnix = updatedUnix

@@ -5,7 +5,7 @@ package internal
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"forgejo.org/modules/indexer/internal"
 )
@@ -30,13 +30,13 @@ type dummyIndexer struct {
 }
 
 func (d *dummyIndexer) Index(_ context.Context, _ ...*IndexerData) error {
-	return fmt.Errorf("indexer is not ready")
+	return errors.New("indexer is not ready")
 }
 
 func (d *dummyIndexer) Delete(_ context.Context, _ ...int64) error {
-	return fmt.Errorf("indexer is not ready")
+	return errors.New("indexer is not ready")
 }
 
 func (d *dummyIndexer) Search(_ context.Context, _ *SearchOptions) (*SearchResult, error) {
-	return nil, fmt.Errorf("indexer is not ready")
+	return nil, errors.New("indexer is not ready")
 }

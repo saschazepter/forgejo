@@ -7,6 +7,7 @@ package webhook
 type HookEventType string
 
 // Types of hook events
+// update TestCreateWebhook in models/webhook/webhook_test.go when adding or changing values here
 const (
 	HookEventCreate                    HookEventType = "create"
 	HookEventDelete                    HookEventType = "delete"
@@ -33,6 +34,9 @@ const (
 	HookEventPackage                   HookEventType = "package"
 	HookEventSchedule                  HookEventType = "schedule"
 	HookEventWorkflowDispatch          HookEventType = "workflow_dispatch"
+	HookEventActionRunFailure          HookEventType = "action_run_failure"
+	HookEventActionRunRecover          HookEventType = "action_run_recover"
+	HookEventActionRunSuccess          HookEventType = "action_run_success"
 )
 
 // Event returns the HookEventType as an event string
@@ -65,6 +69,12 @@ func (h HookEventType) Event() string {
 		return "repository"
 	case HookEventRelease:
 		return "release"
+	case HookEventActionRunFailure:
+		return "action_run_failure"
+	case HookEventActionRunRecover:
+		return "action_run_recover"
+	case HookEventActionRunSuccess:
+		return "action_run_success"
 	}
 	return ""
 }
