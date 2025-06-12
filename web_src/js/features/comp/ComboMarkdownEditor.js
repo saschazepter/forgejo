@@ -121,12 +121,12 @@ class ComboMarkdownEditor {
       // Prevent special keyboard handling if currently a text expander popup is open
       if (this.textarea.hasAttribute('aria-expanded')) return;
 
-      const noModifiers = !e.shiftKey && !e.ctrlKey && !e.altKey;
+      const noModifiers = !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey;
       if (e.key === 'Escape') {
         // Explicitly lose focus and reenable tab navigation.
         e.target.blur();
         this.tabEnabled = false;
-      } else if (e.key === 'Tab' && this.tabEnabled && !e.altKey && !e.ctrlKey) {
+      } else if (e.key === 'Tab' && this.tabEnabled && !e.altKey && !e.ctrlKey && !e.metaKey) {
         if (this.indentSelection(e.shiftKey, true)) {
           this.options?.onContentChanged?.(this, e);
           e.preventDefault();
