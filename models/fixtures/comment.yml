@@ -113,3 +113,75 @@
   review_id: 22
   assignee_id: 5
   created_unix: 946684817
+
+-
+  id: 2000
+  type: 8 # milestone
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  milestone_id: 1
+  old_milestone_id: 0
+  created_unix: 946684820
+
+-
+  id: 2001
+  type: 8 # milestone
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  milestone_id: 2
+  old_milestone_id: 1
+  created_unix: 946684920
+
+-
+  id: 2002
+  type: 8 # milestone
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  milestone_id: 0
+  old_milestone_id: 2
+  created_unix: 946685020
+
+-
+  id: 2003
+  type: 8 # milestone
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  milestone_id: 10 # not exsting milestone
+  old_milestone_id: 0
+  created_unix: 946685080
+
+-
+  id: 2010
+  type: 30 # project
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  project_id: 1
+  old_project_id: 0
+  created_unix: 946685120
+
+-
+  id: 2011
+  type: 30 # project
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  project_id: 2
+  old_project_id: 1
+  created_unix: 946685220
+
+-
+  id: 2012
+  type: 30 # project
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  project_id: 0
+  old_project_id: 2
+  created_unix: 946685320
+
+-
+  id: 2013
+  type: 30 # project
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  project_id: 10 # not existing project
+  old_project_id: 0
+  created_unix: 946685320
