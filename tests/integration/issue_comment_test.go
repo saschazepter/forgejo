@@ -5,6 +5,7 @@ package integration
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"forgejo.org/tests"
@@ -74,4 +75,85 @@ func TestIssueCommentChangeProject(t *testing.T) {
 	links = event.Find("a")
 	assert.Contains(t, event.Text(), "added this to the (deleted) project")
 	assert.Equal(t, "/user1", links.Eq(0).AttrOr("href", ""))
+}
+
+func TestIssueCommentChangeLabel(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	req := NewRequest(t, "GET", "/user2/repo1/issues/1")
+	resp := MakeRequest(t, req, http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+
+	// Add multiple labels
+	event := htmlDoc.Find("#issuecomment-2020 .text")
+	links := event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user1 added the label1 label2 labels ")
+	assert.Equal(t, "/user1", links.Eq(0).AttrOr("href", ""))
+	assert.Equal(t, "/user2/repo1/issues?labels=1", links.Eq(1).AttrOr("href", ""))
+	assert.Equal(t, "/user2/repo1/issues?labels=2", links.Eq(2).AttrOr("href", ""))
+	assert.Empty(t, htmlDoc.Find("#issuecomment-2021 .text").Text())
+
+	// Remove single label
+	event = htmlDoc.Find("#issuecomment-2022 .text")
+	links = event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user2 removed the label1 label ")
+	assert.Equal(t, "/user2", links.Eq(0).AttrOr("href", ""))
+	assert.Equal(t, "/user2/repo1/issues?labels=1", links.Eq(1).AttrOr("href", ""))
+
+	// Modify labels (add and remove)
+	event = htmlDoc.Find("#issuecomment-2023 .text")
+	links = event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user1 added label1 and removed label2 labels ")
+	assert.Equal(t, "/user1", links.Eq(0).AttrOr("href", ""))
+	assert.Equal(t, "/user2/repo1/issues?labels=1", links.Eq(1).AttrOr("href", ""))
+	assert.Equal(t, "/user2/repo1/issues?labels=2", links.Eq(2).AttrOr("href", ""))
+	assert.Empty(t, htmlDoc.Find("#issuecomment-2024 .text").Text())
+
+	// Add single label
+	event = htmlDoc.Find("#issuecomment-2025 .text")
+	links = event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user2 added the label2 label ")
+	assert.Equal(t, "/user2", links.Eq(0).AttrOr("href", ""))
+	assert.Equal(t, "/user2/repo1/issues?labels=2", links.Eq(1).AttrOr("href", ""))
+
+	// Remove multiple labels
+	event = htmlDoc.Find("#issuecomment-2026 .text")
+	links = event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user1 removed the label1 label2 labels ")
+	assert.Equal(t, "/user1", links.Eq(0).AttrOr("href", ""))
+	assert.Equal(t, "/user2/repo1/issues?labels=1", links.Eq(1).AttrOr("href", ""))
+	assert.Equal(t, "/user2/repo1/issues?labels=2", links.Eq(2).AttrOr("href", ""))
+	assert.Empty(t, htmlDoc.Find("#issuecomment-2027 .text").Text())
+}
+
+func TestIssueCommentChangeAssignee(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	req := NewRequest(t, "GET", "/user2/repo1/issues/1")
+	resp := MakeRequest(t, req, http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+
+	// self-assign
+	event := htmlDoc.Find("#issuecomment-2040 .text")
+	links := event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user1 self-assigned this")
+	assert.Equal(t, "/user1", links.Eq(0).AttrOr("href", ""))
+
+	// remove other
+	event = htmlDoc.Find("#issuecomment-2041 .text")
+	links = event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user1 was unassigned by user2")
+	assert.Equal(t, "/user1", links.Eq(0).AttrOr("href", ""))
+
+	// add other
+	event = htmlDoc.Find("#issuecomment-2042 .text")
+	links = event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user2 was assigned by user1")
+	assert.Equal(t, "/user2", links.Eq(0).AttrOr("href", ""))
+
+	// self-remove
+	event = htmlDoc.Find("#issuecomment-2043 .text")
+	links = event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user2 removed their assignment")
+	assert.Equal(t, "/user2", links.Eq(0).AttrOr("href", ""))
 }

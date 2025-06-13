@@ -184,4 +184,108 @@
   issue_id: 1 # in repo_id 1
   project_id: 10 # not existing project
   old_project_id: 0
-  created_unix: 946685320
+  created_unix: 946685420
+
+-
+  id: 2020
+  type: 7 # label
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  label_id: 1
+  content: 1 # add label
+  created_unix: 946685520
+
+-
+  id: 2021
+  type: 7 # label
+  poster_id: 1
+  issue_id: 1
+  label_id: 2
+  content: 1 # add label
+  created_unix: 946685620
+
+-
+  id: 2022
+  type: 7 # label
+  poster_id: 2
+  issue_id: 1 # in repo_id 1
+  label_id: 1
+  content: 0 # remove label
+  created_unix: 946685720
+
+-
+  id: 2023
+  type: 7 # label
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  label_id: 1
+  content: 1 # add label
+  created_unix: 946685720
+
+-
+  id: 2024
+  type: 7 # label
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  label_id: 2
+  content: 0 # remove label
+  created_unix: 946685720
+
+-
+  id: 2025
+  type: 7 # label
+  poster_id: 2
+  issue_id: 1 # in repo_id 1
+  label_id: 2
+  content: 1 # add label
+  created_unix: 946685820
+
+-
+  id: 2026
+  type: 7 # label
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  label_id: 1
+  content: 0 # remove label
+  created_unix: 946685920
+
+-
+  id: 2027
+  type: 7 # label
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  label_id: 2
+  content: 0 # remove label
+  created_unix: 946685920
+
+- id: 2040
+  type: 9 # assignee
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  assignee_id: 1 # self
+  removed_assignee: false # add assignee
+  created_unix: 946688020
+
+- id: 2041
+  type: 9 # assignee
+  poster_id: 2
+  issue_id: 1 # in repo_id 1
+  assignee_id: 1
+  removed_assignee: true # remove assignee
+  created_unix: 946688120
+
+- id: 2042
+  type: 9 # assignee
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  assignee_id: 2
+  removed_assignee: false # add assignee
+  created_unix: 946688220
+
+- id: 2043
+  type: 9 # assignee
+  poster_id: 2
+  issue_id: 1 # in repo_id 1
+  assignee_id: 2 # self
+  removed_assignee: true # remove assignee
+  created_unix: 946688320
