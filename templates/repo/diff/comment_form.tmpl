@@ -29,18 +29,18 @@
 			<span class="markup-info">{{svg "octicon-markdown"}} {{ctx.Locale.Tr "repo.diff.comment.markdown_info"}}</span>
 			<div class="right button-sequence">
 				{{if $.reply}}
-					<button class="ui submit primary tiny button btn-reply" type="submit">{{ctx.Locale.Tr "repo.diff.comment.reply"}}</button>
+					<button class="ui submit primary tiny button" type="submit">{{ctx.Locale.Tr "repo.diff.comment.reply"}}</button>
 					<input type="hidden" name="reply" value="{{$.reply}}">
 				{{else}}
 					{{if $.root.CurrentReview}}
-						<button name="pending_review" type="submit" class="ui submit primary tiny button btn-add-comment">{{ctx.Locale.Tr "repo.diff.comment.add_review_comment"}}</button>
+						<button name="pending_review" type="submit" class="ui submit primary tiny button">{{ctx.Locale.Tr "repo.diff.comment.add_review_comment"}}</button>
 					{{else}}
-						<button name="pending_review" type="submit" class="ui submit primary tiny button btn-start-review">{{ctx.Locale.Tr "repo.diff.comment.start_review"}}</button>
+						<button name="pending_review" type="submit" class="ui submit primary tiny button">{{ctx.Locale.Tr "repo.diff.comment.start_review"}}</button>
 						<button name="single_review" value="true" type="submit" class="ui submit tiny basic button btn-add-single">{{ctx.Locale.Tr "repo.diff.comment.add_single_comment"}}</button>
 					{{end}}
 				{{end}}
 				{{if or (not $.HasComments) $.hidden}}
-					<button type="button" class="ui submit tiny basic button btn-cancel cancel-code-comment">{{ctx.Locale.Tr "cancel"}}</button>
+					<button type="button" class="ui submit tiny basic button cancel-code-comment">{{ctx.Locale.Tr "cancel"}}</button>
 				{{end}}
 			</div>
 		</div>
