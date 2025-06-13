@@ -48,7 +48,7 @@
 			</div>
 		</div>
 	{{end}}
-	<div id="code-comments-{{(index .comments 0).ID}}" class="comment-code-cloud ui segment{{if $resolved}} tw-hidden{{end}}">
+	<div id="code-comments-{{(index .comments 0).ID}}" class="comment-code-cloud ui segment{{if $resolved}} tw-hidden{{end}} tw-mb-2">
 		{{range .comments}}
 			{{$createdSubStr:= DateUtils.TimeSince .CreatedUnix}}
 			<div class="comment code-comment tw-pb-4" id="{{.HashTag}}">
@@ -104,7 +104,7 @@
 				</div>
 			</div>
 		{{end}}
-		<div class="tw-flex tw-items-center tw-flex-wrap tw-mt-2 tw-mb-2">
+		<div class="tw-flex tw-items-center tw-flex-wrap tw-mt-2">
 			<div class="tw-flex-1">
 				{{if $resolved}}
 					<div class="ui grey text">

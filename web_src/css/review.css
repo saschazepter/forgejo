@@ -146,7 +146,7 @@
 }
 
 .comment-code-cloud .footer {
-  padding: 10px 0;
+  padding: 10px 0 0 0;
 }
 
 .comment-code-cloud .footer .markup-info {
@@ -167,7 +167,7 @@
 }
 
 .diff-file-body .comment-form {
-  margin: 0 0 0 3em;
+  margin-left: 3em;
 }
 
 .diff-file-body.binary {
