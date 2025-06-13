@@ -190,7 +190,7 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 		// even on template error, the page returns HTTP 200
 		// count the comments to ensure success.
 		doc = NewHTMLParser(t, resp.Body)
-		assert.Len(t, doc.Find(`.comments > .comment`).Nodes, 1)
+		assert.Len(t, doc.Find(`.comment-code-cloud > .comment`).Nodes, 1)
 	})
 
 	t.Run("outdated and newer review (line 2)", func(t *testing.T) {
@@ -307,7 +307,7 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 		// even on template error, the page returns HTTP 200
 		// count the comments to ensure success.
 		doc = NewHTMLParser(t, resp.Body)
-		comments := doc.Find(`.comments > .comment`)
+		comments := doc.Find(`.comment-code-cloud > .comment`)
 		assert.Len(t, comments.Nodes, 1) // the outdated comment belongs to another review and should not be shown
 	})
 
@@ -339,7 +339,7 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 		resp := session.MakeRequest(t, req, http.StatusOK)
 
 		doc := NewHTMLParser(t, resp.Body)
-		comments := doc.Find(`.comments > .comment`)
+		comments := doc.Find(`.comment-code-cloud > .comment`)
 		assert.Len(t, comments.Nodes, 3) // 1 comment on line 1 + 2 comments on line 3
 	})
 }
