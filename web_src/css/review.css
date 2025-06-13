@@ -128,10 +128,6 @@
   cursor: pointer;
 }
 
-.comment-code-cloud .ui.active.tab {
-  padding: 0.5em;
-}
-
 .comment-code-cloud .ui.active.tab.markup {
   padding: 1em;
   min-height: 168px;
