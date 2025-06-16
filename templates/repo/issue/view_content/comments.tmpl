@@ -192,12 +192,13 @@
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
 					{{template "shared/user/authorlink" .Poster}}
-					{{$newMilestoneDisplayHtml := "Unknown Project"}}
+					{{$milestoneIcon := svg "octicon-milestone" 16 "tw-ml-1 tw-mr-2"}}
+					{{$newMilestoneDisplayHtml := ""}}
 					{{if gt .MilestoneID 0}}
-						{{$newMilestoneDisplayHtml = HTMLFormat `<a href='%s/milestones/%d' rel='nofollow'>%s%s</a>` $.RepoLink .MilestoneID (svg "octicon-milestone" 16 "tw-ml-1 tw-mr-2") .Milestone.Name}}
+						{{$newMilestoneDisplayHtml = HTMLFormat `<a href='%s/milestones/%d' rel='nofollow'>%s%s</a>` $.RepoLink .MilestoneID $milestoneIcon .Milestone.Name}}
 					{{end}}
 					{{if gt .OldMilestoneID 0}}
-						{{$oldMilestoneDisplayHtml := HTMLFormat `<a href='%s/milestones/%d' rel='nofollow'>%s%s</a>` $.RepoLink .OldMilestoneID (svg "octicon-milestone" 16 "tw-ml-1 tw-mr-2") .OldMilestone.Name}}
+						{{$oldMilestoneDisplayHtml := HTMLFormat `<a href='%s/milestones/%d' rel='nofollow'>%s%s</a>` $.RepoLink .OldMilestoneID $milestoneIcon .OldMilestone.Name}}
 						{{if gt .MilestoneID 0}}
 							{{ctx.Locale.Tr "repo.issues.change_milestone_at" $oldMilestoneDisplayHtml $newMilestoneDisplayHtml $createdStr}}
 						{{else}}
