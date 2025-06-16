@@ -159,3 +159,91 @@ func TestIssueCommentChangeAssignee(t *testing.T) {
 	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user2 removed their assignment")
 	assert.Equal(t, "/user2", links.Eq(0).AttrOr("href", ""))
 }
+
+func TestIssueCommentChangeLock(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	req := NewRequest(t, "GET", "/user2/repo1/issues/1")
+	resp := MakeRequest(t, req, http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+
+	// lock without reason
+	event := htmlDoc.Find("#issuecomment-2050 .text")
+	links := event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user1 locked and limited conversation to collaborators")
+	assert.Equal(t, "/user1", links.Eq(0).AttrOr("href", ""))
+
+	// unlock
+	event = htmlDoc.Find("#issuecomment-2051 .text")
+	links = event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user1 unlocked this conversation")
+	assert.Equal(t, "/user1", links.Eq(0).AttrOr("href", ""))
+
+	// lock with reason
+	event = htmlDoc.Find("#issuecomment-2052 .text")
+	links = event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user1 locked as Too heated and limited conversation to collaborators")
+	assert.Equal(t, "/user1", links.Eq(0).AttrOr("href", ""))
+
+	// unlock
+	event = htmlDoc.Find("#issuecomment-2053 .text")
+	links = event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user1 unlocked this conversation")
+	assert.Equal(t, "/user1", links.Eq(0).AttrOr("href", ""))
+}
+
+func TestIssueCommentChangePin(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	req := NewRequest(t, "GET", "/user2/repo1/issues/1")
+	resp := MakeRequest(t, req, http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+
+	// pin
+	event := htmlDoc.Find("#issuecomment-2060 .text")
+	links := event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user1 pinned this")
+	assert.Equal(t, "/user1", links.Eq(0).AttrOr("href", ""))
+
+	// unpin
+	event = htmlDoc.Find("#issuecomment-2061 .text")
+	links = event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user1 unpinned this")
+	assert.Equal(t, "/user1", links.Eq(0).AttrOr("href", ""))
+}
+
+func TestIssueCommentChangeOpen(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	req := NewRequest(t, "GET", "/user2/repo1/issues/1")
+	resp := MakeRequest(t, req, http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+
+	// close issue
+	event := htmlDoc.Find("#issuecomment-2070 .text")
+	links := event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user1 closed this issue")
+	assert.Equal(t, "/user1", links.Eq(0).AttrOr("href", ""))
+
+	// reopen issue
+	event = htmlDoc.Find("#issuecomment-2071 .text")
+	links = event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user2 reopened this issue")
+	assert.Equal(t, "/user2", links.Eq(0).AttrOr("href", ""))
+
+	req = NewRequest(t, "GET", "/user2/repo1/pulls/2")
+	resp = MakeRequest(t, req, http.StatusOK)
+	htmlDoc = NewHTMLParser(t, resp.Body)
+
+	// close pull request
+	event = htmlDoc.Find("#issuecomment-2072 .text")
+	links = event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user1 closed this pull request")
+	assert.Equal(t, "/user1", links.Eq(0).AttrOr("href", ""))
+
+	// reopen pull request
+	event = htmlDoc.Find("#issuecomment-2073 .text")
+	links = event.Find("a")
+	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user2 reopened this pull request")
+	assert.Equal(t, "/user2", links.Eq(0).AttrOr("href", ""))
+}

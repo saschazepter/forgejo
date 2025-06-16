@@ -289,3 +289,64 @@
   assignee_id: 2 # self
   removed_assignee: true # remove assignee
   created_unix: 946688320
+
+- id: 2050
+  type: 23 # lock
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  created_unix: 946688420
+
+- id: 2051
+  type: 24 # unlock
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  created_unix: 946688520
+
+- id: 2052
+  type: 23 # lock
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  content: "Too heated"
+  created_unix: 946688620
+
+- id: 2053
+  type: 24 # unlock
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  created_unix: 946688720
+
+- id: 2060
+  type: 36 # pin
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  created_unix: 946688820
+
+- id: 2061
+  type: 37 # unpin
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  created_unix: 946688920
+
+- id: 2070
+  type: 2 # close
+  poster_id: 1
+  issue_id: 1 # in repo_id 1
+  created_unix: 946689020
+
+- id: 2071
+  type: 1 # reopen
+  poster_id: 2
+  issue_id: 1 # in repo_id 1
+  created_unix: 946689220
+
+- id: 2072
+  type: 2 # close
+  poster_id: 1
+  issue_id: 2 # pull in repo_id 1
+  created_unix: 946689320
+
+- id: 2073
+  type: 1 # reopen
+  poster_id: 2
+  issue_id: 2 # pull in repo_id 1
+  created_unix: 946689420
