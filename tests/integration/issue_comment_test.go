@@ -144,12 +144,14 @@ func TestIssueCommentChangeAssignee(t *testing.T) {
 	links = event.Find("a")
 	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user1 was unassigned by user2")
 	assert.Equal(t, "/user1", links.Eq(0).AttrOr("href", ""))
+	// assert.Equal(t, "/user2", links.Eq(1).AttrOr("href", ""))
 
 	// add other
 	event = htmlDoc.Find("#issuecomment-2042 .text")
 	links = event.Find("a")
 	assert.Contains(t, strings.Join(strings.Fields(event.Text()), " "), "user2 was assigned by user1")
 	assert.Equal(t, "/user2", links.Eq(0).AttrOr("href", ""))
+	// assert.Equal(t, "/user1", links.Eq(1).AttrOr("href", ""))
 
 	// self-remove
 	event = htmlDoc.Find("#issuecomment-2043 .text")
