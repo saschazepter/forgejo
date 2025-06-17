@@ -23,6 +23,10 @@ func MailActionRun(run *actions_model.ActionRun, priorStatus actions_model.Statu
 		return nil
 	}
 
+	if !run.EnableMailNotifications {
+		return nil
+	}
+
 	if run.TriggerUser.Email != "" && run.TriggerUser.EmailNotificationsPreference != user_model.EmailNotificationsDisabled {
 		if err := sendMailActionRun(run.TriggerUser, run, priorStatus, lastRun); err != nil {
 			return err

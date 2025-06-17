@@ -64,8 +64,9 @@ func TestActionRunNowDoneNotificationMail(t *testing.T) {
 	// Do some funky stuff with the action run's ids:
 	// The run with the larger ID finished first.
 	// This is odd but something that must work.
-	run1 := &actions_model.ActionRun{ID: 2, Repo: &repo, RepoID: repo.ID, Title: "some workflow", TriggerUser: triggerUser, TriggerUserID: triggerUser.ID, Status: actions_model.StatusFailure, Stopped: 1745821796, TriggerEvent: "workflow_dispatch"}
-	run2 := &actions_model.ActionRun{ID: 1, Repo: &repo, RepoID: repo.ID, Title: "some workflow", TriggerUser: triggerUser, TriggerUserID: triggerUser.ID, Status: actions_model.StatusSuccess, Stopped: 1745822796, TriggerEvent: "push"}
+	run1 := &actions_model.ActionRun{ID: 2, Repo: &repo, RepoID: repo.ID, Title: "some workflow", TriggerUser: triggerUser, TriggerUserID: triggerUser.ID, Status: actions_model.StatusFailure, Stopped: 1745821796, TriggerEvent: "workflow_dispatch", EnableMailNotifications: true}
+	run2 := &actions_model.ActionRun{ID: 1, Repo: &repo, RepoID: repo.ID, Title: "some workflow", TriggerUser: triggerUser, TriggerUserID: triggerUser.ID, Status: actions_model.StatusSuccess, Stopped: 1745822796, TriggerEvent: "push", EnableMailNotifications: true}
+	run3 := &actions_model.ActionRun{ID: 1, Repo: &repo, RepoID: repo.ID, Title: "some workflow", TriggerUser: triggerUser, TriggerUserID: triggerUser.ID, Status: actions_model.StatusSuccess, Stopped: 1745822796, TriggerEvent: "push", EnableMailNotifications: false}
 
 	notify_service.RegisterNotifier(NewNotifier())
 
@@ -142,5 +143,14 @@ func TestActionRunNowDoneNotificationMail(t *testing.T) {
 		notify_service.ActionRunNowDone(ctx, run2, actions_model.StatusRunning, run1)
 		assert.True(t, mailSentToOwner)
 		assert.True(t, mailSentToTriggerUser)
+	})
+
+	t.Run("SendNotificationEmailOnActionRunRecoveredWithDisabledMail", func(t *testing.T) {
+		defer MockMailSettings(func(msgs ...*Message) {
+			assert.Len(t, msgs, 0)
+		})()
+		assert.NotNil(t, setting.MailService)
+
+		notify_service.ActionRunNowDone(ctx, run3, actions_model.StatusRunning, run1)
 	})
 }
