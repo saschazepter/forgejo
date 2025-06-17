@@ -100,5 +100,8 @@
     "stars.list.none": "Ninguém favoritou este repositório.",
     "followers.outgoing.list.self.none": "Você não está seguindo ninguém.",
     "editor.textarea.tab_hint": "Linha já indentada. Pressione <kbd>Tab</kbd> novamente ou <kbd>Esc</kbd> para sair do editor.",
-    "editor.textarea.shift_tab_hint": "Sem indentação nesta linha. Pressione <kbd>Shift</kbd> + <kbd>Tab</kbd> novamente ou <kbd>Esc</kbd> para sair do editor."
+    "editor.textarea.shift_tab_hint": "Sem indentação nesta linha. Pressione <kbd>Shift</kbd> + <kbd>Tab</kbd> novamente ou <kbd>Esc</kbd> para sair do editor.",
+    "admin.dashboard.cleanup_offline_runners": "Limpar runners desconectados",
+    "avatar.constraints_hint": "Imagem de perfil personalizada não pode exceder %[1]s em tamanho ou ser maior que %[2]dx%[3]d pixels",
+    "settings.visibility.description": "A visibilidade do perfil afeta a habilidade de acessarem seus repositórios não-privados. <a href=\"%s\" target=\"_blank\">Saiba mais</a>"
 }

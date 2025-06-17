@@ -102,5 +102,6 @@
     "editor.textarea.tab_hint": "Rinda jau ir ar atkāpi. Spied <kbd>Tab</kbd> vēlreiz vai <kbd>Escape</kbd>, lai izietu no redaktora!",
     "editor.textarea.shift_tab_hint": "Šajā rindā nav atkāpes. Spied <kbd>Shift</kbd> + <kbd>Tab</kbd> vēlreiz vai <kbd>Escape</kbd>, lai izietu no redaktora!",
     "admin.dashboard.cleanup_offline_runners": "Notīrīt bezsaistes izpildītājus",
-    "settings.visibility.description": "Profila redzamība ietekmē iespēju citiem piekļūt Tavām glabātavām, kas nav privātas. <a href=\"%s\" target=\"_blank\">Uzzināt vairāk</a>"
+    "settings.visibility.description": "Profila redzamība ietekmē iespēju citiem piekļūt Tavām glabātavām, kas nav privātas. <a href=\"%s\" target=\"_blank\">Uzzināt vairāk</a>",
+    "avatar.constraints_hint": "Pielāgots profila attēls nevar pārsniegt %[1]s vai būt lielāks par %[2]dx%[3]d pikseļiem"
 }

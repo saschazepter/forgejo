@@ -88,10 +88,10 @@
     "moderation.report_abuse_form.details": "Використовуйте цю форму, щоб повідомити про користувачів, які створюють спам-профілі, репозиторії, задачі, коментарі або поводяться неналежним чином.",
     "moderation.abuse_category": "Категорія",
     "moderation.abuse_category.other_violations": "Інші порушення правил платформи",
-    "moderation.reporting_failed": "Не вдалося надіслати нове повідомлення про порушення: %v",
+    "moderation.reporting_failed": "Не вдалося надіслати повідомлення про порушення: %v",
     "moderation.report_remarks": "Подробиці",
     "moderation.reported_thank_you": "Дякуємо за ваше повідомлення. Адміністрацію поінформовано про нього.",
-    "repo.form.cannot_create": "Усі простори, в яких ви можете створювати репозиторії, досягли максимальної кількості репозиторіїв.",
+    "repo.form.cannot_create": "У всіх просторах, де ви можете створювати репозиторії, досягнуто обмеження кількості репозиторіїв.",
     "repo.issue_indexer.title": "Індексатор задач",
     "followers.incoming.list.self.none": "Ніхто не стежить за вашим профілем.",
     "followers.incoming.list.none": "Ніхто не стежить за цим користувачем.",
@@ -102,5 +102,6 @@
     "editor.textarea.tab_hint": "У рядку вже є відступ. Натисніть <kbd>Tab</kbd> ще раз або <kbd>Esc</kbd>, щоб вийти з редактора.",
     "editor.textarea.shift_tab_hint": "У цьому рядку немає відступів. Натисніть <kbd>Shift</kbd> + <kbd>Tab</kbd> ще раз або <kbd>Esc</kbd>, щоб вийти з редактора.",
     "admin.dashboard.cleanup_offline_runners": "Очистити неактивні раннери",
-    "settings.visibility.description": "Видимість профілю впливає на можливість інших користувачів отримати доступ до ваших неприватних репозиторіїв. <a href=\"%s\" target=\"_blank\">Дізнатися більше</a>"
+    "settings.visibility.description": "Видимість профілю впливає на можливість інших користувачів отримати доступ до ваших неприватних репозиторіїв. <a href=\"%s\" target=\"_blank\">Дізнатися більше</a>",
+    "avatar.constraints_hint": "Розмір користувацького аватара не може перевищувати %[1]s або бути більшим за %[2]d×%[3]d пікселів"
 }

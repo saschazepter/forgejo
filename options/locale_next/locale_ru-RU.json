@@ -101,5 +101,7 @@
     "moderation.report_abuse_form.header": "Жалоба администрации",
     "editor.textarea.tab_hint": "Отступ уже добавлен. Нажмите <kbd>Tab</kbd> снова или <kbd>Escape</kbd>, чтобы покинуть редактор.",
     "editor.textarea.shift_tab_hint": "В строке нет отступов. Нажмите <kbd>Shift</kbd> + <kbd>Tab</kbd> снова или <kbd>Escape</kbd>, чтобы покинуть редактор.",
-    "admin.dashboard.cleanup_offline_runners": "Удалить недоступных исполнителей"
+    "admin.dashboard.cleanup_offline_runners": "Удалить недоступных исполнителей",
+    "avatar.constraints_hint": "Изображение профиля не может быть более %[1]s и крупнее %[2]dx%[3]d пикселей",
+    "settings.visibility.description": "Видимость профиля влияет на доступ других до ваших не частных репозиториев. <a href=\"%s\" target=\"_blank\">Подробнее</a>"
 }

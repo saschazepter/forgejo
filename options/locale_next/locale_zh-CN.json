@@ -69,5 +69,7 @@
     "followers.incoming.list.self.none": "没有人关注你的个人资料。",
     "editor.textarea.tab_hint": "此行已缩进。再次按 <kbd>Tab</kbd> 或按 <kbd>Escape</kbd> 退出编辑器。",
     "editor.textarea.shift_tab_hint": "此行无缩进。再次按 <kbd>Shift</kbd> + <kbd>Tab</kbd> 或按 <kbd>Escape</kbd> 退出编辑器。",
-    "admin.dashboard.cleanup_offline_runners": "清理离线运行器"
+    "admin.dashboard.cleanup_offline_runners": "清理离线运行器",
+    "settings.visibility.description": "个人资料可见性设置会影响他人对您的非私有仓库的访问。<a href=\"%s\" target=\"_blank\">了解更多</a>",
+    "avatar.constraints_hint": "自定义头像大小不得超过 %[1]s，或大于 %[2]d×%[3]d 像素"
 }

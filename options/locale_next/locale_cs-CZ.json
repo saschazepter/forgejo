@@ -102,5 +102,6 @@
     "editor.textarea.tab_hint": "Řádek je již odsazen. Pro opuštění editoru stiskněte znovu <kbd>Tab</kbd> nebo <kbd>Escape</kbd>.",
     "editor.textarea.shift_tab_hint": "Na tomto řádku není žádné odsazení. Pro opuštění editoru stiskněte znovu <kbd>Shift</kbd> + <kbd>Tab</kbd> nebo <kbd>Escape</kbd>.",
     "admin.dashboard.cleanup_offline_runners": "Vymazat offline runnery",
-    "settings.visibility.description": "Viditelnost profilu ovlivňuje možnost ostatních přistupovat k vašim veřejným repozitářům. <a href=\"%s\" target=\"_blank\">Zjistit více</a>"
+    "settings.visibility.description": "Viditelnost profilu ovlivňuje možnost ostatních přistupovat k vašim veřejným repozitářům. <a href=\"%s\" target=\"_blank\">Zjistit více</a>",
+    "avatar.constraints_hint": "Velikost vlastního avataru nesmí překročit %[1]s nebo být větší než %[2]dx%[3]d pixelů"
 }

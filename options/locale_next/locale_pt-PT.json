@@ -101,5 +101,7 @@
     "editor.textarea.tab_hint": "Linha já indentada. Pressione <kbd>Tab</kbd> novamente ou <kbd>Escape</kbd> para sair do editor.",
     "editor.textarea.shift_tab_hint": "Sem indentação nesta linha. Pressione <kbd>Shift</kbd> + <kbd>Tab</kbd> novamente ou <kbd>Escape</kbd> para sair do editor.",
     "stars.list.none": "Ninguém juntou este repositório aos favoritos.",
-    "admin.dashboard.cleanup_offline_runners": "Limpeza de executores offline"
+    "admin.dashboard.cleanup_offline_runners": "Limpeza de executores offline",
+    "settings.visibility.description": "A visibilidade do perfil afecta a capacidade de outros acederem aos seus repositórios não privados. <a href=\"%s\" target=\"_blank\">Ler mais</a>",
+    "avatar.constraints_hint": "O avatar personalizado não pode exceder %[1]s de tamanho ou ser maior do que %[2]dx%[3]d pixéis"
 }

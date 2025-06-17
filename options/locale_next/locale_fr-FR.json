@@ -97,5 +97,11 @@
     "repo.issue_indexer.title": "Indexeur de problèmes",
     "stars.list.none": "Personne n'a mis d'étoiles sur ce dépôt.",
     "watch.list.none": "Personne ne consulte ce dépôt.",
-    "repo.form.cannot_create": "Tous les espaces dans lesquels vous pouvez créer des dépôts ont atteint la limite de dépôts."
+    "repo.form.cannot_create": "Tous les espaces dans lesquels vous pouvez créer des dépôts ont atteint la limite de dépôts.",
+    "admin.dashboard.cleanup_offline_runners": "Nettoyer les exécuteurs hors ligne",
+    "mail.actions.run_info_trigger": "Déclenché parce que : %[1]s par : %[2]s",
+    "settings.visibility.description": "La visibilité du profil affecte la capacité des autres à accéder à vos dépôts non-privés. <a href=\"%s\" target=\"_blank\">Voir plus</a>",
+    "editor.textarea.shift_tab_hint": "Pas d'indentation sur cette ligne. Appuyez sur <kbd>Maj</kbd> + <kbd>Tab</kbd> une nouvelle fois ou sur <kbd>Échap</kbd> pour quitter l'éditeur.",
+    "avatar.constraints_hint": "L'avatar personnalisé ne doit pas dépasser une taille de %[1]s ou être plus grand que %[2]dx%[3]d pixels",
+    "editor.textarea.tab_hint": "Ligne déjà indentée. Appuyez sur <kbd>Tab</kbd> une nouvelle fois ou sur <kbd>Échap</kbd> pour quitter l'éditeur."
 }

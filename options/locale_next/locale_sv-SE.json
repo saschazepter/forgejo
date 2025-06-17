@@ -56,7 +56,7 @@
     "mail.actions.successful_run_after_failure": "Arbetsflöde %[1]s återställdes i förrådet %[2]s",
     "mail.actions.not_successful_run": "Arbetsflödet %[1]s misslyckades i förrådet %[2]s",
     "editor.textarea.shift_tab_hint": "Ingen indragning på den här raden. Tryck på <kbd>Shift</kbd> + <kbd>Tab</kbd> igen eller <kbd>Escape</kbd> för att lämna redigeringsläget.",
-    "meta.last_line": "Tack för att du översatte Forgejo! Daniel Nylander heter jag. https://www.danielnylander.se",
+    "meta.last_line": "Daniel Nylander heter jag och har översatt Forgejo. Mer information om mig på https://www.danielnylander.se",
     "editor.textarea.tab_hint": "Raden är redan indragen. Tryck på <kbd>Tab</kbd> igen eller <kbd>Escape</kbd> för att lämna redigeringsläget.",
     "home.welcome.no_activity": "Ingen aktivitet",
     "home.welcome.activity_hint": "Det finns inget i ditt flöde ännu. Dina åtgärder och aktivitet från förråd som du bevakar kommer att visas här.",
@@ -93,5 +93,7 @@
     "moderation.abuse_category": "Kategori",
     "moderation.abuse_category.placeholder": "Välj en kategori",
     "moderation.abuse_category.spam": "Skräppost",
-    "moderation.abuse_category.malware": "Skadlig kod"
+    "moderation.abuse_category.malware": "Skadlig kod",
+    "settings.visibility.description": "Profilens synlighet påverkar andras möjlighet att komma åt dina icke-privata förråd. <a href=\"%s\" target=\"_blank\">Läs mer</a>",
+    "avatar.constraints_hint": "Anpassade avatarer får inte vara större än %[1] eller %[2]dx%[3] bildpunkter"
 }
