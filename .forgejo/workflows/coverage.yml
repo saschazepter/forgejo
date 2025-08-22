@@ -1,0 +1,61 @@
+name: coverage
+
+on:
+  workflow_dispatch:
+
+jobs:
+  all:
+    runs-on: docker
+    container:
+      image: 'data.forgejo.org/oci/ci:1'
+      options: --tmpfs /tmp:exec,noatime
+    services:
+      elasticsearch:
+        image: data.forgejo.org/oci/bitnami/elasticsearch:7
+        options: --tmpfs /bitnami/elasticsearch/data
+        env:
+          discovery.type: single-node
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      minio:
+        image: data.forgejo.org/oci/bitnami/minio:2024.8.17
+        options: >-
+          --hostname gitea.minio --tmpfs /bitnami/minio/data:noatime
+        env:
+          MINIO_DOMAIN: minio
+          MINIO_ROOT_USER: 123456
+          MINIO_ROOT_PASSWORD: 12345678
+      mysql:
+        image: 'data.forgejo.org/oci/bitnami/mysql:8.4'
+        env:
+          ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: testgitea
+          #
+          # See also https://codeberg.org/forgejo/forgejo/issues/976
+          #
+          MYSQL_EXTRA_FLAGS: --innodb-adaptive-flushing=OFF --innodb-buffer-pool-size=4G --innodb-log-buffer-size=128M --innodb-flush-log-at-trx-commit=0 --innodb-flush-log-at-timeout=30 --innodb-flush-method=nosync --innodb-fsync-threshold=1000000000 --disable-log-bin
+        options: --tmpfs /bitnami/mysql/data:noatime
+      ldap:
+        image: data.forgejo.org/oci/test-openldap:latest
+      pgsql:
+        image: data.forgejo.org/oci/bitnami/postgresql:16
+        env:
+          POSTGRESQL_DATABASE: test
+          POSTGRESQL_PASSWORD: postgres
+          POSTGRESQL_FSYNC: off
+          POSTGRESQL_EXTRA_FLAGS: -c full_page_writes=off
+        options: --tmpfs /bitnami/postgresql
+    steps:
+      - uses: https://data.forgejo.org/actions/checkout@v4
+      - uses: ./.forgejo/workflows-composite/setup-env
+      - name: install git >= 2.42
+        uses: ./.forgejo/workflows-composite/apt-install-from
+        with:
+          packages: git
+      - uses: ./.forgejo/workflows-composite/build-backend
+      - run: |
+          su forgejo -c 'echo OK'
+        timeout-minutes: 120
+        env:
+          TEST_ELASTICSEARCH_URL: http://elasticsearch:9200
+          TEST_MINIO_ENDPOINT: minio:9000
+          TEST_LDAP: 1
