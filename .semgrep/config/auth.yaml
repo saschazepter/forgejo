@@ -38,3 +38,41 @@ rules:
     paths:
       include:
         - "/routers/api/**/*.go"
+
+  - id: forgejo-api-use-resource-GetUserRepoPermission
+    patterns:
+      - pattern: |
+          $X.GetUserRepoPermission($CTX, $REPO, $DOER)
+      - metavariable-type:
+          metavariable: $CTX
+          types:
+            - "*context.APIContext"
+    languages:
+      - go
+    message: >
+      GetUserRepoPermission does not take into account fine-grained access token limitations.  Use
+      GetUserRepoPermissionWithReducer.
+    fix: |
+      $X.GetUserRepoPermissionWithReducer($CTX, $REPO, $DOER, $CTX.Reducer)
+    severity: ERROR
+
+  - id: forgejo-api-suspicious-GetUserRepoPermission
+    patterns:
+      - pattern: $X.GetUserRepoPermission($CTX, $REPO, $DOER)
+      - pattern-not: # don't match if identical to forgejo-api-use-resource-GetUserRepoPermission
+          patterns:
+          - pattern: |
+              $X.GetUserRepoPermission($CTX, $REPO, $DOER)
+          - metavariable-type:
+              metavariable: $CTX
+              types:
+                - "*context.APIContext"
+    languages:
+      - go
+    message: >
+      API code is accessing GetUserRepoPermission which does not take into account fine-grained access token
+      limitations.  Should this use GetUserRepoPermissionWithReducer?
+    severity: ERROR
+    paths:
+      include:
+        - "/routers/api/**/*.go"
