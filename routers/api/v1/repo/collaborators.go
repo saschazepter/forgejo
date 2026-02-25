@@ -301,6 +301,11 @@ func GetRepoPermissions(ctx *context.APIContext) {
 		return
 	}
 
+	// GetUserRepoPermission is used which doesn't take into account fine-grained access token's permissions, but that's
+	// appropriate in this rare case because we're trying to load the collaborator's permissions, not the access token's
+	// permissions.
+	//
+	// nosemgrep: forgejo-api-use-resource-GetUserRepoPermission
 	permission, err := access_model.GetUserRepoPermission(ctx, ctx.Repo.Repository, collaborator)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
