@@ -63,6 +63,12 @@ func ListForks(ctx *context.APIContext) {
 	}
 	apiForks := make([]*api.Repository, len(forks))
 	for i, fork := range forks {
+		// GetUserRepoPermission is used which doesn't take into account fine-grained access token's permissions. A fork
+		// cannot have a different visibility than the original repo. It makes sense that if you can view a `ctx.Repo`
+		// (guaranteed by the `repoAssignment` middleware used on the API endpoint), you can view the forks of that
+		// repo.
+		//
+		// nosemgrep: forgejo-api-use-resource-GetUserRepoPermission
 		permission, err := access_model.GetUserRepoPermission(ctx, fork, ctx.Doer)
 		if err != nil {
 			ctx.Error(http.StatusInternalServerError, "GetUserRepoPermission", err)
