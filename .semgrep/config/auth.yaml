@@ -1,0 +1,40 @@
+rules:
+  - id: forgejo-api-use-resource-SearchRepoOptions
+    patterns:
+      - pattern: |
+          repo_model.SearchRepoOptions{...}
+      - pattern-not: |
+          repo_model.SearchRepoOptions{
+            ...,
+            AuthorizationReducer: ctx.Reducer,
+            ...
+          }
+    languages:
+      - go
+    message: >
+      SearchRepoOptions does not take into account fine-grained access token limitations.  Include the
+      AuthorizationReducer field.
+    severity: ERROR
+    paths:
+      include:
+        - "/routers/api/**/*.go"
+
+  - id: forgejo-api-use-resource-SearchRepoOptions
+    patterns:
+      - pattern: |
+          organization.SearchTeamRepoOptions{...}
+      - pattern-not: |
+          organization.SearchTeamRepoOptions{
+            ...,
+            AuthorizationReducer: ctx.Reducer,
+            ...
+          }
+    languages:
+      - go
+    message: >
+      SearchTeamRepoOptions does not take into account fine-grained access token limitations.  Include the
+      AuthorizationReducer field.
+    severity: ERROR
+    paths:
+      include:
+        - "/routers/api/**/*.go"
