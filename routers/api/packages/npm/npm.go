@@ -168,6 +168,13 @@ func UploadPackage(ctx *context.Context) {
 		canWrite := repo.OwnerID == ctx.Doer.ID
 
 		if !canWrite {
+			// GetUserRepoPermission is used, which doesn't take into account any AuthorizationReducer from access
+			// tokens. This permission check is unusual as it's the only package-based API that does repo-level
+			// permission checks.  Repo-specific access tokens aren't expected to be used with `package:write` scope, so
+			// there's currently no need to change this to GetUserRepoPermissionWithReducer -- and because package APIs
+			// doesn't take use an `APIContext`, we don't have access to a reducer to provide to it.
+			//
+			// nosemgrep: forgejo-api-suspicious-GetUserRepoPermission
 			perms, err := access_model.GetUserRepoPermission(ctx, repo, ctx.Doer)
 			if err != nil {
 				apiError(ctx, http.StatusInternalServerError, err)
