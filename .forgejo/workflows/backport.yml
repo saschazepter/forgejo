@@ -47,7 +47,7 @@ jobs:
           cat <<'EOF'
           ${{ toJSON(github) }}
           EOF
-      - uses: https://data.forgejo.org/actions/git-backporting@v4.8.7
+      - uses: https://data.forgejo.org/actions/git-backporting@v4.9.1
         with:
           target-branch-pattern: "^backport/(?<target>(v.*))$"
           strategy: ort
