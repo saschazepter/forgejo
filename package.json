@@ -88,7 +88,7 @@
     "@stylistic/eslint-plugin": "5.10.0",
     "@stylistic/stylelint-plugin": "4.0.1",
     "@vitejs/plugin-vue": "6.0.7",
-    "@vitest/coverage-v8": "4.1.7",
+    "@vitest/coverage-v8": "4.1.8",
     "@vitest/eslint-plugin": "1.6.19",
     "@vue/test-utils": "2.4.10",
     "eslint": "9.39.4",
@@ -121,7 +121,7 @@
     "typescript": "5.9.3",
     "typescript-eslint": "8.60.1",
     "vite-string-plugin": "2.0.4",
-    "vitest": "4.1.7"
+    "vitest": "4.1.8"
   },
   "browserslist": ["defaults"],
   "scarfSettings": {
