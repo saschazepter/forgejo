@@ -19,12 +19,12 @@ func UpdatePublicKeyInRepo(ctx context.Context, keyID, repoID int64) error {
 	return extra.Error
 }
 
-// AuthorizedPublicKeyByContent searches content as prefix (leak e-mail part)
+// AuthorizedPublicKeyByFingerprint searches content as prefix (leak e-mail part)
 // and returns public key found.
-func AuthorizedPublicKeyByContent(ctx context.Context, content string) (*ResponseText, ResponseExtra) {
+func AuthorizedPublicKeyByFingerprint(ctx context.Context, fingerprint string) (*ResponseText, ResponseExtra) {
 	// Ask for running deliver hook and test pull request tasks.
 	reqURL := setting.LocalURL + "api/internal/ssh/authorized_keys"
 	req := newInternalRequest(ctx, reqURL, "POST")
-	req.Param("content", content)
+	req.Param("content", fingerprint)
 	return requestJSONResp(req, &ResponseText{})
 }
