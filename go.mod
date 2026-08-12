@@ -42,8 +42,8 @@ require (
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/gdgvda/cron v0.7.0
 	github.com/gliderlabs/ssh v0.3.8
-	github.com/go-ap/activitypub v0.0.0-20260208110334-902f6cf8c2cc
-	github.com/go-ap/jsonld v0.0.0-20251216162253-e38fa664ea77
+	github.com/go-ap/activitypub v0.0.0-20260811143456-e874d5d2264f
+	github.com/go-ap/jsonld v0.0.0-20260607140920-737b40e0ca38
 	github.com/go-chi/chi/v5 v5.3.1
 	github.com/go-chi/cors v1.2.2
 	github.com/go-co-op/gocron v1.37.0
@@ -165,7 +165,7 @@ require (
 	github.com/emersion/go-sasl v0.0.0-20231106173351-e73c9f7bad43 // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.1 // indirect
-	github.com/go-ap/errors v0.0.0-20260208110149-e1b309365966 // indirect
+	github.com/go-ap/errors v0.0.0-20260701132509-92e5e4fd6394 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.8 // indirect
 	github.com/go-enry/go-oniguruma v1.2.1 // indirect
 	github.com/go-fed/httpsig v1.1.0 // indirect
