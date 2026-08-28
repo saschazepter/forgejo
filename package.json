@@ -83,7 +83,7 @@
     "wrap-ansi": "10.0.1"
   },
   "devDependencies": {
-    "@axe-core/playwright": "4.12.1",
+    "@axe-core/playwright": "4.13.0",
     "@eslint-community/eslint-plugin-eslint-comments": "4.7.2",
     "@playwright/test": "1.60.0",
     "@stoplight/spectral-cli": "6.16.0",
