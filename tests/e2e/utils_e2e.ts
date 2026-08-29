@@ -80,7 +80,11 @@ export async function load_logged_in_context(browser: Browser, workerInfo: TestI
 }
 
 export async function login({browser}: {browser: Browser}, workerInfo: TestInfo) {
-  const context = await load_logged_in_context(browser, workerInfo, 'user2');
+  return await login_as_user(browser, workerInfo, 'user2');
+}
+
+export async function login_as_user(browser: Browser, workerInfo: TestInfo, user: string) {
+  const context = await load_logged_in_context(browser, workerInfo, user);
   return await context?.newPage();
 }
 
