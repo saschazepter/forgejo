@@ -18,8 +18,8 @@ cloud.google.com/go/storage v1.0.0/go.mod h1:IhtSnM/ZTZV8YYJWCY8RULGVqBDmpoyjwiy
 cloud.google.com/go/storage v1.5.0/go.mod h1:tpKbwo567HUNpVclU5sGELwQWBDZ8gh0ZeosJ0Rtdos=
 code.forgejo.org/forgejo-contrib/go-libravatar v0.0.0-20260301104140-add494e31dab h1:g/uf/tNOvCdGL9EuYV9EJQglEH8n572P1ZwH4lBBkjI=
 code.forgejo.org/forgejo-contrib/go-libravatar v0.0.0-20260301104140-add494e31dab/go.mod h1:PphB88CPbx601QrWPMZATeorACeVmQlyv3u+uUMbSaM=
-code.forgejo.org/forgejo/actions-proto v0.7.0 h1:0UA8AIOIWEiMLQvBbnZ6GQ9reh6BbM15Ep8x+oeTCY8=
-code.forgejo.org/forgejo/actions-proto v0.7.0/go.mod h1:+444hHBs9/qDh5X/AedaTv0Egj3vd/EXP93vg9zFV2E=
+code.forgejo.org/forgejo/actions-proto v0.8.0 h1:FD4iwlmIqoD4JqdUdmDK6AL+bNOeqWSqThCZABEMvrA=
+code.forgejo.org/forgejo/actions-proto v0.8.0/go.mod h1:uzZXLqIw/B3W9AZFrlmFjsdtGsJH3nBVGaajYHGLf5Q=
 code.forgejo.org/forgejo/go-rpmutils v1.0.0 h1:RZGGeKt70p/WaIEL97pyT6uiiEIoN8/aLmS5Z6WmX0M=
 code.forgejo.org/forgejo/go-rpmutils v1.0.0/go.mod h1:cg+VbgLXfrDPza9T+kBsMb3TVmmzPN4XseT6gDGLSUk=
 code.forgejo.org/forgejo/go-xsd-duration v0.0.0-20220703122237-02e73435a078 h1:RArF5AsF9LH4nEoJxqRxcP5r8hhRfWcId84G82YbqzA=
