@@ -340,7 +340,7 @@ jobs:
           make coverage-show-percentage
       - if: forgejo.event_name == 'pull_request' && (steps.coverage-unit.outputs.cache-hit && steps.coverage-e2e.outputs.cache-hit && steps.coverage-sqlite.outputs.cache-hit)
         name: create or update the coverage report in a pull request comment
-        uses: https://codeberg.org/clouds666/unkai@0241847811cf3da3c2c6ad954c10d839c68544d6 # v0.2.9
+        uses: https://codeberg.org/clouds666/unkai@85dc8d9796ff06473dfd773c5883cfb8be1045ce # v0.2.13
         with:
           token: ${{ forgejo.TOKEN }}
       - if: forgejo.event_name != 'pull_request' && (steps.coverage-unit.outputs.cache-hit && steps.coverage-e2e.outputs.cache-hit && steps.coverage-sqlite.outputs.cache-hit)
