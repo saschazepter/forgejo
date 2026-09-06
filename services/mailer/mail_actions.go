@@ -5,6 +5,8 @@ package mailer
 
 import (
 	"bytes"
+	"context"
+	"fmt"
 
 	actions_model "forgejo.org/models/actions"
 	user_model "forgejo.org/models/user"
@@ -14,24 +16,27 @@ import (
 )
 
 const (
-	tplActionNowDone base.TplName = "actions/now_done"
+	tplActionJobFailure base.TplName = "actions/job_failure"
 )
 
-var MailActionRun = mailActionRun // make it mockable
-func mailActionRun(run *actions_model.ActionRun, priorStatus actions_model.Status) error {
+var sendActionRunJobFailureNotification = func(ctx context.Context, job *actions_model.ActionRunJob) error {
+	if !job.Status.IsFailure() {
+		return nil
+	}
+
 	if setting.MailService == nil {
 		// No mail service configured
 		return nil
 	}
 
-	if !run.NotifyEmail {
+	if !job.Run.NotifyEmail {
 		return nil
 	}
 
-	user := run.TriggerUser
+	user := job.Run.TriggerUser
 	// this happens e.g. when this is a scheduled run
 	if user.IsSystem() {
-		user = run.Repo.Owner
+		user = job.Run.Repo.Owner
 	}
 	if user.IsSystem() || user.Email == "" {
 		return nil
@@ -41,46 +46,27 @@ func mailActionRun(run *actions_model.ActionRun, priorStatus actions_model.Statu
 		return nil
 	}
 
-	return sendMailActionRun(user, run, priorStatus)
-}
-
-func sendMailActionRun(to *user_model.User, run *actions_model.ActionRun, priorStatus actions_model.Status) error {
-	var (
-		locale  = translation.NewLocale(to.Language)
-		content bytes.Buffer
-	)
-
-	var subject string
-	if run.Status.IsSuccess() {
-		subject = locale.TrString("mail.actions.successful_run_after_failure_subject", run.Title, run.Repo.FullName())
-	} else {
-		subject = locale.TrString("mail.actions.not_successful_run_subject", run.Title, run.Repo.FullName())
+	jobLink, err := job.HTMLURL(ctx)
+	if err != nil {
+		return fmt.Errorf("could not generate link to job results: %w", err)
 	}
 
-	commitSHA := run.CommitSHA
-	if len(commitSHA) > 7 {
-		commitSHA = commitSHA[:7]
-	}
-
+	locale := translation.NewLocale(user.Language)
 	data := map[string]any{
-		"locale":          locale,
-		"Link":            run.HTMLURL(),
-		"Subject":         subject,
-		"Language":        locale.Language(),
-		"RepoFullName":    run.Repo.FullName(),
-		"Run":             run,
-		"TriggerUserLink": run.TriggerUser.HTMLURL(),
-		"LastRun":         nil,
-		"PriorStatus":     priorStatus,
-		"CommitSHA":       commitSHA,
-		"IsSuccess":       run.Status.IsSuccess(),
+		"locale":   locale,
+		"Language": locale.Language(),
+		"Link":     jobLink,
+		"Job":      job,
 	}
 
-	if err := bodyTemplates.ExecuteTemplate(&content, string(tplActionNowDone), data); err != nil {
+	var content bytes.Buffer
+	if err := bodyTemplates.ExecuteTemplate(&content, string(tplActionJobFailure), data); err != nil {
 		return err
 	}
 
-	msg := NewMessage(to.EmailTo(), subject, content.String())
+	subject := fmt.Sprintf("[%[1]s] %s", job.Run.Repo.FullName(),
+		locale.TrString("mail.actions.job_failure_subject", job.Name))
+	msg := NewMessage(user.EmailTo(), subject, content.String())
 	msg.Info = subject
 	SendAsync(msg)
 

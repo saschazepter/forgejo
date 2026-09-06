@@ -216,12 +216,24 @@ func (m *mailNotifier) NewUserSignUp(ctx context.Context, newUser *user_model.Us
 	MailNewUser(ctx, newUser)
 }
 
-func (m *mailNotifier) ActionRunNowDone(ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status) {
-	// Only send an email if the run failed.
-	if !run.Status.IsFailure() {
-		return
+func (m *mailNotifier) NewWorkflowJobAttempt(ctx context.Context, job *actions_model.ActionRunJob) {
+	if err := sendActionRunJobFailureNotification(ctx, job); err != nil {
+		log.Error("SendActionRunJobFailureNotification: %v", err)
 	}
-	if err := MailActionRun(run, priorStatus); err != nil {
-		log.Error("MailActionRun: %v", err)
+}
+
+func (m *mailNotifier) WorkflowJobStatusChanged(
+	ctx context.Context, job *actions_model.ActionRunJob, _ actions_model.Status,
+) {
+	if err := sendActionRunJobFailureNotification(ctx, job); err != nil {
+		log.Error("SendActionRunJobFailureNotification: %v", err)
+	}
+}
+
+func (m *mailNotifier) WorkflowJobCompleted(
+	ctx context.Context, job *actions_model.ActionRunJob, _ actions_model.Status,
+) {
+	if err := sendActionRunJobFailureNotification(ctx, job); err != nil {
+		log.Error("SendActionRunJobFailureNotification: %v", err)
 	}
 }

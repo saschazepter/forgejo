@@ -12,6 +12,7 @@ import (
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/gitrepo"
 	"forgejo.org/services/mailer"
+	notify_service "forgejo.org/services/notify"
 	release_service "forgejo.org/services/release"
 
 	"github.com/stretchr/testify/assert"
@@ -47,6 +48,10 @@ func TestMailNewRelease(t *testing.T) {
 			called = true
 		})()
 
+		notifier := mailer.NewNotifier()
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
+
 		require.NoError(t, release_service.CreateRelease(gitRepo, &repo_model.Release{
 			RepoID:      repo.ID,
 			Repo:        repo,
@@ -79,6 +84,10 @@ func TestMailNewRelease(t *testing.T) {
 			called = true
 		})()
 
+		notifier := mailer.NewNotifier()
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
+
 		require.NoError(t, release_service.CreateRelease(gitRepo, &repo_model.Release{
 			RepoID:      repo.ID,
 			Repo:        repo,
@@ -105,6 +114,10 @@ func TestMailNewRelease(t *testing.T) {
 		defer mailer.MockMailSettings(func(msgs ...*mailer.Message) {
 			called = true
 		})()
+
+		notifier := mailer.NewNotifier()
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
 
 		require.NoError(t, release_service.CreateRelease(gitRepo, &repo_model.Release{
 			RepoID:      repo.ID,

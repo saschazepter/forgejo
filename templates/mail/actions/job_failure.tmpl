@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style>
+		.footer { font-size:small; color:#666;}
+	</style>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head>
+
+{{$repo_link := HTMLFormat `<a href="%s">%s</a>` .Job.Run.Repo.HTMLURL .Job.Run.Repo.FullName}}
+<body>
+	<p>
+		{{.locale.Tr "mail.actions.job_failure_info" .Job.Name}}
+	</p>
+	<p>
+		{{.locale.Tr "mail.actions.job_failure_info_repository" $repo_link}}<br />
+		{{.locale.Tr "mail.actions.job_failure_info_run" .Job.Run.Title .Job.Run.HTMLURL}}<br />
+		{{.locale.Tr "mail.actions.job_failure_info_job" .Job.Name .Link}}<br />
+		{{.locale.Tr "mail.actions.job_failure_info_duration" .Job.Duration}}<br />
+		{{.locale.Tr "mail.actions.job_failure_info_finished" (.Job.Stopped.Format "2006-01-02 15:04:05 -07:00")}}
+	</p>
+	<p>
+		{{.locale.Tr "mail.actions.job_failure_view_results" .Link}}
+	</p>
+	<div class="footer">
+		<p>
+			---
+			<br>
+			<a href="{{.Link}}">{{.locale.Tr "mail.view_it_on" AppName}}</a>.
+		</p>
+	</div>
+</body>
+</html>
