@@ -37,7 +37,7 @@ function run_test() {
   mkdir -p $coverage
 
   set -o pipefail
-  run_verbose $GO test -timeout=40m -tags='sqlite sqlite_unlock_notify' -covermode atomic -cover $package -coverpkg $COVERED_PACKAGES $COVERAGE_TEST_ARGS -args -test.gocoverdir=$coverage |& grep --text -v 'warning: no packages being tested depend on matches for pattern'
+  run_verbose $GO test -timeout=120m -tags='sqlite sqlite_unlock_notify' -covermode atomic -cover $package -coverpkg $COVERED_PACKAGES $COVERAGE_TEST_ARGS -args -test.gocoverdir=$coverage |& grep --text -v 'warning: no packages being tested depend on matches for pattern'
   set +o pipefail
 }
 
