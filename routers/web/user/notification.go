@@ -345,18 +345,24 @@ func NotificationSubscriptions(ctx *context.Context) {
 
 	ctx.Data["Status"] = 1
 	ctx.Data["Title"] = ctx.Tr("notification.subscriptions")
+	pager := notificationSubscriptionPager(ctx, page, count)
 
 	// redirect to last page if request page is more than total pages
-	pager := context.NewPagination(int(count), setting.UI.IssuePagingNum, page, 5)
 	if pager.Paginater.Current() < page {
 		ctx.Redirect(fmt.Sprintf("/notifications/subscriptions?page=%d", pager.Paginater.Current()))
 		return
 	}
-	pager.AddParam(ctx, "sort", "SortType")
-	pager.AddParam(ctx, "state", "State")
 	ctx.Data["Page"] = pager
 
 	ctx.HTML(http.StatusOK, tplNotificationSubscriptions)
+}
+
+func notificationSubscriptionPager(ctx *context.Context, page int, count int64) *context.Pagination {
+	pager := context.NewPagination(int(count), setting.UI.IssuePagingNum, page, 5)
+	pager.AddParam(ctx, "sort", "SortType")
+	pager.AddParam(ctx, "state", "State")
+	pager.AddParam(ctx, "issueType", "IssueType")
+	return pager
 }
 
 // NotificationWatching returns the list of watching repos
