@@ -118,26 +118,26 @@
 						{{$rejectOfficial := call $approvalCounts .ID "reject"}}
 						{{$waitingOfficial := call $approvalCounts .ID "waiting"}}
 						{{if gt $approveOfficial 0}}
-							<span class="approvals green flex-text-inline">
-								{{svg "octicon-check" 14}}
+							<span class="approvals flex-text-inline">
+								{{svg "octicon-check" 14 "text green"}}
 								{{ctx.Locale.TrN $approveOfficial "repo.pulls.approve_count_1" "repo.pulls.approve_count_n" $approveOfficial}}
 							</span>
 						{{end}}
 						{{if gt $rejectOfficial 0}}
-							<span class="rejects red flex-text-inline">
-								{{svg "octicon-diff" 14}}
+							<span class="rejects flex-text-inline">
+								{{svg "octicon-diff" 14 "text red"}}
 								{{ctx.Locale.TrN $rejectOfficial "repo.pulls.reject_count_1" "repo.pulls.reject_count_n" $rejectOfficial}}
 							</span>
 						{{end}}
 						{{if gt $waitingOfficial 0}}
 							<span class="waiting flex-text-inline">
-								{{svg "octicon-eye" 14}}
+								{{svg "octicon-eye" 14 "text blue"}}
 								{{ctx.Locale.TrN $waitingOfficial "repo.pulls.waiting_count_1" "repo.pulls.waiting_count_n" $waitingOfficial}}
 							</span>
 						{{end}}
 						{{if and (not .PullRequest.HasMerged) .PullRequest.ConflictedFiles}}
 							<span class="conflicting flex-text-inline">
-								{{svg "octicon-x" 14}}
+								{{svg  "octicon-x" 14 "text red"}}
 								{{ctx.Locale.TrN (len .PullRequest.ConflictedFiles) "repo.pulls.num_conflicting_files_1" "repo.pulls.num_conflicting_files_n" (len .PullRequest.ConflictedFiles)}}
 							</span>
 						{{end}}
