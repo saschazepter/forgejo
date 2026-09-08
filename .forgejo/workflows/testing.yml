@@ -345,7 +345,7 @@ jobs:
           token: ${{ forgejo.TOKEN }}
       - if: forgejo.event_name != 'pull_request' && (steps.coverage-unit.outputs.cache-hit && steps.coverage-e2e.outputs.cache-hit && steps.coverage-sqlite.outputs.cache-hit)
         name: upload the converted coverage data (textfmt.out)
-        uses: https://data.forgejo.org/forgejo/upload-artifact@v4
+        uses: https://data.forgejo.org/forgejo/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           name: coverage
           path: coverage/textfmt.out
