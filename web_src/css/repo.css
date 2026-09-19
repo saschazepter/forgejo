@@ -2016,7 +2016,6 @@ details.repo-search-result summary::marker {
   position: relative;
   color: var(--color-text);
   min-height: 41px;
-  background-color: var(--color-box-header);
   display: flex;
   justify-content: space-between;
   align-items: center;
