@@ -164,7 +164,7 @@ func TestCliCmdError(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, 1, r.ExitCode)
 	assert.Equal(t, "Incorrect Usage: flag provided but not defined: -no-such\n\n", r.Stderr)
-	assert.Empty(t, r.Stdout)
+	assert.Equal(t, "(subcommand help template)", r.Stdout)
 
 	app = newTestApp(func(_ context.Context, ctx *cli.Command) error { return nil })
 	r, err = runTestApp(app, "./gitea", "test-cmd")
