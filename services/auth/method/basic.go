@@ -52,7 +52,7 @@ func (b *Basic) Verify(req *http.Request, w http.ResponseWriter, _ auth.SessionS
 	log.Trace("Basic Authorization: Attempting SignIn for %s", uname)
 	u, source, err := UserSignIn(req.Context(), uname, passwd)
 	if err != nil {
-		if user_model.IsErrUserNotExist(err) || user_model.IsErrUserProhibitLogin(err) ||
+		if user_model.IsErrUserNotExist(err) || user_model.IsErrEmailAddressNotExist(err) || user_model.IsErrUserProhibitLogin(err) ||
 			errors.As(err, &db.ErrUserPasswordInvalid{}) || errors.As(err, &db.ErrUserPasswordNotSet{}) {
 			return &auth.AuthenticationAttemptedIncorrectCredential{Error: err}
 		}
