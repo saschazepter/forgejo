@@ -15,6 +15,7 @@ import (
 	"forgejo.org/models/repo"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/json"
+	"forgejo.org/modules/setting"
 	auth_service "forgejo.org/services/auth"
 
 	"github.com/urfave/cli/v3"
@@ -99,6 +100,10 @@ enable-openid-connect flag in a workflow.`,
 }
 
 func runCreateAuthorizedIntegration(ctx context.Context, c *cli.Command) error {
+	// this command should load settings since config such as authorized_integration.ALLOW_LOCALNETWORKS can affect behavior of this command.
+	// this also makes behavior match experience from configuring this using web ui.
+	setting.LoadSettings()
+
 	if !c.IsSet("username") {
 		return errors.New("you must provide a username to generate a token for")
 	}
