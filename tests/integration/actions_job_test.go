@@ -1262,6 +1262,38 @@ func TestActionsRunsEvaluateIf(t *testing.T) {
 				}
 			}
 		})
+
+		t.Run("sends job that fails server-side if evaluation to runner", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			arif := newActionsRunIfTester(t)
+			runID := arif.dispatchSingleJob("${{ fromJSON('abc') }}").ID // invalid JSON
+			arif.mockRunTaskAndFail()                                    // mock failure to evaluate the if from the runner
+			run := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: runID})
+			assert.Equal(t, actions_model.StatusFailure, run.Status)
+			job := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{RunID: run.ID})
+			assert.Equal(t, actions_model.StatusFailure, job.Status)
+		})
+
+		t.Run("sends unblocked job that fails server-side if evaluation to runner", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			arif := newActionsRunIfTester(t)
+			runID := arif.dispatchMultipleJobs("${{ 'abc' == 'abc' }}", "${{ fromJSON('abc') }}").ID // invalid JSON
+			task1 := arif.mockRunTask()
+			task2 := arif.mockRunTaskAndFail() // mock failure to evaluate the if from the runner
+
+			actionTask1 := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionTask{ID: task1.Id})
+			actionRunJob1 := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{ID: actionTask1.JobID})
+			assert.Equal(t, actions_model.StatusSuccess, actionRunJob1.Status)
+
+			actionTask2 := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionTask{ID: task2.Id})
+			actionRunJob2 := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{ID: actionTask2.JobID})
+			assert.Equal(t, actions_model.StatusFailure, actionRunJob2.Status)
+
+			run := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: runID})
+			assert.Equal(t, actions_model.StatusFailure, run.Status)
+		})
 	})
 }
 

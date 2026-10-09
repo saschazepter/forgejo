@@ -5,7 +5,6 @@ package actions
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	actions_model "forgejo.org/models/actions"
@@ -171,8 +170,15 @@ func convertSingleWorkflowToJobs(run *actions_model.ActionRun, jobs []*jobparser
 				log.Trace("job %q skipped by server-side 'if' evaluation", id)
 				status = actions_model.StatusSkipped
 			} else {
-				if err != nil && !errors.Is(err, jobparser.ErrCannotEvaluateInJobParser) {
-					return nil, fmt.Errorf("unable to evaluate job 'if' on server-side with unexpected error: %w", err)
+				if err != nil {
+					// `err != nil` case from EvaluateIf intentionally falls through to here, where we do nothing but
+					// log the error.  There are two classes of possible error: ErrCannotEvaluateInJobParser, in which
+					// we know we can't evaluate if server-side and must dispatch to the runner, and, all other errors
+					// which occur because the user made a mistake in their workflow.  As the first class of error
+					// requires us to set the job as waiting and send it to a runner, and, we don't have a convenient
+					// way to report the second class of errors to the user, we just dispatch all of them to a runner by
+					// setting the state to waiting.
+					log.Trace("server-side evaluation of 'if' failed with an error; the job can be picked up by a runner: %s", err.Error())
 				}
 				status = actions_model.StatusWaiting
 			}
