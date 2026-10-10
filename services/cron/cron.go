@@ -14,7 +14,7 @@ import (
 	"forgejo.org/modules/sync"
 	"forgejo.org/modules/translation"
 
-	"github.com/go-co-op/gocron"
+	"github.com/go-co-op/gocron/v2"
 )
 
 var scheduler = gocron.NewScheduler(time.Local)
