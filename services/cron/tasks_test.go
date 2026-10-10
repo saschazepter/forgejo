@@ -4,20 +4,26 @@
 package cron
 
 import (
-	"sort"
+	"cmp"
+	"slices"
 	"strconv"
 	"testing"
 
+	"forgejo.org/modules/test"
+	"github.com/go-co-op/gocron/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAddTaskToScheduler(t *testing.T) {
-	assert.Empty(t, scheduler.Jobs())
-	defer scheduler.Clear()
+	defer test.MockProtect(&scheduler)()
+
+	var err error
+	scheduler, err = gocron.NewScheduler()
+	require.NoError(t, err)
 
 	// no seconds
-	err := addTaskToScheduler(&Task{
+	err = addTaskToScheduler(&Task{
 		Name: "task 1",
 		config: &BaseConfig{
 			Schedule: "5 4 * * *",
@@ -26,8 +32,8 @@ func TestAddTaskToScheduler(t *testing.T) {
 	require.NoError(t, err)
 	jobs := scheduler.Jobs()
 	assert.Len(t, jobs, 1)
-	assert.Equal(t, "task 1", jobs[0].Tags()[0])
-	assert.Equal(t, "5 4 * * *", jobs[0].Tags()[1])
+	assert.Equal(t, "task 1", jobs[0].Name())
+	assert.Equal(t, "5 4 * * *", jobs[0].Schedule().(gocron.CronJobSchedule).Crontab)
 
 	// with seconds
 	err = addTaskToScheduler(&Task{
@@ -38,12 +44,12 @@ func TestAddTaskToScheduler(t *testing.T) {
 	})
 	require.NoError(t, err)
 	jobs = scheduler.Jobs() // the item order is not guaranteed, so we need to sort it before "assert"
-	sort.Slice(jobs, func(i, j int) bool {
-		return jobs[i].Tags()[0] < jobs[j].Tags()[0]
+	slices.SortFunc(jobs, func(a, b gocron.Job) int {
+		return cmp.Compare(a.Name(), b.Name())
 	})
 	assert.Len(t, jobs, 2)
-	assert.Equal(t, "task 2", jobs[1].Tags()[0])
-	assert.Equal(t, "30 5 4 * * *", jobs[1].Tags()[1])
+	assert.Equal(t, "task 2", jobs[1].Name())
+	assert.Equal(t, "30 5 4 * * *", jobs[1].Schedule().(gocron.CronJobSchedule).Crontab)
 }
 
 func TestScheduleHasSeconds(t *testing.T) {
