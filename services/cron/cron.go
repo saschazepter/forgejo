@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"forgejo.org/modules/graceful"
+	"forgejo.org/modules/log"
 	"forgejo.org/modules/process"
 	"forgejo.org/modules/sync"
 	"forgejo.org/modules/translation"
@@ -17,7 +18,7 @@ import (
 	"github.com/go-co-op/gocron/v2"
 )
 
-var scheduler = gocron.NewScheduler(time.Local)
+var scheduler gocron.Scheduler
 
 // Prevent duplicate running tasks.
 var taskStatusTable = sync.NewStatusTable()
@@ -28,6 +29,14 @@ var taskStatusTable = sync.NewStatusTable()
 func NewContext(original context.Context) {
 	defer pprof.SetGoroutineLabels(original)
 	_, _, finished := process.GetManager().AddTypedContext(graceful.GetManager().ShutdownContext(), "Service: Cron", process.SystemProcessType, true)
+
+	var err error
+	scheduler, err = gocron.NewScheduler()
+	if err != nil {
+		log.Error("Could not start cron scheduler: %v ", err)
+		return
+	}
+
 	initBasicTasks()
 	initExtendedTasks()
 	initActionsTasks()
@@ -39,11 +48,13 @@ func NewContext(original context.Context) {
 		}
 	}
 
-	scheduler.StartAsync()
+	scheduler.Start()
 	started = true
 	lock.Unlock()
 	graceful.GetManager().RunAtShutdown(context.Background(), func() {
-		scheduler.Stop()
+		if err := scheduler.Shutdown(); err != nil {
+			log.Error("No clean shutdown of cron scheduler: %v", err)
+		}
 		lock.Lock()
 		started = false
 		lock.Unlock()
@@ -78,14 +89,9 @@ type TaskTable []*TaskTableRow
 // ListTasks returns all running cron tasks.
 func ListTasks() TaskTable {
 	jobs := scheduler.Jobs()
-	jobMap := map[string]*gocron.Job{}
+	jobMap := map[string]gocron.Job{}
 	for _, job := range jobs {
-		// the first tag is the task name
-		tags := job.Tags()
-		if len(tags) == 0 { // should never happen
-			continue
-		}
-		jobMap[job.Tags()[0]] = job
+		jobMap[job.Name()] = job
 	}
 
 	lock.Lock()
@@ -99,12 +105,18 @@ func ListTasks() TaskTable {
 			prev time.Time
 		)
 		if e, ok := jobMap[task.Name]; ok {
-			tags := e.Tags()
-			if len(tags) > 1 {
-				spec = tags[1] // the second tag is the task spec
+			if e.Schedule().JobType() == gocron.CronJobType {
+				spec = e.Schedule().(gocron.CronJobSchedule).Crontab
 			}
-			next = e.NextRun()
-			prev = e.PreviousRun()
+			var err error
+			next, err = e.NextRun()
+			if err != nil {
+				log.Warn("NextRun() returned error for %q: %v", task.Name, err)
+			}
+			prev, err = e.LastRunStartedAt()
+			if err != nil {
+				log.Warn("LastRunStartedAt() returned error for %q: %v", task.Name, err)
+			}
 		}
 
 		task.lock.Lock()
