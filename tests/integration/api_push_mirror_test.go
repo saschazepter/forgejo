@@ -347,7 +347,12 @@ func TestAPIPushMirrorSSH(t *testing.T) {
 			assert.Equal(t, "SSH authentication not available.", apiError.Message)
 		})
 
-		t.Run("Normal", func(t *testing.T) {
+		testMirrorPush := func(t *testing.T, srcRepo *repo_model.Repository, expectedSHA string) {
+			t.Helper()
+
+			pushToRepo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{})
+			sshURL := fmt.Sprintf("ssh://%s@%s/%s.git", setting.SSH.User, net.JoinHostPort(setting.SSH.ListenHost, strconv.Itoa(setting.SSH.ListenPort)), pushToRepo.FullName())
+
 			var pushMirror *repo_model.PushMirror
 			t.Run("Adding", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
@@ -399,7 +404,6 @@ func TestAPIPushMirrorSSH(t *testing.T) {
 
 			t.Run("Check mirrored content", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
-				sha := "1032bbf17fbc0d9c95bb5418dabe8f8c99278700"
 
 				req := NewRequest(t, "GET", fmt.Sprintf("/api/v1/repos/%s/commits?limit=1", srcRepo.FullName())).AddTokenAuth(token)
 				resp := MakeRequest(t, req, http.StatusOK)
@@ -408,7 +412,7 @@ func TestAPIPushMirrorSSH(t *testing.T) {
 				DecodeJSON(t, resp, &commitList)
 
 				assert.Len(t, commitList, 1)
-				assert.Equal(t, sha, commitList[0].SHA)
+				assert.Equal(t, expectedSHA, commitList[0].SHA)
 
 				assert.Eventually(t, func() bool {
 					req := NewRequest(t, "GET", fmt.Sprintf("/api/v1/repos/%s/commits?limit=1", srcRepo.FullName())).AddTokenAuth(token)
@@ -417,7 +421,7 @@ func TestAPIPushMirrorSSH(t *testing.T) {
 					var commitList []*api.Commit
 					DecodeJSON(t, resp, &commitList)
 
-					return len(commitList) != 0 && commitList[0].SHA == sha
+					return len(commitList) != 0 && commitList[0].SHA == expectedSHA
 				}, time.Second*30, time.Second)
 			})
 
@@ -432,6 +436,17 @@ func TestAPIPushMirrorSSH(t *testing.T) {
 
 				assert.Contains(t, string(knownHosts), string(publicKey))
 			})
+		}
+
+		t.Run("Normal", func(t *testing.T) {
+			testMirrorPush(t, srcRepo, "1032bbf17fbc0d9c95bb5418dabe8f8c99278700")
+		})
+
+		t.Run("LFS", func(t *testing.T) {
+			defer test.MockVariableValue(&setting.LFS.StartServer, true)()
+
+			srcRepo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 54})
+			testMirrorPush(t, srcRepo, "e9c32647bab825977942598c0efa415de300304b")
 		})
 	})
 }
