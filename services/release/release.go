@@ -50,11 +50,6 @@ func createTag(ctx context.Context, gitRepo *git.Repository, rel *repo_model.Rel
 	// Only actual create when publish.
 	if !rel.IsDraft {
 		if !gitRepo.IsTagExist(rel.TagName) {
-			if err := rel.LoadAttributes(ctx); err != nil {
-				log.Error("LoadAttributes: %v", err)
-				return false, err
-			}
-
 			protectedTags, err := git_model.GetProtectedTags(ctx, rel.Repo.ID)
 			if err != nil {
 				return false, fmt.Errorf("GetProtectedTags: %w", err)
