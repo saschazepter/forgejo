@@ -113,6 +113,13 @@ func (r *Release) LoadAttributes(ctx context.Context) error {
 		}
 	}
 
+	// This function may be called on a release that's not yet in the database.
+	// The next two attributes relies on the release struct already having been
+	// assigned a ID. Return early if that's not the case.
+	if r.ID == 0 {
+		return nil
+	}
+
 	err = r.LoadArchiveDownloadCount(ctx)
 	if err != nil {
 		return err
