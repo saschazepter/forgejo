@@ -214,8 +214,10 @@ func TestPatchStatus(t *testing.T) {
 
 		// Test that the status is set to empty if the diff is empty.
 		t.Run("Empty diff", func(t *testing.T) {
-			require.NoError(t, git.NewCommand(t.Context(), "switch", "-c", "empty-patch").AddDynamicArguments(repo.DefaultBranch).Run(&git.RunOpts{Dir: dstPath}))
-			require.NoError(t, git.NewCommand(t.Context(), "commit", "--allow-empty", "--message=empty").Run(&git.RunOpts{Dir: dstPath}))
+			require.NoError(t, git.NewCommand(t.Context(), "switch", "-c", "empty-patch").AddDynamicArguments(repo.DefaultBranch+"~1").Run(&git.RunOpts{Dir: dstPath}))
+			require.NoError(t, os.WriteFile(filepath.Join(dstPath, "CONTACT"), []byte("gusted@example.com"), 0o600))
+			require.NoError(t, git.NewCommand(t.Context(), "add", "CONTACT").Run(&git.RunOpts{Dir: dstPath}))
+			require.NoError(t, git.NewCommand(t.Context(), "commit", "--message=differently").Run(&git.RunOpts{Dir: dstPath}))
 
 			test := func(t *testing.T, pr *issues_model.PullRequest) {
 				t.Helper()
@@ -223,7 +225,7 @@ func TestPatchStatus(t *testing.T) {
 				assert.Empty(t, pr.ConflictedFiles)
 				assert.Equal(t, issues_model.PullRequestStatusEmpty, pr.Status)
 				assert.Equal(t, 1, pr.CommitsAhead)
-				assert.Equal(t, 0, pr.CommitsBehind)
+				assert.Equal(t, 1, pr.CommitsBehind)
 				assert.True(t, pr.Mergeable(t.Context()))
 			}
 

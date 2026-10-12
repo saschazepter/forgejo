@@ -437,21 +437,15 @@ func checkConflicts(ctx context.Context, pr *issues_model.PullRequest, testPatch
 		}
 
 		if !conflict {
-			// No conflicts were detected, now check if the pull request actually
-			// contains anything useful via a diff. git-diff-tree(1) with --quiet
-			// will return exit code 0 if there's no diff and exit code 1 if there's
-			// a diff.
-			err := git.NewCommand(ctx, "diff-tree", "--quiet").AddDynamicArguments(treeHash, pr.MergeBase).Run(&git.RunOpts{Dir: testPatchCtx.gitRepo.Path, Env: testPatchCtx.env})
-			isEmpty := true
+			// No conflicts were detected, we now check if the pull request contains
+			// changed code. We do this by comparing the tree of the merged tree and
+			// that of the base reference.
+			baseTree, err := testPatchCtx.gitRepo.GetTree(testPatchCtx.baseRev)
 			if err != nil {
-				if git.IsErrorExitCode(err, 1) {
-					isEmpty = false
-				} else {
-					return false, fmt.Errorf("DiffTree: %w", err)
-				}
+				return false, fmt.Errorf("GetTree: %w", err)
 			}
 
-			if isEmpty {
+			if treeHash == baseTree.ID.String() {
 				log.Debug("PullRequest[%d]: Patch is empty - ignoring", pr.ID)
 				pr.Status = issues_model.PullRequestStatusEmpty
 			}
