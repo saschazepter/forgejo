@@ -84,7 +84,7 @@
     "@axe-core/playwright": "4.13.0",
     "@eslint-community/eslint-plugin-eslint-comments": "4.8.1",
     "@playwright/test": "1.62.1",
-    "@stoplight/spectral-cli": "6.16.3",
+    "@stoplight/spectral-cli": "6.17.0",
     "@stylistic/eslint-plugin": "5.10.0",
     "@stylistic/stylelint-plugin": "5.3.0",
     "@types/tinycolor2": "1.4.6",
