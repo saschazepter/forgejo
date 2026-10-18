@@ -880,13 +880,13 @@ func doInternalReferences(ctx *APITestContext, dstPath string) func(t *testing.T
 		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerName: ctx.Username, Name: ctx.Reponame})
 		pr1 := unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{HeadRepoID: repo.ID})
 
-		_, stdErr, gitErr := git.NewCommand(git.DefaultContext, "push", "origin").AddDynamicArguments(fmt.Sprintf(":refs/pull/%d/head", pr1.Index)).RunStdString(&git.RunOpts{Dir: dstPath})
-		require.Error(t, gitErr)
-		assert.Contains(t, stdErr, fmt.Sprintf("Forgejo: Only AGit pull-requests can be pushed via refs/pull/%d/head", pr1.Index))
-		assert.Contains(t, stdErr, pr1.HeadBranch)
-		assert.Contains(t, stdErr, fmt.Sprintf("[remote rejected] refs/pull/%d/head", pr1.Index))
+		t.Run("deletion", func(t *testing.T) {
+			_, stdErr, gitErr := git.NewCommand(git.DefaultContext, "push", "origin").AddDynamicArguments(fmt.Sprintf(":refs/pull/%d/head", pr1.Index)).RunStdString(&git.RunOpts{Dir: dstPath})
+			require.NoError(t, gitErr)
+			assert.Contains(t, stdErr, "(Forgejo ignored PR deletion attempt)")
+		})
 
-		_, stdErr, gitErr = git.NewCommand(git.DefaultContext, "push", "origin", "--force").AddDynamicArguments(fmt.Sprintf("HEAD~1:refs/pull/%d/head", pr1.Index)).RunStdString(&git.RunOpts{Dir: dstPath})
+		_, stdErr, gitErr := git.NewCommand(git.DefaultContext, "push", "origin", "--force").AddDynamicArguments(fmt.Sprintf("HEAD~1:refs/pull/%d/head", pr1.Index)).RunStdString(&git.RunOpts{Dir: dstPath})
 		require.Error(t, gitErr)
 		assert.Contains(t, stdErr, fmt.Sprintf("Forgejo: Only AGit pull-requests can be pushed via refs/pull/%d/head", pr1.Index))
 		assert.Contains(t, stdErr, pr1.HeadBranch)

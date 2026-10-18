@@ -401,30 +401,52 @@ func TestGitPushMirror(t *testing.T) {
 		u.User = url.UserPassword(owner.LowerName, userPassword)
 		doGitClone(repoPath, u)(t)
 
-		// create a PR
 		branchName := "local-branch"
 		doGitCreateBranch(repoPath, branchName)(t)
 		doGitAddSomeCommits(repoPath, branchName)(t)
+
+		// create an agit PR (1)
 		err := git.NewCommand(git.DefaultContext, "push", "origin").
 			AddDynamicArguments(fmt.Sprintf("%s:refs/for/main/first-pr", branchName)).Run(&git.RunOpts{Dir: repoPath})
 		require.NoError(t, err)
+
+		// create a branch PR (2)
 		err = git.NewCommand(git.DefaultContext, "push", "origin").
-			AddDynamicArguments(fmt.Sprintf("%s:refs/for/main/second-pr", branchName)).Run(&git.RunOpts{Dir: repoPath})
+			AddDynamicArguments(fmt.Sprintf("%s:remote-branch", branchName)).Run(&git.RunOpts{Dir: repoPath})
+		require.NoError(t, err)
+		pullIssue := &issues_model.Issue{
+			RepoID:   repo.ID,
+			Title:    "Branch Pull Request",
+			PosterID: owner.ID,
+			Poster:   owner,
+			IsPull:   true,
+		}
+		pullRequest := &issues_model.PullRequest{
+			HeadRepo:            repo,
+			HeadRepoID:          repo.ID,
+			HeadBranch:          "remote-branch",
+			BaseRepo:            repo,
+			BaseRepoID:          repo.ID,
+			BaseBranch:          repo.DefaultBranch,
+			Type:                issues_model.PullRequestGitea,
+			AllowMaintainerEdit: true,
+		}
+		err = pull_service.NewPullRequest(git.DefaultContext, repo, pullIssue, nil, nil, pullRequest, nil)
 		require.NoError(t, err)
 
 		// push --mirror
 		var stderr bytes.Buffer
 		err = git.NewCommand(git.DefaultContext, "push", "--mirror").Run(&git.RunOpts{Dir: repoPath, Stderr: &stderr})
 		assert.Contains(t, stderr.String(), "(Forgejo ignored PR deletion attempt)")
-		require.NoError(t, err)
+		require.NoError(t, err, stderr.String())
 
-		// ensure the PRs can still be fetched
+		// ensure both PRs can still be fetched
 		err = git.NewCommand(git.DefaultContext, "fetch", "origin").
 			AddDynamicArguments(fmt.Sprintf("refs/pull/%d/head:%s", 1, "first-agit-pr")).
 			Run(&git.RunOpts{Dir: repoPath})
 		require.NoError(t, err)
 		err = git.NewCommand(git.DefaultContext, "fetch", "origin").
-			AddDynamicArguments(fmt.Sprintf("refs/pull/%d/head:%s", 2, "second-agit-pr")).
+			AddDynamicArguments(fmt.Sprintf("refs/pull/%d/head:%s", 2, "second-branch-pr")).
 			Run(&git.RunOpts{Dir: repoPath})
 		require.NoError(t, err)
 	})
