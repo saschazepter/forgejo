@@ -33,7 +33,7 @@
     "@github/markdown-toolbar-element": "2.2.3",
     "@github/quote-selection": "2.1.0",
     "@github/text-expander-element": "2.9.4",
-    "@google/model-viewer": "4.3.1",
+    "@google/model-viewer": "4.4.0",
     "@lezer/highlight": "1.2.5",
     "@mcaptcha/vanilla-glue": "0.1.0-alpha-3",
     "@primer/octicons": "19.14.0",
