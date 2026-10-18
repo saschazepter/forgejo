@@ -135,6 +135,9 @@ func TestE2e(t *testing.T) {
 			if testname == "runner-management.test.e2e" {
 				defer unittest.OverrideFixtures("tests/e2e/fixtures/runner-management")()
 			}
+			if testname == "image-diff.test.e2e" {
+				defer unittest.OverrideFixtures("tests/e2e/fixtures/image-diff")()
+			}
 
 			// Default 2 minute timeout
 			onForgejoRun(t, func(*testing.T, *url.URL) {

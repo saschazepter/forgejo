@@ -271,7 +271,6 @@ func getFileReader(ctx gocontext.Context, repoID int64, blob *git.Blob) ([]byte,
 	buf = buf[:n]
 
 	st = typesniffer.DetectContentType(buf, blob.Name())
-
 	return buf, dataRc, &fileInfo{st.IsText(), true, meta.Size, &meta.Pointer, st}, nil
 }
 

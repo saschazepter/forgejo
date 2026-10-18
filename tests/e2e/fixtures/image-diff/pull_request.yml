@@ -1,0 +1,26 @@
+# LFS
+## Head branch contains a newly created Git LFS file
+- id: 1014
+  type: 0 # gitea pull request
+  status: 2 # mergeable
+  issue_id: 1027
+  index: 1
+  head_repo_id: 54
+  base_repo_id: 54
+  head_branch: branch-with-new-image
+  base_branch: master
+  merge_base: e9c32647bab825977942598c0efa415de300304b
+  has_merged: false
+
+## Pull request modifies a Git LFS file (the OID of a pointer is changed)
+- id: 1015
+  type: 0 # gitea pull request
+  status: 2 # mergeable
+  issue_id: 1028
+  index: 2
+  head_repo_id: 54
+  base_repo_id: 54
+  head_branch: branch-with-new-image-modified
+  base_branch: branch-with-new-image
+  merge_base: bb73dde8795fb895e2feaa247c90ba9a808dd7a5
+  has_merged: false

@@ -291,6 +291,9 @@ forgejo.org/routers/api/v1/permissions/testhelpers
 forgejo.org/routers/web/org
 	MustEnableProjects
 
+forgejo.org/routers/web/repo
+	RawCommitURL
+
 forgejo.org/services/auth
 	RegisterInternalIssuerForTesting
 

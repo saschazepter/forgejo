@@ -1,16 +1,16 @@
-{{if or .blobBase .blobHead}}
+{{if or .dataBase .dataHead}}
 <tr>
 	<td colspan="2">
 		<div class="image-diff"
-			data-path-before="{{.root.BeforeRawPath}}/{{PathEscapeSegments .file.OldName}}"
-			data-path-after="{{.root.RawPath}}/{{PathEscapeSegments .file.Name}}"
-			data-mime-before="{{.sniffedTypeBase.GetMimeType}}"
-			data-mime-after="{{.sniffedTypeHead.GetMimeType}}"
+			data-path-before="{{.root.BeforeMediaPath}}/{{PathEscapeSegments .file.OldName}}"
+			data-path-after="{{.root.MediaPath}}/{{PathEscapeSegments .file.Name}}"
+			data-mime-before="{{.fileInfoBase.SniffedType.GetMimeType}}"
+			data-mime-after="{{.fileInfoHead.SniffedType.GetMimeType}}"
 		>
 			<overflow-menu class="ui secondary pointing tabular top attached borderless menu">
 				<div class="overflow-menu-items tw-justify-center">
 					<a class="item active" data-tab="diff-side-by-side-{{.file.Index}}">{{ctx.Locale.Tr "repo.diff.image.side_by_side"}}</a>
-					{{if and .blobBase .blobHead}}
+					{{if and .dataBase .dataHead}}
 					<a class="item" data-tab="diff-swipe-{{.file.Index}}">{{ctx.Locale.Tr "repo.diff.image.swipe"}}</a>
 					<a class="item" data-tab="diff-overlay-{{.file.Index}}">{{ctx.Locale.Tr "repo.diff.image.overlay"}}</a>
 					{{end}}
@@ -19,7 +19,7 @@
 			<div class="image-diff-tabs is-loading">
 				<div class="ui bottom attached tab image-diff-container active" data-tab="diff-side-by-side-{{.file.Index}}">
 					<div class="diff-side-by-side">
-						{{if .blobBase}}
+						{{if .dataBase}}
 						<span class="side">
 							<p class="side-header">{{ctx.Locale.Tr "repo.diff.file_before"}}</p>
 							<span class="before-container"><img class="image-before" alt=""></span>
@@ -30,11 +30,11 @@
 									{{ctx.Locale.Tr "repo.diff.file_image_height"}}: <span class="text bounds-info-height"></span>
 									&nbsp;|&nbsp;
 								</span>
-								{{ctx.Locale.Tr "repo.diff.file_byte_size"}}: <span class="text">{{ctx.Locale.TrSize .blobBase.Size}}</span>
+								{{ctx.Locale.Tr "repo.diff.file_byte_size"}}: <span class="text">{{ctx.Locale.TrSize .fileInfoBase.FileSize}}</span>
 							</p>
 						</span>
 						{{end}}
-						{{if .blobHead}}
+						{{if .dataHead}}
 						<span class="side">
 							<p class="side-header">{{ctx.Locale.Tr "repo.diff.file_after"}}</p>
 							<span class="after-container"><img class="image-after" alt=""></span>
@@ -45,13 +45,13 @@
 									{{ctx.Locale.Tr "repo.diff.file_image_height"}}: <span class="text bounds-info-height"></span>
 									&nbsp;|&nbsp;
 								</span>
-								{{ctx.Locale.Tr "repo.diff.file_byte_size"}}: <span class="text">{{ctx.Locale.TrSize .blobHead.Size}}</span>
+								{{ctx.Locale.Tr "repo.diff.file_byte_size"}}: <span class="text">{{ctx.Locale.TrSize .fileInfoHead.FileSize}}</span>
 							</p>
 						</span>
 						{{end}}
 					</div>
 				</div>
-				{{if and .blobBase .blobHead}}
+				{{if and .dataBase .dataHead}}
 				<div class="ui bottom attached tab image-diff-container" data-tab="diff-swipe-{{.file.Index}}">
 					<div class="diff-swipe">
 						<div class="swipe-frame">

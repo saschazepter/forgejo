@@ -1,4 +1,5 @@
 // Copyright 2019 The Gitea Authors. All rights reserved.
+// Copyright 2026 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package repo
@@ -28,6 +29,7 @@ import (
 	csv_module "forgejo.org/modules/csv"
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/gitrepo"
+	lfs_reader "forgejo.org/modules/lfs/reader"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/markup"
 	"forgejo.org/modules/optional"
@@ -54,7 +56,7 @@ func setCompareContext(ctx *context.Context, before, head *git.Commit, headOwner
 	ctx.Data["HeadCommit"] = head
 	ctx.Data["SignInLink"] = setting.AppSubURL + "/user/login?redirect_to=" + url.QueryEscape(ctx.Data["Link"].(string))
 
-	ctx.Data["GetBlobByPathForCommit"] = func(commit *git.Commit, path string) *git.Blob {
+	ctx.Data["GetDataByPathForCommit"] = func(commit *git.Commit, path string) *git.Blob {
 		if commit == nil {
 			return nil
 		}
@@ -66,19 +68,21 @@ func setCompareContext(ctx *context.Context, before, head *git.Commit, headOwner
 		return blob
 	}
 
-	ctx.Data["GetSniffedTypeForBlob"] = func(blob *git.Blob) typesniffer.SniffedType {
-		st := typesniffer.SniffedType{}
+	ctx.Data["GetFileInfoForBlob"] = func(blob *git.Blob) lfs_reader.FileInfo {
+		fileInfo := &lfs_reader.FileInfo{}
 
 		if blob == nil {
-			return st
+			return *fileInfo
 		}
 
-		st, err := blob.GuessContentType()
+		reader, fileInfo, err := lfs_reader.OpenReaderFromMaybeLFSBlob(ctx, ctx.Repo.Repository.ID, blob)
 		if err != nil {
-			log.Error("GuessContentType failed: %v", err)
-			return st
+			log.Error("OpenReaderFromMaybeLFSBlob failed: %v", err)
+			return *fileInfo
 		}
-		return st
+		// We don't need the reader here
+		reader.Close()
+		return *fileInfo
 	}
 
 	setPathsCompareContext(ctx, before, head, headOwner, headName)
@@ -96,13 +100,19 @@ func RawCommitURL(owner, name string, commit *git.Commit) string {
 	return setting.AppSubURL + "/" + url.PathEscape(owner) + "/" + url.PathEscape(name) + "/raw/commit/" + url.PathEscape(commit.ID.String())
 }
 
+// MediaCommitURL gets the relative URL for the commit in the given repository
+// (with LFS support where necessary)
+func MediaCommitURL(owner, name string, commit *git.Commit) string {
+	return setting.AppSubURL + "/" + url.PathEscape(owner) + "/" + url.PathEscape(name) + "/media/commit/" + url.PathEscape(commit.ID.String())
+}
+
 // setPathsCompareContext sets context data for source and raw paths
 func setPathsCompareContext(ctx *context.Context, base, head *git.Commit, headOwner, headName string) {
 	ctx.Data["SourcePath"] = SourceCommitURL(headOwner, headName, head)
-	ctx.Data["RawPath"] = RawCommitURL(headOwner, headName, head)
+	ctx.Data["MediaPath"] = MediaCommitURL(headOwner, headName, head)
 	if base != nil {
 		ctx.Data["BeforeSourcePath"] = SourceCommitURL(headOwner, headName, base)
-		ctx.Data["BeforeRawPath"] = RawCommitURL(headOwner, headName, base)
+		ctx.Data["BeforeMediaPath"] = MediaCommitURL(headOwner, headName, base)
 	}
 }
 
