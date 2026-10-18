@@ -91,7 +91,7 @@ require (
 	github.com/sourcegraph/zoekt v0.0.0-20260114143800-c747a3bccc2a
 	github.com/stretchr/testify v1.12.1
 	github.com/syndtr/goleveldb v1.0.0
-	github.com/ulikunitz/xz v0.5.16
+	github.com/ulikunitz/xz v0.5.17
 	github.com/urfave/cli/v3 v3.12.0
 	github.com/valyala/fastjson v1.6.10
 	github.com/yohcop/openid-go v1.0.1
