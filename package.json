@@ -92,7 +92,7 @@
     "@types/throttle-debounce": "5.0.2",
     "@types/tinycolor2": "1.4.6",
     "@types/toastify-js": "1.12.4",
-    "@vitejs/plugin-vue": "6.0.9",
+    "@vitejs/plugin-vue": "6.0.10",
     "@vitest/coverage-v8": "5.0.1",
     "@vitest/eslint-plugin": "1.6.27",
     "@vue/test-utils": "2.4.10",
