@@ -385,11 +385,11 @@ type SchedulePayload struct {
 }
 
 type WorkflowDispatchPayload struct {
-	Inputs     map[string]string `json:"inputs"`
-	Ref        string            `json:"ref"`
-	Repository *Repository       `json:"repository"`
-	Sender     *User             `json:"sender"`
-	Workflow   string            `json:"workflow"`
+	Inputs     map[string]any `json:"inputs"`
+	Ref        string         `json:"ref"`
+	Repository *Repository    `json:"repository"`
+	Sender     *User          `json:"sender"`
+	Workflow   string         `json:"workflow"`
 }
 
 // ReviewPayload FIXME

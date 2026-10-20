@@ -127,7 +127,7 @@ func (entry *Workflow) Dispatch(ctx context.Context, inputGetter InputValueGette
 	jobNames := util.KeysOfMap(wf.Jobs)
 
 	payload := &structs.WorkflowDispatchPayload{
-		Inputs:     inputs,
+		Inputs:     inputsAny,
 		Ref:        entry.Ref,
 		Repository: convert.ToRepo(ctx, repo, access.Permission{AccessMode: perm.AccessModeNone}),
 		Sender:     convert.ToUser(ctx, doer, nil),
