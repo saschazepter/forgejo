@@ -43,18 +43,6 @@ func ProcReceive(ctx context.Context, repo *repo_model.Repository, gitRepo *git.
 		// - refs/for/...
 
 		if opts.RefFullNames[i].IsPull() {
-			if opts.NewCommitIDs[i] == objectFormat.EmptyObjectID().String() {
-				// ignore deletion of refs/pull
-				// can happen when executing git push --mirror
-				results = append(results, private.HookProcReceiveRefResult{
-					OriginalRef: opts.RefFullNames[i],
-					OldOID:      opts.OldCommitIDs[i],
-					NewOID:      opts.OldCommitIDs[i],
-					Ref:         "(Forgejo ignored PR deletion attempt)",
-				})
-				continue
-			}
-
 			refFullName := opts.RefFullNames[i]
 			pullIndex, _ := strconv.ParseInt(refFullName.PullName(), 10, 64)
 			if pullIndex <= 0 {
@@ -67,16 +55,48 @@ func ProcReceive(ctx context.Context, repo *repo_model.Repository, gitRepo *git.
 				continue
 			}
 
+			isDeletion := opts.NewCommitIDs[i] == objectFormat.EmptyObjectID().String()
+
 			pr, err := issues_model.GetPullRequestByIndex(ctx, repo.ID, pullIndex)
 			if err != nil {
 				if !issues_model.IsErrPullRequestNotExist(err) {
 					return nil, fmt.Errorf("failed to get AGit pull request %d in repository %q: %w", pullIndex, repo.FullName(), err)
 				}
+
+				if !isDeletion {
+					results = append(results, private.HookProcReceiveRefResult{
+						OriginalRef: opts.RefFullNames[i],
+						OldOID:      opts.OldCommitIDs[i],
+						NewOID:      opts.NewCommitIDs[i],
+						Err:         "Unknown pull request id",
+					})
+					continue
+				}
+
+				// Deletion of a refs/pull/.../head for which we have no pull request
+				// This can occur after a pull mirror was converted to a push mirror.
+				// Perform the deletion of the refs, since they shouldn't exist in the first place.
+				// https://codeberg.org/forgejo/forgejo/pulls/14885
+				if _, _, err := git.NewCommand(ctx, "update-ref", "-d").
+					AddDynamicArguments(refFullName.String(), opts.OldCommitIDs[i]).
+					RunStdString(&git.RunOpts{Dir: repo.RepoPath()}); err != nil {
+					return nil, fmt.Errorf("failed to delete the reference of the non-existing pull request %d: %w", pullIndex, err)
+				}
 				results = append(results, private.HookProcReceiveRefResult{
 					OriginalRef: opts.RefFullNames[i],
 					OldOID:      opts.OldCommitIDs[i],
 					NewOID:      opts.NewCommitIDs[i],
-					Err:         "Unknown pull request id",
+				})
+				continue
+			}
+			if isDeletion {
+				// ignore deletion of refs/pull pointing to existing pull requests
+				// happens on git push --mirror
+				results = append(results, private.HookProcReceiveRefResult{
+					OriginalRef: opts.RefFullNames[i],
+					OldOID:      opts.OldCommitIDs[i],
+					NewOID:      opts.OldCommitIDs[i],
+					Ref:         "(Forgejo ignored PR deletion attempt)",
 				})
 				continue
 			}
