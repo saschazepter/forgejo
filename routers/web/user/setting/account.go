@@ -117,8 +117,18 @@ func EmailPost(ctx *context.Context) {
 			ctx.Redirect(setting.AppSubURL + "/user/settings/account")
 			return
 		}
+		if email == nil {
+			log.Warn("Make primary failed: EmailAddress[%d] not found for user: %-v", id, ctx.Doer)
+			ctx.Redirect(setting.AppSubURL + "/user/settings/account")
+			return
+		}
 
 		if err := user.MakeEmailAddressPrimary(ctx, ctx.Doer, email, true); err != nil {
+			if errors.Is(err, validation.ErrEmailNotActivated) {
+				log.Debug("Make primary failed: email %s is not activated for user: %-v", email.Email, ctx.Doer)
+				ctx.Redirect(setting.AppSubURL + "/user/settings/account")
+				return
+			}
 			ctx.ServerError("MakeEmailPrimary", err)
 			return
 		}
