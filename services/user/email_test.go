@@ -12,6 +12,7 @@ import (
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/setting"
+	"forgejo.org/modules/validation"
 
 	"github.com/gobwas/glob"
 	"github.com/stretchr/testify/assert"
@@ -177,11 +178,22 @@ func TestDeleteEmailAddresses(t *testing.T) {
 func TestMakeEmailAddressPrimary(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-	newPrimaryEmail := unittest.AssertExistsAndLoadBean(t, &user_model.EmailAddress{ID: 35, UID: user.ID}, "is_primary = false")
+	newPrimaryEmail := unittest.AssertExistsAndLoadBean(t, &user_model.EmailAddress{ID: 35, UID: user.ID}, "is_primary = false", "is_activated = false")
 
-	require.NoError(t, MakeEmailAddressPrimary(db.DefaultContext, user, newPrimaryEmail, false))
+	t.Run("Not activated", func(t *testing.T) {
+		require.ErrorIs(t, MakeEmailAddressPrimary(db.DefaultContext, user, newPrimaryEmail, false), validation.ErrEmailNotActivated)
 
-	unittest.AssertExistsIf(t, true, &user_model.User{ID: 2, Email: newPrimaryEmail.Email})
-	unittest.AssertExistsIf(t, true, &user_model.EmailAddress{ID: 3, UID: user.ID}, "is_primary = false")
-	unittest.AssertExistsIf(t, true, &user_model.EmailAddress{ID: 35, UID: user.ID, IsPrimary: true})
+		unittest.AssertExistsIf(t, true, &user_model.User{ID: 2, Email: "user2@example.com"})
+		unittest.AssertExistsIf(t, true, &user_model.EmailAddress{ID: 3, UID: user.ID, IsPrimary: true})
+		unittest.AssertExistsIf(t, true, &user_model.EmailAddress{ID: 35, UID: user.ID}, "is_primary = false")
+	})
+
+	t.Run("Activated", func(t *testing.T) {
+		require.NoError(t, user_model.ActivateEmail(db.DefaultContext, newPrimaryEmail))
+		require.NoError(t, MakeEmailAddressPrimary(db.DefaultContext, user, newPrimaryEmail, false))
+
+		unittest.AssertExistsIf(t, true, &user_model.User{ID: 2, Email: newPrimaryEmail.Email})
+		unittest.AssertExistsIf(t, true, &user_model.EmailAddress{ID: 3, UID: user.ID}, "is_primary = false")
+		unittest.AssertExistsIf(t, true, &user_model.EmailAddress{ID: 35, UID: user.ID, IsPrimary: true})
+	})
 }
