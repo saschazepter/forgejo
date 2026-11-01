@@ -10,6 +10,7 @@ import (
 	"forgejo.org/models/webhook"
 	"forgejo.org/modules/base"
 	"forgejo.org/modules/setting"
+	webhook_module "forgejo.org/modules/webhook"
 	"forgejo.org/services/context"
 	webhook_service "forgejo.org/services/webhook"
 )
@@ -39,7 +40,7 @@ func DefaultOrSystemWebhooks(ctx *context.Context) {
 	sys["Webhooks"], _, err = webhook.GetSystemWebhooks(ctx, db.ListOptions{ListAll: true}, false)
 	sys["BaseLink"] = setting.AppSubURL + "/admin/hooks"
 	sys["BaseLinkNew"] = setting.AppSubURL + "/admin/system-hooks"
-	sys["WebhookList"] = webhook_service.List()
+	sys["WebhookList"] = webhook_service.List(webhook_module.ScopeSystem)
 	if err != nil {
 		ctx.ServerError("GetWebhooksAdmin", err)
 		return
@@ -50,7 +51,7 @@ func DefaultOrSystemWebhooks(ctx *context.Context) {
 	def["Webhooks"], _, err = webhook.GetDefaultWebhooks(ctx)
 	def["BaseLink"] = setting.AppSubURL + "/admin/hooks"
 	def["BaseLinkNew"] = setting.AppSubURL + "/admin/default-hooks"
-	def["WebhookList"] = webhook_service.List()
+	def["WebhookList"] = webhook_service.List(webhook_module.ScopeSystem)
 	if err != nil {
 		ctx.ServerError("GetWebhooksAdmin", err)
 		return

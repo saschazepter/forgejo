@@ -21,6 +21,7 @@ import (
 	"forgejo.org/modules/json"
 	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
+	"forgejo.org/modules/templates"
 	"forgejo.org/modules/web/middleware"
 	webhook_module "forgejo.org/modules/webhook"
 	"forgejo.org/services/context"
@@ -45,7 +46,7 @@ func WebhookList(ctx *context.Context) {
 	ctx.Data["PageIsSettingsHooks"] = true
 	ctx.Data["BaseLink"] = ctx.Repo.RepoLink + "/settings/hooks"
 	ctx.Data["BaseLinkNew"] = ctx.Repo.RepoLink + "/settings/hooks"
-	ctx.Data["WebhookList"] = webhook_service.List()
+	ctx.Data["WebhookList"] = webhook_service.List(webhook_module.ScopeRepo)
 	ctx.Data["Description"] = ctx.Tr("repo.settings.hooks_desc", setting.AppDocsURL("user/repository/webhooks/"))
 
 	ws, err := db.Find[webhook.Webhook](ctx, webhook.ListWebhookOptions{RepoID: ctx.Repo.Repository.ID})
@@ -121,20 +122,24 @@ func WebhookNew(ctx *context.Context) {
 		return
 	}
 
+	var scope webhook_module.Scope
 	if orCtx.IsAdmin && orCtx.IsSystemWebhook {
 		ctx.Data["PageIsAdminSystemHooks"] = true
 		ctx.Data["PageIsAdminSystemHooksNew"] = true
+		scope = webhook_module.ScopeSystem
 	} else if orCtx.IsAdmin {
 		ctx.Data["PageIsAdminDefaultHooks"] = true
 		ctx.Data["PageIsAdminDefaultHooksNew"] = true
+		scope = webhook_module.ScopeUser
 	} else {
 		ctx.Data["PageIsSettingsHooks"] = true
 		ctx.Data["PageIsSettingsHooksNew"] = true
+		scope = webhook_module.ScopeRepo
 	}
 
 	hookType := ctx.Params(":type")
 	handler := webhook_service.GetWebhookHandler(hookType)
-	if handler == nil {
+	if handler == nil || !handler.Available(scope) {
 		ctx.NotFound("GetWebhookHandler", nil)
 		return
 	}
@@ -142,7 +147,7 @@ func WebhookNew(ctx *context.Context) {
 	ctx.Data["WebhookHandler"] = handler
 	ctx.Data["BaseLink"] = orCtx.LinkNew
 	ctx.Data["BaseLinkNew"] = orCtx.LinkNew
-	ctx.Data["WebhookList"] = webhook_service.List()
+	ctx.Data["WebhookList"] = webhook_service.List(scope)
 
 	ctx.HTML(http.StatusOK, orCtx.NewTemplate)
 }
@@ -223,7 +228,7 @@ func WebhookCreate(ctx *context.Context) {
 	}
 	ctx.Data["BaseLink"] = orCtx.LinkNew
 	ctx.Data["BaseLinkNew"] = orCtx.LinkNew
-	ctx.Data["WebhookList"] = webhook_service.List()
+	ctx.Data["WebhookList"] = webhook_service.List(webhook_module.ScopeRepo)
 
 	if ctx.HasError() {
 		// pre-fill the form with the submitted data
@@ -349,7 +354,7 @@ func checkWebhook(ctx *context.Context) (*ownerRepoCtx, *webhook.Webhook) {
 	}
 	ctx.Data["BaseLink"] = orCtx.Link
 	ctx.Data["BaseLinkNew"] = orCtx.LinkNew
-	ctx.Data["WebhookList"] = webhook_service.List()
+	ctx.Data["WebhookList"] = webhook_service.List(webhook_module.ScopeRepo)
 
 	var w *webhook.Webhook
 	if orCtx.RepoID > 0 {
@@ -394,6 +399,11 @@ func WebhookEdit(ctx *context.Context) {
 	}
 	ctx.Data["Webhook"] = w
 
+	if w.Type == webhook_module.GIT_PAGES {
+		pagesCommit, _ := ctx.Repo.GitRepo.GetBranchCommit(webhook_service.GitPagesBranchName)
+		ctx.Data["GitPagesBranchMissing"] = (pagesCommit == nil)
+	}
+
 	ctx.HTML(http.StatusOK, orCtx.NewTemplate)
 }
 
@@ -408,15 +418,29 @@ func WebhookTest(ctx *context.Context) {
 	}
 
 	// Grab latest commit or fake one if it's empty repository.
-	commit := ctx.Repo.Commit
-	if commit == nil {
-		ghost := user_model.NewGhostUser()
-		objectFormat := git.ObjectFormatFromName(ctx.Repo.Repository.ObjectFormatName)
-		commit = &git.Commit{
-			ID:            objectFormat.EmptyObjectID(),
-			Author:        ghost.NewGitSig(),
-			Committer:     ghost.NewGitSig(),
-			CommitMessage: "This is a fake commit",
+	var branchName string
+	var commit *git.Commit
+	if w.Type == webhook_module.GIT_PAGES {
+		branchName = webhook_service.GitPagesBranchName
+		commit, _ = ctx.Repo.GitRepo.GetBranchCommit(branchName)
+		if commit == nil {
+			ctx.Flash.Error(ctx.Tr("webhooks.git_pages.test.no_pages_branch",
+				templates.TrustHTML("<code>"+branchName+"</code>")))
+			ctx.Status(http.StatusNotFound)
+			return
+		}
+	} else {
+		branchName = ctx.Repo.Repository.DefaultBranch
+		commit = ctx.Repo.Commit
+		if commit == nil {
+			ghost := user_model.NewGhostUser()
+			objectFormat := git.ObjectFormatFromName(ctx.Repo.Repository.ObjectFormatName)
+			commit = &git.Commit{
+				ID:            objectFormat.EmptyObjectID(),
+				Author:        ghost.NewGitSig(),
+				Committer:     ghost.NewGitSig(),
+				CommitMessage: "This is a fake commit",
+			}
 		}
 	}
 
@@ -438,7 +462,7 @@ func WebhookTest(ctx *context.Context) {
 
 	commitID := commit.ID.String()
 	p := &api.PushPayload{
-		Ref:          git.BranchPrefix + ctx.Repo.Repository.DefaultBranch,
+		Ref:          git.BranchPrefix + branchName,
 		Before:       commitID,
 		After:        commitID,
 		CompareURL:   setting.AppURL + ctx.Repo.Repository.ComposeCompareURL(commitID, commitID),

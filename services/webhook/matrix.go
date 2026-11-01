@@ -30,7 +30,8 @@ import (
 
 type matrixHandler struct{}
 
-func (matrixHandler) Type() webhook_module.HookType { return webhook_module.MATRIX }
+func (matrixHandler) Available(webhook_module.Scope) bool { return true }
+func (matrixHandler) Type() webhook_module.HookType       { return webhook_module.MATRIX }
 
 func (matrixHandler) Icon(size int) template.HTML {
 	return svg.RenderHTML("gitea-matrix", size, "img")

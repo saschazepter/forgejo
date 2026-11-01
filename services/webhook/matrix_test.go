@@ -360,7 +360,7 @@ func TestMatrixJSONPayload(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "PUT", req.Method)
-	assert.Equal(t, "/_matrix/client/v3/rooms/ROOM_ID/send/m.room.message/Le5CqY5h6_wPgbUm8YkjQV1tML1yIs_VhIyk8RjQox4", req.URL.Path)
+	assert.Equal(t, "/_matrix/client/v3/rooms/ROOM_ID/send/m.room.message/OWkz2tnGWTev7X-soFlJGDJYtqaL_or14nskUb5Ath0", req.URL.Path)
 	assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
 	var body MatrixPayload
 	err = json.NewDecoder(req.Body).Decode(&body)

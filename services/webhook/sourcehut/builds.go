@@ -31,7 +31,8 @@ import (
 
 type BuildsHandler struct{}
 
-func (BuildsHandler) Type() webhook_module.HookType { return webhook_module.SOURCEHUT_BUILDS }
+func (BuildsHandler) Available(webhook_module.Scope) bool { return true }
+func (BuildsHandler) Type() webhook_module.HookType       { return webhook_module.SOURCEHUT_BUILDS }
 func (BuildsHandler) Metadata(w *webhook_model.Webhook) any {
 	s := &BuildsMeta{}
 	if err := json.Unmarshal([]byte(w.Meta), s); err != nil {

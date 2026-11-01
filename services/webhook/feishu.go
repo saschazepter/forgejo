@@ -20,8 +20,9 @@ import (
 
 type feishuHandler struct{}
 
-func (feishuHandler) Type() webhook_module.HookType { return webhook_module.FEISHU }
-func (feishuHandler) Icon(size int) template.HTML   { return shared.ImgIcon("feishu.png", size) }
+func (feishuHandler) Available(webhook_module.Scope) bool { return true }
+func (feishuHandler) Type() webhook_module.HookType       { return webhook_module.FEISHU }
+func (feishuHandler) Icon(size int) template.HTML         { return shared.ImgIcon("feishu.png", size) }
 
 func (feishuHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 	var form struct {

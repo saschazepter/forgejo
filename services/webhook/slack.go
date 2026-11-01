@@ -26,8 +26,9 @@ import (
 
 type slackHandler struct{}
 
-func (slackHandler) Type() webhook_module.HookType { return webhook_module.SLACK }
-func (slackHandler) Icon(size int) template.HTML   { return shared.ImgIcon("slack.png", size) }
+func (slackHandler) Available(webhook_module.Scope) bool { return true }
+func (slackHandler) Type() webhook_module.HookType       { return webhook_module.SLACK }
+func (slackHandler) Icon(size int) template.HTML         { return shared.ImgIcon("slack.png", size) }
 
 type slackForm struct {
 	forms.WebhookCoreForm

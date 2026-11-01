@@ -20,8 +20,9 @@ import (
 
 type packagistHandler struct{}
 
-func (packagistHandler) Type() webhook_module.HookType { return webhook_module.PACKAGIST }
-func (packagistHandler) Icon(size int) template.HTML   { return shared.ImgIcon("packagist.png", size) }
+func (packagistHandler) Available(webhook_module.Scope) bool { return true }
+func (packagistHandler) Type() webhook_module.HookType       { return webhook_module.PACKAGIST }
+func (packagistHandler) Icon(size int) template.HTML         { return shared.ImgIcon("packagist.png", size) }
 
 func (packagistHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 	var form struct {

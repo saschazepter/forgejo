@@ -26,6 +26,7 @@ import (
 
 type msteamsHandler struct{}
 
+func (msteamsHandler) Available(webhook_module.Scope) bool { return true }
 func (msteamsHandler) Type() webhook_module.HookType       { return webhook_module.MSTEAMS }
 func (msteamsHandler) Metadata(*webhook_model.Webhook) any { return nil }
 func (msteamsHandler) Icon(size int) template.HTML         { return shared.ImgIcon("msteams.png", size) }
@@ -758,7 +759,8 @@ func (m msteamsConvertor) PullRequest(p *api.PullRequestPayload) (MSTeamsPayload
 
 	if (p.PullRequest.RequestedReviewers != nil || p.PullRequest.RequestedReviewersTeams != nil) &&
 		(p.Action == api.HookIssueReviewRequested || p.Action == api.HookIssueReviewRequestRemoved || p.Action == api.HookIssueOpened || p.Action == api.HookIssueReOpened) {
-		list := make([]string, 0,
+		list := make(
+			[]string, 0,
 			len(p.PullRequest.RequestedReviewers)+
 				len(p.PullRequest.RequestedReviewersTeams),
 		)

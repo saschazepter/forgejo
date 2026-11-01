@@ -22,6 +22,7 @@ import (
 
 type dingtalkHandler struct{}
 
+func (dingtalkHandler) Available(webhook_module.Scope) bool { return true }
 func (dingtalkHandler) Type() webhook_module.HookType       { return webhook_module.DINGTALK }
 func (dingtalkHandler) Metadata(*webhook_model.Webhook) any { return nil }
 func (dingtalkHandler) Icon(size int) template.HTML         { return shared.ImgIcon("dingtalk.ico", size) }

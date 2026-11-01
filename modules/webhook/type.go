@@ -136,6 +136,7 @@ const (
 	WECHATWORK       HookType = "wechatwork"
 	PACKAGIST        HookType = "packagist"
 	SOURCEHUT_BUILDS HookType = "sourcehut_builds" //nolint:revive
+	GIT_PAGES        HookType = "git_pages"        //nolint:revive
 )
 
 // HookStatus is the status of a web hook
@@ -146,4 +147,13 @@ const (
 	HookStatusNone HookStatus = iota
 	HookStatusSucceed
 	HookStatusFail
+)
+
+// Scope for which a HookType is suitable
+type Scope int
+
+const (
+	ScopeSystem Scope = iota
+	ScopeUser
+	ScopeRepo
 )

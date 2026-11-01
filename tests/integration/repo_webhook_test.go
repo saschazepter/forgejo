@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"testing"
 
+	webhook_module "forgejo.org/modules/webhook"
 	app_context "forgejo.org/services/context"
 	"forgejo.org/services/webhook"
 	"forgejo.org/tests"
@@ -22,7 +23,10 @@ func TestNewWebHookLink(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	session := loginUser(t, "user2")
 
-	webhooksLen := len(webhook.List())
+	webhooksLenSystem := len(webhook.List(webhook_module.ScopeSystem))
+	webhooksLenUser := len(webhook.List(webhook_module.ScopeUser))
+	webhooksLenRepo := len(webhook.List(webhook_module.ScopeRepo))
+
 	baseurl := "/user2/repo1/settings/hooks"
 	tests := []string{
 		// webhook list page
@@ -37,7 +41,7 @@ func TestNewWebHookLink(t *testing.T) {
 		resp := session.MakeRequest(t, NewRequest(t, "GET", url), http.StatusOK)
 		htmlDoc := NewHTMLParser(t, resp.Body)
 		assert.Equal(t,
-			webhooksLen,
+			webhooksLenRepo,
 			htmlDoc.Find(`a[href^="`+baseurl+`/"][href$="/new"]`).Length(),
 			"not all webhooks are listed in the 'new' dropdown")
 	}
@@ -46,14 +50,14 @@ func TestNewWebHookLink(t *testing.T) {
 	resp := session.MakeRequest(t, NewRequestWithValues(t, "POST", baseurl+"/gitea/new", map[string]string{}), http.StatusUnprocessableEntity)
 	htmlDoc := NewHTMLParser(t, resp.Body)
 	assert.Equal(t,
-		webhooksLen,
+		webhooksLenRepo,
 		htmlDoc.Find(`a[href^="`+baseurl+`/"][href$="/new"]`).Length(),
 		"not all webhooks are listed in the 'new' dropdown on failure")
 
 	resp = session.MakeRequest(t, NewRequestWithValues(t, "POST", baseurl+"/1", map[string]string{}), http.StatusUnprocessableEntity)
 	htmlDoc = NewHTMLParser(t, resp.Body)
 	assert.Equal(t,
-		webhooksLen,
+		webhooksLenRepo,
 		htmlDoc.Find(`a[href^="`+baseurl+`/"][href$="/new"]`).Length(),
 		"not all webhooks are listed in the 'new' dropdown on failure")
 
@@ -63,7 +67,7 @@ func TestNewWebHookLink(t *testing.T) {
 		resp := adminSession.MakeRequest(t, NewRequest(t, "GET", baseurl), http.StatusOK)
 		htmlDoc := NewHTMLParser(t, resp.Body)
 		assert.Equal(t,
-			webhooksLen,
+			webhooksLenUser,
 			htmlDoc.Find(`a[href^="`+baseurl+`/"][href$="/new"]`).Length(),
 			"not all webhooks are listed in the 'new' dropdown")
 	})
@@ -72,11 +76,11 @@ func TestNewWebHookLink(t *testing.T) {
 		resp := adminSession.MakeRequest(t, NewRequest(t, "GET", baseurl), http.StatusOK)
 		htmlDoc := NewHTMLParser(t, resp.Body)
 		assert.Equal(t,
-			webhooksLen,
+			webhooksLenSystem,
 			htmlDoc.Find(`a[href^="/admin/default-hooks/"][href$="/new"]`).Length(),
 			"not all webhooks are listed in the 'new' dropdown for default-hooks")
 		assert.Equal(t,
-			webhooksLen,
+			webhooksLenSystem,
 			htmlDoc.Find(`a[href^="/admin/system-hooks/"][href$="/new"]`).Length(),
 			"not all webhooks are listed in the 'new' dropdown for system-hooks")
 	})
@@ -290,6 +294,19 @@ func TestWebhookForms(t *testing.T) {
 
 		"branch_filter": "srht/*",
 	}))
+
+	t.Run("git_pages/required", func(t *testing.T) {
+		testWebhookFormsGitPages(t, session, map[string]string{
+			"site_url": "https://username.example.org/",
+		})
+	})
+	t.Run("git_pages/optional", func(t *testing.T) {
+		testWebhookFormsGitPages(t, session, map[string]string{
+			"site_url": "https://username.example.org/",
+			"server":   "example.org",
+			"password": "123456",
+		})
+	})
 }
 
 func assertInput(t testing.TB, form *goquery.Selection, name string) string {
@@ -433,6 +450,62 @@ func testWebhookFormsShared(t *testing.T, endpoint, name string, session *TestSe
 				}
 			})
 		}
+	}
+}
+
+func testWebhookFormsGitPages(t *testing.T, session *TestSession, validFields map[string]string, invalidPatches ...map[string]string) {
+	endpoint, name := "/user2/repo1/settings/hooks", "git_pages"
+
+	// new webhook form
+	resp := session.MakeRequest(t, NewRequest(t, "GET", endpoint+"/"+name+"/new"), http.StatusOK)
+	htmlForm := NewHTMLParser(t, resp.Body).Find(`form[action^="` + endpoint + `/"]`)
+
+	// fill the form
+	payload := map[string]string{}
+	for k, v := range validFields {
+		assertInput(t, htmlForm, k)
+		payload[k] = v
+	}
+	if t.Failed() {
+		t.FailNow() // prevent further execution if the form could not be filled properly
+	}
+
+	// create the webhook (this redirects back to the hook list)
+	resp = session.MakeRequest(t, NewRequestWithValues(t, "POST", endpoint+"/"+name+"/new", payload), http.StatusSeeOther)
+	assertHasFlashMessages(t, resp, "success")
+	listEndpoint := resp.Header().Get("Location")
+	updateEndpoint := endpoint + "/"
+
+	// find last created hook in the hook list
+	// (a bit hacky, but the list should be sorted)
+	resp = session.MakeRequest(t, NewRequest(t, "GET", listEndpoint), http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+	selector := `a[href^="` + updateEndpoint + `"]`
+	editFormURL := htmlDoc.Find(selector).Last().AttrOr("href", "")
+	assert.NotEmpty(t, editFormURL)
+
+	// edit webhook form
+	resp = session.MakeRequest(t, NewRequest(t, "GET", editFormURL), http.StatusOK)
+	htmlForm = NewHTMLParser(t, resp.Body).Find(`form[action^="` + updateEndpoint + `"]`)
+	editPostURL := htmlForm.AttrOr("action", "")
+	assert.NotEmpty(t, editPostURL)
+
+	// fill the form
+	payload = map[string]string{}
+	for k, v := range validFields {
+		assert.Equal(t, v, assertInput(t, htmlForm, k), "input %q did not contain value %q", k, v)
+		payload[k] = v
+	}
+
+	// update the webhook
+	resp = session.MakeRequest(t, NewRequestWithValues(t, "POST", editPostURL, payload), http.StatusSeeOther)
+	assertHasFlashMessages(t, resp, "success")
+
+	// check the updated webhook
+	resp = session.MakeRequest(t, NewRequest(t, "GET", editFormURL), http.StatusOK)
+	htmlForm = NewHTMLParser(t, resp.Body).Find(`form[action^="` + updateEndpoint + `"]`)
+	for k, v := range validFields {
+		assert.Equal(t, v, assertInput(t, htmlForm, k), "input %q did not contain value %q", k, v)
 	}
 }
 

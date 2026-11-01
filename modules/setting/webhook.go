@@ -30,6 +30,16 @@ var Webhook = struct {
 	PayloadCommitLimit: 15,
 }
 
+var GitPagesWebhook = struct {
+	WildcardDomain    string
+	WildcardIndexRepo string
+	DefaultServer     string
+}{
+	WildcardDomain:    "",
+	WildcardIndexRepo: "pages",
+	DefaultServer:     "",
+}
+
 func loadWebhookFrom(rootCfg ConfigProvider) {
 	sec := rootCfg.Section("webhook")
 	Webhook.QueueLength = sec.Key("QUEUE_LENGTH").MustInt(1000)
@@ -48,4 +58,9 @@ func loadWebhookFrom(rootCfg ConfigProvider) {
 	}
 	Webhook.ProxyHosts = sec.Key("PROXY_HOSTS").Strings(",")
 	Webhook.PayloadCommitLimit = sec.Key("PAYLOAD_COMMIT_LIMIT").MustInt(15)
+
+	sec = rootCfg.Section("webhook.git_pages")
+	GitPagesWebhook.WildcardDomain = sec.Key("WILDCARD_DOMAIN").MustString("")
+	GitPagesWebhook.WildcardIndexRepo = sec.Key("WILDCARD_INDEX_REPO").MustString("pages")
+	GitPagesWebhook.DefaultServer = sec.Key("DEFAULT_SERVER").MustString("")
 }

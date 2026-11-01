@@ -31,6 +31,7 @@ import (
 )
 
 type Handler interface {
+	Available(webhook_module.Scope) bool
 	Type() webhook_module.HookType
 	Metadata(*webhook_model.Webhook) any
 	// UnmarshalForm provides a function to bind the request to the form.
@@ -55,6 +56,19 @@ var webhookHandlers = []Handler{
 	wechatworkHandler{},
 	packagistHandler{},
 	sourcehut.BuildsHandler{},
+	gitPagesHandler{},
+}
+
+// List provides a list of the supported webhooks for the given scope
+func List(scope webhook_module.Scope) []Handler {
+	handlers := []Handler{}
+	for _, handler := range webhookHandlers {
+		if handler.Available(scope) {
+			handlers = append(handlers, handler)
+			continue
+		}
+	}
+	return handlers
 }
 
 // GetWebhookHandler return the handler for a given webhook type (nil if not found)
@@ -65,11 +79,6 @@ func GetWebhookHandler(name webhook_module.HookType) Handler {
 		}
 	}
 	return nil
-}
-
-// List provides a list of the supported webhooks
-func List() []Handler {
-	return webhookHandlers
 }
 
 // IsValidHookTaskType returns true if a webhook registered

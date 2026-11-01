@@ -27,6 +27,8 @@ type defaultHandler struct {
 	forgejo bool
 }
 
+func (defaultHandler) Available(webhook_module.Scope) bool { return true }
+
 func (dh defaultHandler) Type() webhook_module.HookType {
 	if dh.forgejo {
 		return webhook_module.FORGEJO

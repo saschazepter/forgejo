@@ -10,6 +10,7 @@ import (
 	"forgejo.org/models/webhook"
 	"forgejo.org/modules/base"
 	"forgejo.org/modules/setting"
+	webhook_module "forgejo.org/modules/webhook"
 	"forgejo.org/services/context"
 	webhook_service "forgejo.org/services/webhook"
 )
@@ -24,7 +25,7 @@ func Webhooks(ctx *context.Context) {
 	ctx.Data["PageIsSettingsHooks"] = true
 	ctx.Data["BaseLink"] = setting.AppSubURL + "/user/settings/hooks"
 	ctx.Data["BaseLinkNew"] = setting.AppSubURL + "/user/settings/hooks"
-	ctx.Data["WebhookList"] = webhook_service.List()
+	ctx.Data["WebhookList"] = webhook_service.List(webhook_module.ScopeUser)
 	ctx.Data["Description"] = ctx.Tr("settings.hooks.desc")
 
 	ws, err := db.Find[webhook.Webhook](ctx, webhook.ListWebhookOptions{OwnerID: ctx.Doer.ID})

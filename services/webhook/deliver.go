@@ -84,6 +84,8 @@ func Deliver(ctx context.Context, t *webhook_model.HookTask) error {
 			redacted = "Bearer " + redacted
 		} else if strings.HasPrefix(authorization, "Basic ") {
 			redacted = "Basic " + redacted
+		} else if strings.HasPrefix(authorization, "Pages ") {
+			redacted = "Pages " + redacted
 		}
 		t.RequestInfo.Headers["Authorization"] = redacted
 	}

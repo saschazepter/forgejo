@@ -112,6 +112,7 @@ func pushTestPayloadWithCommitMessage(message string) *api.PushPayload {
 		TotalCommits: 2,
 		Repo: &api.Repository{
 			HTMLURL:  "http://localhost:3000/test/repo",
+			CloneURL: "http://localhost:3000/test/repo.git",
 			Name:     "repo",
 			FullName: "test/repo",
 		},

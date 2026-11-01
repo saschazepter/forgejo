@@ -24,8 +24,9 @@ import (
 
 type telegramHandler struct{}
 
-func (telegramHandler) Type() webhook_module.HookType { return webhook_module.TELEGRAM }
-func (telegramHandler) Icon(size int) template.HTML   { return shared.ImgIcon("telegram.png", size) }
+func (telegramHandler) Available(webhook_module.Scope) bool { return true }
+func (telegramHandler) Type() webhook_module.HookType       { return webhook_module.TELEGRAM }
+func (telegramHandler) Icon(size int) template.HTML         { return shared.ImgIcon("telegram.png", size) }
 
 func (telegramHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 	var form struct {

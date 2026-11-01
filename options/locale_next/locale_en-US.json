@@ -1268,5 +1268,18 @@
 	"sync_fork.sync.button": "Sync",
 	"modal.close": "Close",
 	"project.missing_issues_in_list": "Could not find all issues in list. Check if they were deleted.",
+	"webhooks.git_pages.description": "Deploy a website from your repository to a %[1]s server. Read more in the <a target=\"_blank\" rel=\"noopener\" href=\"%[2]s\">Forgejo documentation</a>.",
+	"webhooks.git_pages.site_url.label": "Site URL",
+	"webhooks.git_pages.site_url.helper": "Location of the deployed website.",
+	"webhooks.git_pages.server.label": "Deploy server",
+	"webhooks.git_pages.server.validation": "Must be an address: `host` or `host:port`.",
+	"webhooks.git_pages.server.helper": "Address of the git-pages server to which the website will be deployed. Connection protocol is determined by the site URL schema.",
+	"webhooks.git_pages.password.label": "Deploy password",
+	"webhooks.git_pages.password.helper": "Password for the \"DNS Challenge\" authorization method. Leave empty when using other methods.",
+	"webhooks.git_pages.active.helper": "Site will be deployed on push to the %[1]s branch.",
+	"webhooks.git_pages.test.no_pages_branch": "This webhook type requires a %[1]s branch to exist.",
+	"form.Server": "Deploy server",
+	"webhooks.git_pages.server.required_for_this_site": "Must be provided for an initial deploy to an %[1]s site URL.",
+	"webhooks.git_pages.site_url_and_server_dns_mismatch": "The hostname of site %[1]s resolves to A/AAAA DNS records that are not present for the specified deploy server %[2]s. Verify that the correct deploy server has been configured.",
 	"meta.last_line": "Thank you for translating Forgejo! This line isn't seen by the users but it serves other purposes in the translation management. You can place a fun fact in the translation instead of translating it."
 }

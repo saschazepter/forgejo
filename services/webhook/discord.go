@@ -33,8 +33,9 @@ import (
 
 type discordHandler struct{}
 
-func (discordHandler) Type() webhook_module.HookType { return webhook_module.DISCORD }
-func (discordHandler) Icon(size int) template.HTML   { return shared.ImgIcon("discord.png", size) }
+func (discordHandler) Available(webhook_module.Scope) bool { return true }
+func (discordHandler) Type() webhook_module.HookType       { return webhook_module.DISCORD }
+func (discordHandler) Icon(size int) template.HTML         { return shared.ImgIcon("discord.png", size) }
 
 type discordForm struct {
 	forms.WebhookCoreForm

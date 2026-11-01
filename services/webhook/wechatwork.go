@@ -20,6 +20,7 @@ import (
 
 type wechatworkHandler struct{}
 
+func (wechatworkHandler) Available(webhook_module.Scope) bool { return true }
 func (wechatworkHandler) Type() webhook_module.HookType       { return webhook_module.WECHATWORK }
 func (wechatworkHandler) Metadata(*webhook_model.Webhook) any { return nil }
 

@@ -38,6 +38,8 @@
 			{{template "webhook/new/packagist" .}}
 		{{else if eq .HookType "sourcehut_builds"}}
 			{{template "webhook/new/sourcehut_builds" .}}
+		{{else if eq .HookType "git_pages"}}
+			{{template "webhook/new/git_pages" .}}
 		{{end}}
 	{{end}}
 </div>

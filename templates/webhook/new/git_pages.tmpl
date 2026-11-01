@@ -1,0 +1,39 @@
+{{$isNew:=.PageIsSettingsHooksNew}}
+
+<p>{{ctx.Locale.Tr "webhooks.git_pages.description" ("<a target=\"_blank\" rel=\"noopener\" href=\"https://git-pages.org\">git-pages</a>"|TrustHTML) (AppDocsURL "user/repository/git-pages-webhook/")}}</p>
+<form class="ui form" action="{{.BaseLink}}/{{or .Webhook.ID "git_pages/new"}}" method="post">
+	{{template "base/disable_form_autofill"}}
+	<div class="required field {{if .Err_SiteURL}}error{{end}}">
+		<label for="site_url">{{ctx.Locale.Tr "webhooks.git_pages.site_url.label"}}</label>
+		<input id="site_url" name="site_url" type="url" value="{{if $isNew}}{{if .WebhookHandler.SettingGitPagesWebhook.WildcardDomain}}https://{{.Owner.LowerName}}.{{.WebhookHandler.SettingGitPagesWebhook.WildcardDomain}}/{{if ne .Repository.Name .WebhookHandler.SettingGitPagesWebhook.WildcardIndexRepo}}{{.Repository.Name}}/{{end}}{{end}}{{else}}{{.Webhook.URL}}{{end}}" placeholder="https://example.org/" autofocus required>
+		<span class="help">{{ctx.Locale.Tr "webhooks.git_pages.site_url.helper"}}</span>
+	</div>
+	<div class="field {{if .Err_Server}}error{{end}}">
+		<label for="server">{{ctx.Locale.Tr "webhooks.git_pages.server.label"}}</label>
+		<input id="server" name="server" inputmode="url" pattern="(?!.{254,})(?:(?!-)(?:xn--[A-Za-z0-9_\-]{1,59}|(?!xn--)[A-Za-z0-9_\-]{1,63})(?&lt;!-)\.)*(?:xn--[A-Za-z0-9_\-]{1,59}|[A-Za-z]{2,63})(?::[0-9]{1,5})?" title="{{ctx.Locale.Tr "webhooks.git_pages.server.validation"}}" value="{{if $isNew}}{{.WebhookHandler.SettingGitPagesWebhook.DefaultServer}}{{else}}{{.HookMetadata.Server}}{{end}}">
+		<span class="help">{{ctx.Locale.Tr "webhooks.git_pages.server.helper"}}</span>
+	</div>
+	<div class="field {{if .Err_Password}}error{{end}}">
+		<label for="password">{{ctx.Locale.Tr "webhooks.git_pages.password.label"}}</label>
+		<input id="password" name="password" type="password" value="{{.Webhook.HeaderAuthorizationTrimPrefix "Pages "}}" autocomplete="off">
+		<span class="help">{{ctx.Locale.Tr "webhooks.git_pages.password.helper"}}</span>
+	</div>
+
+	<div class="divider"></div>
+
+	<fieldset>
+		<label>
+			<input name="active" type="checkbox" {{if or $isNew .Webhook.IsActive}}checked{{end}}>
+			{{ctx.Locale.Tr "repo.settings.active"}}
+			<span class="help">{{ctx.Locale.Tr "webhooks.git_pages.active.helper" ("<code>pages</code>"|TrustHTML)}}</span>
+		</label>
+		{{if $isNew}}
+			<button class="ui primary button">{{ctx.Locale.Tr "repo.settings.add_webhook"}}</button>
+		{{else}}
+			<button class="ui primary button">{{ctx.Locale.Tr "repo.settings.update_webhook"}}</button>
+			<a class="ui red delete-button button" data-url="{{.BaseLink}}/delete" data-id="{{.Webhook.ID}}" data-modal-id="delete-webhook">{{ctx.Locale.Tr "repo.settings.delete_webhook"}}</a>
+		{{end}}
+	</fieldset>
+
+	{{template "repo/settings/webhook/delete_modal" .}}
+</form>
