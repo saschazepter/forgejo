@@ -12,7 +12,6 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -406,7 +405,7 @@ func configSetNonExist(key, value string) error {
 }
 
 func configAddNonExist(key, value string) error {
-	_, _, err := NewCommand(DefaultContext, "config", "--global", "--get").AddDynamicArguments(key, regexp.QuoteMeta(value)).RunStdString(nil)
+	_, _, err := NewCommand(DefaultContext, "config", "--global", "--get", "--fixed-value").AddDynamicArguments(key, value).RunStdString(nil)
 	if err == nil {
 		// already exist
 		return nil
@@ -426,7 +425,7 @@ func configUnsetAll(key, value string) error {
 	_, _, err := NewCommand(DefaultContext, "config", "--global", "--get").AddDynamicArguments(key).RunStdString(nil)
 	if err == nil {
 		// exist, need to remove
-		_, _, err = NewCommand(DefaultContext, "config", "--global", "--unset-all").AddDynamicArguments(key, regexp.QuoteMeta(value)).RunStdString(nil)
+		_, _, err = NewCommand(DefaultContext, "config", "--global", "--unset-all", "--fixed-value").AddDynamicArguments(key, value).RunStdString(nil)
 		if err != nil && !IsErrorExitCode(err, 5) {
 			// exit code 5: try to unset an option which does not exist
 			return fmt.Errorf("failed to unset git global config %s, err: %w", key, err)

@@ -82,6 +82,12 @@ func TestGitConfig(t *testing.T) {
 	require.NoError(t, configSetNonExist("test.key-x", "*"))
 	require.NoError(t, configUnsetAll("test.key-x", "*"))
 	assert.False(t, gitConfigContains("key-x = *"))
+
+	// https://codeberg.org/forgejo/forgejo/issues/15048
+	require.NoError(t, configAddNonExist("test.key-y", ""))
+	assert.True(t, gitConfigContains("key-y = "))
+	require.NoError(t, configUnsetAll("test.key-y", ""))
+	assert.False(t, gitConfigContains("key-y = "))
 }
 
 func TestSyncConfig(t *testing.T) {
