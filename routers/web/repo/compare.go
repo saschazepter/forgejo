@@ -69,16 +69,14 @@ func setCompareContext(ctx *context.Context, before, head *git.Commit, headOwner
 	}
 
 	ctx.Data["GetFileInfoForBlob"] = func(blob *git.Blob) lfs_reader.FileInfo {
-		fileInfo := &lfs_reader.FileInfo{}
-
 		if blob == nil {
-			return *fileInfo
+			return lfs_reader.FileInfo{}
 		}
 
 		reader, fileInfo, err := lfs_reader.OpenReaderFromMaybeLFSBlob(ctx, ctx.Repo.Repository.ID, blob)
 		if err != nil {
 			log.Error("OpenReaderFromMaybeLFSBlob failed: %v", err)
-			return *fileInfo
+			return lfs_reader.FileInfo{}
 		}
 		// We don't need the reader here
 		reader.Close()
