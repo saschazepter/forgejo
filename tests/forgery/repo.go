@@ -103,6 +103,15 @@ func CreateRepository(t testing.TB, owner *user_model.User, opts *CreateReposito
 		// reload the repo since pushing a commit might update the model via the push_update queue (IsEmpty for instance)
 		repo, err = repo_model.GetRepositoryByID(t.Context(), repo.ID)
 		require.NoError(t, err)
+	} else if opts.LatestSha != nil {
+		require.False(t, repo.IsEmpty, "Without Files, no LatestSha can be retrieved")
+
+		gitRepo, err := git.OpenRepository(git.DefaultContext, repo.RepoPath())
+		require.NoError(t, err)
+		defer gitRepo.Close()
+
+		*opts.LatestSha, err = gitRepo.GetBranchCommitID(defaultBranch)
+		require.NoError(t, err)
 	}
 	repo.Owner = owner
 
