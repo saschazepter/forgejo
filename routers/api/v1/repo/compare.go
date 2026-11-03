@@ -62,14 +62,14 @@ func CompareDiff(ctx *context.APIContext) {
 		infos[1] = infoPath
 	}
 
-	headRepository, headGitRepo, ci, _, _ := parseCompareInfo(ctx, api.CreatePullRequestOption{
+	headRepository, ci, _, _ := parseCompareInfo(ctx, api.CreatePullRequestOption{
 		Base: infos[0],
 		Head: infos[1],
 	})
 	if ctx.Written() {
 		return
 	}
-	defer headGitRepo.Close()
+	defer ci.Close()
 
 	verification := ctx.FormString("verification") == "" || ctx.FormBool("verification")
 	files := ctx.FormString("files") == "" || ctx.FormBool("files")
@@ -78,7 +78,7 @@ func CompareDiff(ctx *context.APIContext) {
 	apiFiles := []*api.CommitAffectedFiles{}
 	userCache := make(map[string]*user_model.User)
 	for i := 0; i < len(ci.Commits); i++ {
-		apiCommit, err := convert.ToCommit(ctx, headRepository, headGitRepo, ci.Commits[i], userCache,
+		apiCommit, err := convert.ToCommit(ctx, headRepository, ci.CompareRepo(), ci.Commits[i], userCache,
 			convert.ToCommitOptions{
 				Stat:         true,
 				Verification: verification,

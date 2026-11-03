@@ -72,6 +72,7 @@ func TestComparePatchAndDiffMenuEntries(t *testing.T) {
 
 	session := loginUser(t, "user2")
 	req := NewRequest(t, "GET", "/user2/repo-release/compare/v1.0...v2.0")
+	expectedCompare := "a8a700e8c6...user2/repo-release:7197b56fdc"
 	resp := session.MakeRequest(t, req, http.StatusOK)
 	htmlDoc := NewHTMLParser(t, resp.Body)
 	downloadOptions := htmlDoc.doc.Find("a.item[download]")
@@ -80,24 +81,22 @@ func TestComparePatchAndDiffMenuEntries(t *testing.T) {
 	downloadOptions.Each(func(idx int, c *goquery.Selection) {
 		value, exists := c.Attr("download")
 		if exists && strings.HasSuffix(value, ".patch") {
+			assert.Equal(t, fmt.Sprintf("%s.patch", expectedCompare), value)
 			patchDownloadEntryPresent = true
 		}
 
 		if exists && strings.HasSuffix(value, ".diff") {
+			assert.Equal(t, fmt.Sprintf("%s.diff", expectedCompare), value)
 			diffDownloadEntryPresent = true
 		}
 	})
 
 	assert.True(t, patchDownloadEntryPresent, "Patch file download entry should be present")
 	assert.True(t, diffDownloadEntryPresent, "Diff file download entry should be present")
-}
 
-func TestComparePatchDownload(t *testing.T) {
-	defer tests.PrepareTestEnv(t)()
-
-	session := loginUser(t, "user2")
-	req := NewRequest(t, "GET", "/user2/repo-release/compare/v1.0...v2.0.patch")
-	attendedResponse := `From 4380f99290b2b3922733ff82c57afad915ace907 Mon Sep 17 00:00:00 2001
+	t.Run("PatchDownload", func(t *testing.T) {
+		req := NewRequestf(t, "GET", "/user2/repo-release/compare/%s.patch", expectedCompare)
+		attendedResponse := `From 4380f99290b2b3922733ff82c57afad915ace907 Mon Sep 17 00:00:00 2001
 From: user1 <address1@example.com>
 Date: Mon, 17 Apr 2023 14:39:35 +0200
 Subject: [PATCH 1/3] feature v2
@@ -145,16 +144,13 @@ index 6dfe48a..bc7068d 100644
 +With a v1.0 and a v2.0
 `
 
-	resp := session.MakeRequest(t, req, http.StatusOK)
-	assert.Equal(t, attendedResponse, resp.Body.String())
-}
+		resp := session.MakeRequest(t, req, http.StatusOK)
+		assert.Equal(t, attendedResponse, resp.Body.String())
+	})
 
-func TestCompareDiffDownload(t *testing.T) {
-	defer tests.PrepareTestEnv(t)()
-
-	session := loginUser(t, "user2")
-	req := NewRequest(t, "GET", "/user2/repo-release/compare/v1.0...v2.0.diff")
-	attendedResponse := `diff --git a/README.md b/README.md
+	t.Run("DiffDownload", func(t *testing.T) {
+		req := NewRequestf(t, "GET", "/user2/repo-release/compare/%s.diff", expectedCompare)
+		attendedResponse := `diff --git a/README.md b/README.md
 index 6dfe48a..bc7068d 100644
 --- a/README.md
 +++ b/README.md
@@ -171,8 +167,56 @@ new file mode 100644
 index 0000000..e69de29
 `
 
+		resp := session.MakeRequest(t, req, http.StatusOK)
+		assert.Equal(t, attendedResponse, resp.Body.String())
+	})
+}
+
+func TestComparePatchAndDiffMenuEntriesCrossRepository(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	session := loginUser(t, "user2")
+	req := NewRequest(t, "GET", "/user2/repo-release/compare/v1.0...user2/repo1:v1.1")
+	expectedCompare := "a8a700e8c6...user2/repo1:65f1bf27bc"
 	resp := session.MakeRequest(t, req, http.StatusOK)
-	assert.Equal(t, attendedResponse, resp.Body.String())
+	htmlDoc := NewHTMLParser(t, resp.Body)
+	downloadOptions := htmlDoc.doc.Find("a.item[download]")
+	var patchDownloadEntryPresent bool
+	var diffDownloadEntryPresent bool
+	downloadOptions.Each(func(idx int, c *goquery.Selection) {
+		value, exists := c.Attr("download")
+		if exists && strings.HasSuffix(value, ".patch") {
+			assert.Equal(t, fmt.Sprintf("%s.patch", expectedCompare), value)
+			patchDownloadEntryPresent = true
+		}
+
+		if exists && strings.HasSuffix(value, ".diff") {
+			assert.Equal(t, fmt.Sprintf("%s.diff", expectedCompare), value)
+			diffDownloadEntryPresent = true
+		}
+	})
+
+	assert.True(t, patchDownloadEntryPresent, "Patch file download entry should be present")
+	assert.True(t, diffDownloadEntryPresent, "Diff file download entry should be present")
+
+	t.Run("PatchDownload", func(t *testing.T) {
+		req := NewRequestf(t, "GET", "/user2/repo-release/compare/%s.patch", expectedCompare)
+		resp := session.MakeRequest(t, req, http.StatusOK)
+		respPatch := resp.Body.String()
+		assert.True(t, strings.HasPrefix(respPatch, "From 65f1bf27bc3bf70f64657658635e66094edbcb4d Mon Sep 17 00:00:00 2001"), "must have .patch file prefix for commit 65f1bf27bc")
+		assert.Contains(t, respPatch, "Subject: [PATCH 1/4] Initial commit\n\n")
+		assert.Contains(t, respPatch, "Subject: [PATCH 4/4] readme: v1\n\n")
+	})
+
+	t.Run("DiffDownload", func(t *testing.T) {
+		req := NewRequestf(t, "GET", "/user2/repo-release/compare/%s.diff", expectedCompare)
+		resp := session.MakeRequest(t, req, http.StatusOK)
+		respDiff := resp.Body.String()
+		assert.True(t, strings.HasPrefix(respDiff, "diff --git a/README.md b/README.md\n"), "must have .diff file prefix")
+		assert.Contains(t, respDiff, "\n--- a/README.md\n")
+		assert.Contains(t, respDiff, "\n+++ b/README.md\n")
+		assert.Contains(t, respDiff, "\n\\ No newline at end of file\n")
+	})
 }
 
 // Git commit graph for repo20

@@ -16,9 +16,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
-
-	logger "forgejo.org/modules/log"
 )
 
 // CompareInfo represents needed information for comparing references.
@@ -37,45 +34,13 @@ func (repo *Repository) GetMergeBaseSimple(base, head string) (string, error) {
 }
 
 // GetMergeBase checks and returns merge base of two branches and the reference used as base.
-func (repo *Repository) GetMergeBase(tmpRemote, base, head string) (string, string, error) {
-	if tmpRemote == "" {
-		tmpRemote = "origin"
-	}
-
-	if tmpRemote != "origin" {
-		tmpBaseName := RemotePrefix + tmpRemote + "/tmp_" + base
-		// Fetch commit into a temporary branch in order to be able to handle commits and tags
-		_, _, err := NewCommand(repo.Ctx, "fetch", "--no-tags").AddDynamicArguments(tmpRemote).AddDashesAndList(base + ":" + tmpBaseName).RunStdString(&RunOpts{Dir: repo.Path})
-		if err == nil {
-			base = tmpBaseName
-		}
-	}
-
+func (repo *Repository) GetMergeBase(base, head string) (string, error) {
 	stdout, _, err := NewCommand(repo.Ctx, "merge-base").AddDashesAndList(base, head).RunStdString(&RunOpts{Dir: repo.Path})
-	return strings.TrimSpace(stdout), base, err
+	return strings.TrimSpace(stdout), err
 }
 
 // GetCompareInfo generates and returns compare information between base and head branches of repositories.
-func (repo *Repository) GetCompareInfo(basePath, baseBranch, headBranch string, directComparison, fileOnly bool) (_ *CompareInfo, err error) {
-	var (
-		remoteBranch string
-		tmpRemote    string
-	)
-
-	// We don't need a temporary remote for same repository.
-	if repo.Path != basePath {
-		// Add a temporary remote
-		tmpRemote = strconv.FormatInt(time.Now().UnixNano(), 10)
-		if err = repo.AddRemote(tmpRemote, basePath, false); err != nil {
-			return nil, fmt.Errorf("AddRemote: %w", err)
-		}
-		defer func() {
-			if err := repo.RemoveRemote(tmpRemote); err != nil {
-				logger.Error("GetPullRequestInfo: RemoveRemote: %v", err)
-			}
-		}()
-	}
-
+func (repo *Repository) GetCompareInfo(baseBranch, headBranch string, directComparison, fileOnly bool) (_ *CompareInfo, err error) {
 	compareInfo := new(CompareInfo)
 
 	compareInfo.HeadCommitID, err = repo.GetRefCommitID(headBranch)
@@ -83,11 +48,11 @@ func (repo *Repository) GetCompareInfo(basePath, baseBranch, headBranch string, 
 		compareInfo.HeadCommitID = headBranch
 	}
 
-	compareInfo.MergeBase, remoteBranch, err = repo.GetMergeBase(tmpRemote, baseBranch, headBranch)
+	compareInfo.MergeBase, err = repo.GetMergeBase(baseBranch, headBranch)
 	if err == nil {
-		compareInfo.BaseCommitID, err = repo.GetRefCommitID(remoteBranch)
+		compareInfo.BaseCommitID, err = repo.GetRefCommitID(baseBranch)
 		if err != nil {
-			compareInfo.BaseCommitID = remoteBranch
+			compareInfo.BaseCommitID = baseBranch
 		}
 		separator := "..."
 		baseCommitID := compareInfo.MergeBase
@@ -115,9 +80,9 @@ func (repo *Repository) GetCompareInfo(basePath, baseBranch, headBranch string, 
 		}
 	} else {
 		compareInfo.Commits = []*Commit{}
-		compareInfo.MergeBase, err = repo.GetRefCommitID(remoteBranch)
+		compareInfo.MergeBase, err = repo.GetRefCommitID(baseBranch)
 		if err != nil {
-			compareInfo.MergeBase = remoteBranch
+			compareInfo.MergeBase = baseBranch
 		}
 		compareInfo.BaseCommitID = compareInfo.MergeBase
 	}
@@ -125,7 +90,7 @@ func (repo *Repository) GetCompareInfo(basePath, baseBranch, headBranch string, 
 	// Count number of changed files.
 	// This probably should be removed as we need to use shortstat elsewhere
 	// Now there is git diff --shortstat but this appears to be slower than simply iterating with --nameonly
-	compareInfo.NumFiles, err = repo.GetDiffNumChangedFiles(remoteBranch, headBranch, directComparison)
+	compareInfo.NumFiles, err = repo.GetDiffNumChangedFiles(baseBranch, headBranch, directComparison)
 	if err != nil {
 		return nil, err
 	}
