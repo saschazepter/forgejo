@@ -12,9 +12,7 @@ import (
 	"forgejo.org/models/perm"
 	repo_model "forgejo.org/models/repo"
 	user_model "forgejo.org/models/user"
-	"forgejo.org/modules/container"
 	"forgejo.org/modules/optional"
-	"forgejo.org/services/authz"
 
 	"xorm.io/builder"
 )
@@ -89,10 +87,7 @@ func recalculateAccess(ctx context.Context, recalc recalcAccess) error {
 			return fmt.Errorf("update access map by team membership: %w", err)
 		}
 
-		// Reduce records from accessMap when they aren't necessary:
-		if err := applyMinVisibility(ctx, accessMap); err != nil {
-			return fmt.Errorf("apply min visibility: %w", err)
-		}
+		removeNoneAccess(accessMap)
 
 		newAccesses := make([]Access, 0, len(accessMap))
 		for key, accessMode := range accessMap {
@@ -186,56 +181,12 @@ func updateAccessMapByTeamMembership(ctx context.Context, accessMap map[accessKe
 	return nil
 }
 
-func applyMinVisibility(ctx context.Context, accessMap map[accessKey]perm.AccessMode) error {
-	// If a repository is public, then an entry accessMap[k] for that repository isn't necessary if it is AccessModeRead
-	// -- the repository is already readable to users.
-	//
-	// The exception is that if the user is a restricted user.  Restricted users can't see public repositories.  But
-	// accessMap[k] for a public repository and a restricted user being AccessModeRead would indicate that the
-	// restricted user has been granted explicit access to this repository.
-	//
-	// To reduce the accessMap on these rules, query the DB for both the visibility of the repo (accounting for
-	// limited-org owned repos), and restricted user field.
-
-	uniqueRepos := make(container.Set[int64])
-	uniqueUsers := make(container.Set[int64])
-	for key := range accessMap {
-		uniqueRepos.Add(key.repoID)
-		uniqueUsers.Add(key.userID)
-	}
-
-	// Reuse logic from the PublicReposAuthorizationReducer to get a filter for only public repos
-	publicRepoFilter := (&authz.PublicReposAuthorizationReducer{}).RepoReadAccessFilter()
-	var publicRepoIDs []int64
-	if err := db.GetEngine(ctx).
-		Select("id").
-		Table("repository").
-		In("id", uniqueRepos.Slice()).
-		Where(publicRepoFilter).
-		Find(&publicRepoIDs); err != nil {
-		return fmt.Errorf("get public repos: %w", err)
-	}
-	publicRepoIDSet := container.SetOf(publicRepoIDs...)
-
-	// Fetch which of the users being recalculated, if any, are restricted users
-	var restrictedUserIDs []int64
-	if err := db.GetEngine(ctx).
-		Select("id").
-		Table("`user`").
-		In("id", uniqueUsers.Slice()).
-		Where("is_restricted").
-		Find(&restrictedUserIDs); err != nil {
-		return fmt.Errorf("get restricted users: %w", err)
-	}
-	restrictedUserIDSet := container.SetOf(restrictedUserIDs...)
-
+func removeNoneAccess(accessMap map[accessKey]perm.AccessMode) {
 	for key, value := range accessMap {
-		if (publicRepoIDSet.Contains(key.repoID) && !restrictedUserIDSet.Contains(key.userID) && value <= perm.AccessModeRead) || value < perm.AccessModeRead {
+		if value < perm.AccessModeRead {
 			delete(accessMap, key)
 		}
 	}
-
-	return nil
 }
 
 func maxAccessMode(modes ...perm.AccessMode) perm.AccessMode {
