@@ -5,12 +5,12 @@
 	{{template "base/disable_form_autofill"}}
 	<div class="required field {{if .Err_SiteURL}}error{{end}}">
 		<label for="site_url">{{ctx.Locale.Tr "webhooks.git_pages.site_url.label"}}</label>
-		<input id="site_url" name="site_url" type="url" value="{{if $isNew}}{{if .WebhookHandler.SettingGitPagesWebhook.WildcardDomain}}https://{{.Owner.LowerName}}.{{.WebhookHandler.SettingGitPagesWebhook.WildcardDomain}}/{{if ne .Repository.Name .WebhookHandler.SettingGitPagesWebhook.WildcardIndexRepo}}{{.Repository.Name}}/{{end}}{{end}}{{else}}{{.Webhook.URL}}{{end}}" placeholder="https://example.org/" autofocus required>
+		<input id="site_url" name="site_url" type="url" value="{{if $isNew}}{{if .WebhookHandler.SettingGitPagesWebhook.WildcardDomain}}https://{{.Owner.LowerName}}.{{.WebhookHandler.SettingGitPagesWebhook.WildcardDomain}}/{{if ne .Repository.Name .WebhookHandler.SettingGitPagesWebhook.WildcardIndexRepo}}{{.Repository.Name}}/{{end}}{{end}}{{else}}{{.Webhook.URL}}{{end}}" placeholder="https://example.org/" {{if not .Err_Server}}autofocus{{end}} required>
 		<span class="help">{{ctx.Locale.Tr "webhooks.git_pages.site_url.helper"}}</span>
 	</div>
 	<div class="field {{if .Err_Server}}error{{end}}">
 		<label for="server">{{ctx.Locale.Tr "webhooks.git_pages.server.label"}}</label>
-		<input id="server" name="server" inputmode="url" pattern="(?!.{254,})(?:(?!-)(?:xn--[A-Za-z0-9_\-]{1,59}|(?!xn--)[A-Za-z0-9_\-]{1,63})(?&lt;!-)\.)*(?:xn--[A-Za-z0-9_\-]{1,59}|[A-Za-z]{2,63})(?::[0-9]{1,5})?" title="{{ctx.Locale.Tr "webhooks.git_pages.server.validation"}}" value="{{if $isNew}}{{.WebhookHandler.SettingGitPagesWebhook.DefaultServer}}{{else}}{{.HookMetadata.Server}}{{end}}">
+		<input id="server" name="server" inputmode="url" pattern="(?!.{254,})(?:(?!-)(?:xn--[A-Za-z0-9_\-]{1,59}|(?!xn--)[A-Za-z0-9_\-]{1,63})(?&lt;!-)\.)*(?:xn--[A-Za-z0-9_\-]{1,59}|[A-Za-z]{2,63})(?::[0-9]{1,5})?" title="{{ctx.Locale.Tr "webhooks.git_pages.server.validation"}}" value="{{if $isNew}}{{.WebhookHandler.SettingGitPagesWebhook.DefaultServer}}{{else}}{{.HookMetadata.Server}}{{end}}" {{if .Err_Server}}autofocus{{end}}>
 		<span class="help">{{ctx.Locale.Tr "webhooks.git_pages.server.helper"}}</span>
 	</div>
 	<div class="field {{if .Err_Password}}error{{end}}">
