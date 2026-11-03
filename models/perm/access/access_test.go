@@ -4,6 +4,7 @@
 package access_test
 
 import (
+	"slices"
 	"testing"
 
 	"forgejo.org/models/db"
@@ -170,4 +171,54 @@ func TestRepository_RecalculateAccessRestrictedUser(t *testing.T) {
 	require.NoError(t, access_model.RecalculateUserAccess(t.Context(), repo24, user.ID))
 	require.NoError(t, access_model.RecalculateUserAccess(t.Context(), repo8, user.ID))
 	assertAccess(t)
+}
+
+func TestRepository_RecalculateAccessPublicRepoReader(t *testing.T) {
+	defer unittest.OverrideFixtures("models/perm/access/TestRepository_RecalculateAccessPublicRepoReader")()
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	// Even though a repository may be public and readable to anyone, an explicit grant of read access (from a team
+	// membership or a real-level collaborator) should populate the access table, allowing that user to appear in
+	// `GetRepoReaders`, and in the repo search on the user dashboard.
+
+	// org41/repo61, public repo in a public org; team.id=22 (team1) gives read access to user38 & user39
+	repo61 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 61})
+	assert.False(t, repo61.IsPrivate)
+	user38 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 38})
+	assert.False(t, user38.IsRestricted)
+	user39 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 39})
+	assert.False(t, user39.IsRestricted)
+
+	// user2/repo1, public repo; user4 is a read collaborator on it
+	repo1 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	assert.False(t, repo1.IsPrivate)
+	user4 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 4})
+	assert.False(t, user4.IsRestricted)
+
+	type grant struct {
+		repo *repo_model.Repository
+		user *user_model.User
+	}
+	grants := []grant{{repo61, user38}, {repo61, user39}, {repo1, user4}}
+
+	for _, g := range grants {
+		_, err := db.GetEngine(t.Context()).Delete(&access_model.Access{UserID: g.user.ID, RepoID: g.repo.ID})
+		require.NoError(t, err)
+	}
+
+	require.NoError(t, access_model.RecalculateAccesses(t.Context(), repo61))
+	require.NoError(t, access_model.RecalculateAccesses(t.Context(), repo1))
+
+	for _, g := range grants {
+		access := unittest.AssertExistsAndLoadBean(t, &access_model.Access{UserID: g.user.ID, RepoID: g.repo.ID})
+		assert.Equal(t, perm_model.AccessModeRead, access.Mode)
+
+		isReader, err := access_model.IsRepoReader(t.Context(), g.repo, g.user.ID)
+		require.NoError(t, err)
+		assert.True(t, isReader)
+
+		readers, err := access_model.GetRepoReaders(t.Context(), g.repo)
+		require.NoError(t, err)
+		assert.True(t, slices.ContainsFunc(readers, func(u *user_model.User) bool { return u.ID == g.user.ID }))
+	}
 }
