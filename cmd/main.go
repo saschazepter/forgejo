@@ -204,7 +204,6 @@ func innerNewMainApp(version, versionExtra string, subCmdsStandaloneArgs, subCmd
 	app.Commands = append(app.Commands, subCmdWithConfig...)
 	app.Commands = append(app.Commands, subCmdStandalone...)
 
-	setting.InitEnvVars()
 	return app
 }
 

@@ -80,7 +80,6 @@ func InitCustomSettings(confFileName string) {
 	_ = hash.Register("dummy", hash.NewDummyHasher)
 
 	setting.PasswordHashAlgo, _ = hash.SetDefaultPasswordHashAlgorithm("dummy")
-	setting.InitEnvVars()
 
 	// Avoid loading the git's system config.
 	// On macOS, system config sets the osxkeychain credential helper, which will cause tests to freeze with a dialog.

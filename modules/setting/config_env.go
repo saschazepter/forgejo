@@ -167,17 +167,3 @@ func EnvironmentToConfig(cfg ConfigProvider, envs []string) (changed bool) {
 	}
 	return changed
 }
-
-func InitEnvVars() {
-	// HOME is managed by Gitea, Gitea's git should use "HOME/.gitconfig".
-	// But git would try "XDG_CONFIG_HOME/git/config" first if "HOME/.gitconfig" does not exist,
-	// then our git.InitFull would still write to "XDG_CONFIG_HOME/git/config" if XDG_CONFIG_HOME is set.
-	_ = os.Unsetenv("XDG_CONFIG_HOME")
-
-	_ = os.Unsetenv("GIT_AUTHOR_NAME")
-	_ = os.Unsetenv("GIT_AUTHOR_EMAIL")
-	_ = os.Unsetenv("GIT_AUTHOR_DATE")
-	_ = os.Unsetenv("GIT_COMMITTER_NAME")
-	_ = os.Unsetenv("GIT_COMMITTER_EMAIL")
-	_ = os.Unsetenv("GIT_COMMITTER_DATE")
-}
