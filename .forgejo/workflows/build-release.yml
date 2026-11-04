@@ -219,7 +219,7 @@ jobs:
 
       - name: end-to-end tests
         if: ${{ secrets.TOKEN != '' && vars.ROLE == 'forgejo-integration' && vars.SKIP_END_TO_END != 'true' }}
-        uses: https://data.forgejo.org/actions/cascading-pr@v2.3.0
+        uses: https://data.forgejo.org/actions/cascading-pr@b52d5b1f4f7bc3dd8b9f6ceca3a05aea6e9920be # v2.3.2
         with:
           origin-url: ${{ env.GITHUB_SERVER_URL }}
           origin-repo: ${{ github.repository }}
