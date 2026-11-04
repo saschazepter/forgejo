@@ -32,7 +32,7 @@ jobs:
       - uses: https://data.forgejo.org/actions/checkout@v6
 
       - id: forgejo
-        uses: https://data.forgejo.org/actions/setup-forgejo@v3.1.8
+        uses: https://data.forgejo.org/actions/setup-forgejo@c1d32055cf40d084c868129ea7e0033c5239842a # v3.2.7
         with:
           user: root
           password: admin1234
