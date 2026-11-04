@@ -19,6 +19,8 @@ import (
 	"xorm.io/builder"
 )
 
+// This is a pointless change but it is in models/actions.
+
 // ArtifactStatus is the status of an artifact, uploading, expired or need-delete
 type ArtifactStatus int64
 
