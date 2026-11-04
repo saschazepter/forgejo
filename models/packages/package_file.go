@@ -70,6 +70,16 @@ func TryInsertFile(ctx context.Context, pf *PackageFile) (*PackageFile, error) {
 			return err
 		}
 
+		if pv.IsInternal {
+			// Don't calculate & update `total_size` on internal packages, because: (a) `total_size` is only used on the
+			// admin `/admin/packages` page for sorting, and internal packages aren't displayed there, and (b) internal
+			// package versions are used as internal data registeries or scratch storage which is often concurrently
+			// accessed by multiple uploads, and recalculating the size of the internal package will cause Error 1020
+			// (HY000) errors on MariaDB w/ innodb_snapshot_isolation because of the aggregate reads to records that are
+			// changing concurrently.
+			return nil
+		}
+
 		return pv.UpdateTotalSize(ctx)
 	})
 
