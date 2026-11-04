@@ -8,7 +8,7 @@ on:
       - labeled
 
 env:
-  RNA_VERSION: v1.6.1 # renovate: datasource=forgejo-releases depName=forgejo/release-notes-assistant registryUrl=https://code.forgejo.org
+  RNA_VERSION: v1.7.3 # renovate: datasource=forgejo-releases depName=forgejo/release-notes-assistant registryUrl=https://code.forgejo.org
 
 jobs:
   release-notes:
