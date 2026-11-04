@@ -1,5 +1,5 @@
 <p>{{ctx.Locale.Tr "repo.settings.add_web_hook_desc" "https://matrix.org/" (ctx.Locale.Tr "repo.settings.web_hook_name_matrix")}}</p>
-<form class="ui form" action="{{.BaseLink}}/{{or .Webhook.ID "matrix/new"}}" method="post">
+<form class="ui form" action="{{.BaseLink}}/{{if .PageIsSettingsHooksNew}}matrix/new{{else}}{{.Webhook.ID}}{{end}}" method="post">
 	<div class="required field {{if .Err_HomeserverURL}}error{{end}}">
 		<label for="homeserver_url">{{ctx.Locale.Tr "repo.settings.matrix.homeserver_url"}}</label>
 		<input id="homeserver_url" name="homeserver_url" type="url" value="{{.HookMetadata.HomeserverURL}}" autofocus required>

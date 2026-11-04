@@ -1,6 +1,6 @@
 <p>{{ctx.Locale.Tr "repo.settings.add_web_hook_desc" "https://feishu.cn" (ctx.Locale.Tr "repo.settings.web_hook_name_feishu_only")}}</p>
 <p>{{ctx.Locale.Tr "repo.settings.add_web_hook_desc" "https://larksuite.com" (ctx.Locale.Tr "repo.settings.web_hook_name_larksuite_only")}}</p>
-<form class="ui form" action="{{.BaseLink}}/{{or .Webhook.ID "feishu/new"}}" method="post">
+<form class="ui form" action="{{.BaseLink}}/{{if .PageIsSettingsHooksNew}}feishu/new{{else}}{{.Webhook.ID}}{{end}}" method="post">
 	<div class="required field {{if .Err_PayloadURL}}error{{end}}">
 		<label for="payload_url">{{ctx.Locale.Tr "repo.settings.payload_url"}}</label>
 		<input id="payload_url" name="payload_url" type="url" value="{{.Webhook.URL}}" autofocus required>

@@ -1,7 +1,7 @@
 {{$isNew:=.PageIsSettingsHooksNew}}
 
 <p>{{ctx.Locale.Tr "webhooks.git_pages.description" ("<a target=\"_blank\" rel=\"noopener\" href=\"https://git-pages.org\">git-pages</a>"|TrustHTML) (AppDocsURL "user/repository/git-pages-webhook/")}}</p>
-<form class="ui form" action="{{.BaseLink}}/{{or .Webhook.ID "git_pages/new"}}" method="post">
+<form class="ui form" action="{{.BaseLink}}/{{if $isNew}}git_pages/new{{else}}{{.Webhook.ID}}{{end}}" method="post">
 	{{template "base/disable_form_autofill"}}
 	<div class="required field {{if .Err_SiteURL}}error{{end}}">
 		<label for="site_url">{{ctx.Locale.Tr "webhooks.git_pages.site_url.label"}}</label>

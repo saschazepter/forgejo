@@ -438,6 +438,7 @@ func testWebhookFormsShared(t *testing.T, endpoint, name string, session *TestSe
 				resp := session.MakeRequest(t, NewRequestWithValues(t, "POST", endpoint+"/"+name+"/new", payload), http.StatusUnprocessableEntity)
 				// check that the invalid form is pre-filled
 				htmlForm = NewHTMLParser(t, resp.Body).Find(`form[action^="` + endpoint + `/"]`)
+				assert.Equal(t, endpoint+"/"+name+"/new", htmlForm.AttrOr("action", "<missing>"))
 				for k, v := range payload {
 					if k == "events" || v == "" {
 						// the 'events' is a radio input, which is buggy below
