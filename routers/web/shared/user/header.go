@@ -168,16 +168,16 @@ func LoadHeaderCount(ctx *context.Context) error {
 		return err
 	}
 
-	var projectType project_module.OwnerType
+	var ownerType project_module.OwnerType
 	if ctx.ContextUser.IsOrganization() {
-		projectType = project_module.TypeOrganization
+		ownerType = project_module.TypeOrganization
 	} else {
-		projectType = project_module.TypeIndividual
+		ownerType = project_module.TypeIndividual
 	}
 	ctx.Data["ProjectCount"], err = db.Count[project_model.Project](ctx, project_model.SearchOptions{
 		OwnerID:  ctx.ContextUser.ID,
 		IsClosed: optional.Some(false),
-		Type:     projectType,
+		Type:     ownerType,
 	})
 	if err != nil {
 		return err

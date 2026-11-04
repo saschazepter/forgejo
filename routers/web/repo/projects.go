@@ -94,7 +94,7 @@ func Projects(ctx *context.Context) {
 		page,
 		setting.UI.IssuePagingNum,
 	)
-	log.Trace("Got RepoSearchOpts for repo %v and project type %v", repo.Name, project_module.APIOwnerTypeRepository)
+	log.Trace("Got project SearchOpts for repo %v and owner type %v", repo.Name, project_module.APIOwnerTypeRepository)
 	projects, err := project_service.ListProjectsByOptions(ctx, opts)
 	if err != nil {
 		ctx.ServerError("ListProjectsByOptions", err)
@@ -566,7 +566,7 @@ func MoveIssues(ctx *context.Context) {
 		return
 	}
 
-	form := &project_structs.MovedIssuesOption{}
+	form := &project_structs.MoveIssuesOption{}
 	if err = json.NewDecoder(ctx.Req.Body).Decode(&form); err != nil {
 		ctx.ServerError("DecodeMovedIssuesForm", err)
 		return

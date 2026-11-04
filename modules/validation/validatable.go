@@ -4,6 +4,7 @@
 package validation
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"slices"
@@ -26,7 +27,7 @@ func (err ErrNotValid) Error() string {
 
 // IsErrNotValid checks if an error is an ErrNotValid.
 func IsErrNotValid(err error) bool {
-	_, ok := err.(ErrNotValid)
+	_, ok := errors.AsType[ErrNotValid](err)
 	return ok
 }
 

@@ -51,16 +51,16 @@ func (countTest *userCountTest) Init(t *testing.T, doerID, userID int64) {
 	})
 	require.NoError(t, err)
 
-	var projectType project_module.OwnerType
+	var ownerType project_module.OwnerType
 	if countTest.user.IsOrganization() {
-		projectType = project_module.TypeOrganization
+		ownerType = project_module.TypeOrganization
 	} else {
-		projectType = project_module.TypeIndividual
+		ownerType = project_module.TypeIndividual
 	}
 	countTest.projectCount, err = db.Count[project_model.Project](db.DefaultContext, &project_model.SearchOptions{
 		OwnerID:  countTest.user.ID,
 		IsClosed: optional.Some(false),
-		Type:     projectType,
+		Type:     ownerType,
 	})
 	require.NoError(t, err)
 	countTest.packageCount, err = packages_model.CountOwnerPackages(db.DefaultContext, countTest.user.ID)

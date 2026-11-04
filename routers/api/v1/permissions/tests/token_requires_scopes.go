@@ -35,6 +35,8 @@ var _ = registerFunctionTestBuilder([]string{"TokenRequiresScopes "}, func(t *te
 			scope = auth_model.AccessTokenScopeReadRepository
 		case auth_model.AccessTokenScopeCategoryUser:
 			scope = auth_model.AccessTokenScopeReadUser
+		case auth_model.AccessTokenScopeCategoryProject:
+			scope = auth_model.AccessTokenScopeReadProject
 		default:
 			panic(fmt.Errorf("unexpected category %v", category))
 		}

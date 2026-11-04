@@ -1974,7 +1974,7 @@ func TestProjectWebMoveIssues(t *testing.T) {
 	repoProject := forgery.CreateProject(t, repo, nil)
 	orgRepo := forgery.CreateRepository(t, org.AsUser(), nil)
 
-	moveOpts := &project_structs.MovedIssuesOption{}
+	moveOpts := &project_structs.MoveIssuesOption{}
 
 	// invalid project
 	for _, tt := range []struct {
@@ -2080,7 +2080,7 @@ func TestProjectWebMoveIssues(t *testing.T) {
 
 			url := fmt.Sprintf("/%s/%s/projects/%d/%d/move", tt.owner, tt.repo, tt.projectID, column.ID)
 			// move not existing issue
-			moveOpts.ProjectIssues = []project_structs.ProjectIssue{
+			moveOpts.ProjectIssues = []project_structs.MoveProjectIssue{
 				{IssueID: 1234567890, Sorting: 123},
 			}
 			resp := sessionJSONPOST(t, session, url, &moveOpts, http.StatusInternalServerError)
@@ -2156,7 +2156,7 @@ func TestProjectWebMoveIssues(t *testing.T) {
 			assert.EqualValues(t, 2, count)
 
 			// set new sorting in moveOpts
-			moveOpts.ProjectIssues = []project_structs.ProjectIssue{
+			moveOpts.ProjectIssues = []project_structs.MoveProjectIssue{
 				{IssueID: preIssues[0].IssueID, Sorting: preIssues[1].Sorting},
 				{IssueID: preIssues[1].IssueID, Sorting: preIssues[0].Sorting},
 			}
@@ -2230,4 +2230,23 @@ func TestProjectWebCRUD(t *testing.T) {
 	unittest.AssertNotExistsBean(t, &project_model.Project{
 		ID: project.ID,
 	})
+}
+
+func TestPostIssuePullProjectEndpoint(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	// create test user, organization, repository and projects
+	user := forgery.CreateUser(t, nil)
+	user2 := forgery.CreateUser(t, nil)
+	repo := forgery.CreateRepository(t, user, nil)
+	repo2 := forgery.CreateRepository(t, user2, nil)
+	repoProject := forgery.CreateProject(t, repo, nil)
+	repoProject2 := forgery.CreateProject(t, repo2, nil)
+
+	session := loginUser(t, user.Name)
+	path := fmt.Sprintf("/%s/%s/pulls/projects?id=%d", user.Name, repo.Name, repoProject.ID)
+	sessionPOST(t, session, path, http.StatusOK)
+
+	path2 := fmt.Sprintf("/%s/%s/pulls/projects?id=%d", user.Name, repo.Name, repoProject2.ID)
+	sessionPOST(t, session, path2, http.StatusNotFound)
 }

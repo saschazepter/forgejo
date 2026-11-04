@@ -253,4 +253,7 @@ type swaggerParameterBodies struct {
 
 	// in:body
 	RegisterRunnerOptions api.RegisterRunnerOptions
+
+	// in:body
+	CreateOrUpdateProjectOptions api.CreateOrUpdateProjectOptions
 }

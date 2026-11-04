@@ -67,17 +67,17 @@ func Projects(ctx *context.Context) {
 	ctx.Data["Keyword"] = keyword
 	page := max(ctx.FormInt("page"), 1)
 
-	projectType := project_service.GetAPIOwnerType(ctx.ContextUser.IsOrganization(), false)
+	ownerType := project_service.GetAPIOwnerType(ctx.ContextUser.IsOrganization(), false)
 	opts := project_service.GetSearchOpts(
 		ctx.ContextUser.ID,
 		showClosed,
 		sortType,
 		keyword,
-		projectType,
+		ownerType,
 		page,
 		setting.UI.IssuePagingNum,
 	)
-	log.Trace("Got OwnerSearch Opts for user %v and project type %v", ctx.ContextUser.Name, projectType)
+	log.Trace("Got project SearchOpts for user %v and owner type %v", ctx.ContextUser.Name, ownerType)
 	projects, err := project_service.ListProjectsByOptions(*ctx, opts)
 	if err != nil {
 		ctx.ServerError("ListProjectsByOptions", err)
@@ -90,7 +90,7 @@ func Projects(ctx *context.Context) {
 		return
 	}
 	log.Trace("Counted %v projects", total)
-	countOpts := project_service.GetSearchOpts(ctx.ContextUser.ID, !showClosed, "", "", projectType)
+	countOpts := project_service.GetSearchOpts(ctx.ContextUser.ID, !showClosed, "", "", ownerType)
 	opTotal, err := project_service.CountProjectsByOptions(*ctx, countOpts)
 	if err != nil {
 		ctx.ServerError("CountProjectsByOptions", err)
@@ -184,8 +184,8 @@ func CreateProject(ctx *context.Context) {
 		return
 	}
 
-	projectType := project_service.GetAPIOwnerType(ctx.ContextUser.IsOrganization(), false)
-	log.Trace("Got project type %v", projectType)
+	ownerType := project_service.GetAPIOwnerType(ctx.ContextUser.IsOrganization(), false)
+	log.Trace("Got owner type %v", ownerType)
 
 	opt := &project_structs.CreateOrUpdateProjectOptions{
 		Title:        form.Title,
@@ -194,7 +194,7 @@ func CreateProject(ctx *context.Context) {
 		CardType:     form.CardType,
 		Status:       "open",
 	}
-	project, err := project_service.NewProject(opt, ctx.ContextUser, nil, projectType)
+	project, err := project_service.NewProject(opt, ctx.ContextUser, nil, ownerType)
 	if err != nil {
 		ctx.ServerError("NewProject", err)
 		return
@@ -530,7 +530,7 @@ func MoveIssues(ctx *context.Context) {
 		return
 	}
 
-	form := &project_structs.MovedIssuesOption{}
+	form := &project_structs.MoveIssuesOption{}
 	if err = json.NewDecoder(ctx.Req.Body).Decode(&form); err != nil {
 		ctx.ServerError("DecodeMovedIssuesForm", err)
 		return

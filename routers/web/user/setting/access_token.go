@@ -85,6 +85,7 @@ func loadAccessTokenCreateData(ctx *context.Context) {
 		"notification",
 		"organization",
 		"package",
+		"project",
 		"repository",
 		"user",
 	}

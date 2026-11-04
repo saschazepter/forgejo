@@ -37,7 +37,7 @@ func GetIssues(ctx context.Context, issueIDs []int64) (issues_model.IssueList, b
 }
 
 // MoveIssuesOnProjectColumn Allows moving Issues between Columns or to change the sorting within Columns
-func MoveIssuesOnProjectColumn(ctx context.Context, column *project_model.Column, projectIssues *project_types.MovedIssuesOption) error {
+func MoveIssuesOnProjectColumn(ctx context.Context, column *project_model.Column, projectIssues *project_types.MoveIssuesOption) error {
 	sortedIssueIDs := projectIssues.GetSortingsMap()
 	err := project_model.MoveIssuesOnProjectColumn(ctx, column, sortedIssueIDs)
 	if err != nil {

@@ -48,7 +48,7 @@ func TestIsCardTypeValid(t *testing.T) {
 	}
 }
 
-func TestIsProjectTypeValid(t *testing.T) {
+func TestIsOwnerTypeValid(t *testing.T) {
 	const UnknownType OwnerType = 15
 
 	cases := []struct {

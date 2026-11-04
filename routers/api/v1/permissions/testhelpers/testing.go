@@ -318,6 +318,8 @@ func RequiredScopesToString(scopeCategories ...auth_model.AccessTokenScopeCatego
 			categories = append(categories, "Repository")
 		case auth_model.AccessTokenScopeCategoryUser:
 			categories = append(categories, "User")
+		case auth_model.AccessTokenScopeCategoryProject:
+			categories = append(categories, "Project")
 		default:
 			panic(fmt.Errorf("unkwnon scope category %v", category))
 		}

@@ -4,6 +4,7 @@
 package project
 
 import (
+	"errors"
 	"fmt"
 
 	"forgejo.org/modules/util"
@@ -22,6 +23,11 @@ func (err ErrMismatchedOwner) Error() string {
 
 func (err ErrMismatchedOwner) Unwrap() error {
 	return util.ErrInvalidArgument
+}
+
+func IsErrMismatchedOwner(err error) bool {
+	_, ok := errors.AsType[ErrMismatchedOwner](err)
+	return ok
 }
 
 // ErrMismatchedID represents an error that

@@ -42,13 +42,14 @@ const (
 	page               = 1
 	pageSize           = 10
 	notExistStr        = "not exist"
+	invalidStr         = "Validation Error"
 )
 
 func TestMain(m *testing.M) {
 	unittest.MainTest(m)
 }
 
-func TestGetProjectType(t *testing.T) {
+func TestGetOwnerType(t *testing.T) {
 	pT := GetAPIOwnerType(false, false)
 	assert.Equal(t, project_module.APIOwnerTypeIndividual, pT)
 
@@ -316,8 +317,8 @@ func TestNewProject(t *testing.T) {
 		assert.ErrorContains(t, err, "Field APITemplateType")
 	})
 
-	t.Run("invalid project type", func(t *testing.T) {
-		invalidProjectType := project_module.APIOwnerType("99")
+	t.Run("invalid owner type", func(t *testing.T) {
+		invalidOwnerType := project_module.APIOwnerType("99")
 		opts := project_structs.CreateOrUpdateProjectOptions{
 			Title:        "Test",
 			Description:  "Test",
@@ -325,7 +326,7 @@ func TestNewProject(t *testing.T) {
 			CardType:     project_module.APICardTypeTextOnly.String(),
 		}
 
-		_, err := NewProject(&opts, user2, nilRepo, invalidProjectType)
+		_, err := NewProject(&opts, user2, nilRepo, invalidOwnerType)
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "Field APIOwnerType")
 	})
@@ -427,12 +428,12 @@ func TestMoveIssuesOnProjectColumnErrors(t *testing.T) {
 
 	for _, tt := range []struct {
 		name          string
-		projectIssues []project_structs.ProjectIssue
+		projectIssues []project_structs.MoveProjectIssue
 		expectError   string
 	}{
 		{
 			name: "Duplicate Issue IDs",
-			projectIssues: []project_structs.ProjectIssue{
+			projectIssues: []project_structs.MoveProjectIssue{
 				{IssueID: int64(1), Sorting: int64(2)},
 				{IssueID: int64(1), Sorting: int64(1)},
 			},
@@ -440,7 +441,7 @@ func TestMoveIssuesOnProjectColumnErrors(t *testing.T) {
 		},
 		{
 			name: "Invalid Issue ID",
-			projectIssues: []project_structs.ProjectIssue{
+			projectIssues: []project_structs.MoveProjectIssue{
 				{IssueID: int64(1234567890), Sorting: int64(2)},
 				{IssueID: int64(1), Sorting: int64(1)},
 			},
@@ -448,7 +449,7 @@ func TestMoveIssuesOnProjectColumnErrors(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			pIs := &project_structs.MovedIssuesOption{
+			pIs := &project_structs.MoveIssuesOption{
 				ProjectIssues: tt.projectIssues,
 			}
 			err := MoveIssuesOnProjectColumn(t.Context(), column, pIs)
@@ -458,7 +459,7 @@ func TestMoveIssuesOnProjectColumnErrors(t *testing.T) {
 	}
 }
 
-func TestGetProjectByIDForOwnerErrors(t *testing.T) {
+func TestGetProjectByIDForOwner(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 
 	// prepare individual, repository, organization project
@@ -492,6 +493,12 @@ func TestGetProjectByIDForOwnerErrors(t *testing.T) {
 	require.NoError(t, CreateProject(t.Context(), project))
 	require.NoError(t, CreateProject(t.Context(), repoProject))
 	require.NoError(t, CreateProject(t.Context(), orgProject))
+
+	t.Run("valid project", func(t *testing.T) {
+		wantProject, err := GetProjectByIDForOwner(t.Context(), project.ID, ownerID, nil)
+		require.NoError(t, err)
+		assert.Equal(t, wantProject.Title, projectTitle)
+	})
 
 	t.Run("individual, wrong owner", func(t *testing.T) {
 		_, err := GetProjectByIDForOwner(t.Context(), project.ID, 99, nil)
@@ -584,7 +591,7 @@ func TestUpdateProject(t *testing.T) {
 	})
 }
 
-func TestCRUDProject(t *testing.T) {
+func TestCUDProject(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 
 	project := &project_model.Project{
@@ -666,8 +673,8 @@ func TestCRUDProject(t *testing.T) {
 		pI2 := unittest.AssertExistsAndLoadBean(t, &project_model.ProjectIssue{ID: 2})
 
 		// move/sort issues
-		pIs := &project_structs.MovedIssuesOption{
-			ProjectIssues: []project_structs.ProjectIssue{
+		pIs := &project_structs.MoveIssuesOption{
+			ProjectIssues: []project_structs.MoveProjectIssue{
 				{
 					IssueID: pI1.IssueID,
 					Sorting: int64(2),

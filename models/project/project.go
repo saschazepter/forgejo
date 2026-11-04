@@ -280,7 +280,7 @@ func ChangeProjectStatus(ctx context.Context, p *Project, isClosed bool) error {
 // DeleteProjectByID Deletes a project by ID.
 // If it's not in a database transaction, it will start a new database transaction.
 // repoID is optional and only needed, when updating a Project that belongs to a repository.
-// Leave empty if the ProjectType is not repository.
+// Leave empty if the OwnerType is not repository.
 func DeleteProjectByID(ctx context.Context, id int64, repoID optional.Option[int64]) error {
 	return db.WithTx(ctx, func(ctx context.Context) error {
 		if err := deleteProjectIssuesByProjectID(ctx, id); err != nil {

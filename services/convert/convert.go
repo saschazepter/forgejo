@@ -20,12 +20,14 @@ import (
 	"forgejo.org/models/organization"
 	"forgejo.org/models/perm"
 	access_model "forgejo.org/models/perm/access"
+	project_model "forgejo.org/models/project"
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/unit"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/container"
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/log"
+	project_module "forgejo.org/modules/project"
 	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
 	"forgejo.org/modules/util"
@@ -574,4 +576,38 @@ func ToActionRunner(runner *actions_model.ActionRunner) (api.ActionRunner, error
 	}
 
 	return actionRunner, nil
+}
+
+// ToAPIProject converts project_model.Project to api.Project.
+func ToAPIProject(p *project_model.Project) *api.Project {
+	status := project_module.APIStatusOpen.String()
+	if p.IsClosed {
+		status = project_module.APIStatusClosed.String()
+	}
+	proj := &api.Project{
+		ID:           p.ID,
+		Title:        p.Title,
+		Description:  p.Description,
+		Status:       status,
+		OwnerType:    p.Type.ToAPIOwnerType().String(),
+		TemplateType: p.TemplateType.ToAPITemplateType().String(),
+		CardType:     p.CardType.ToAPICardType().String(),
+	}
+	if p.Repo != nil {
+		proj.RepoName = p.Repo.Name
+	}
+	// Repo projects are created without owner
+	if p.Owner != nil {
+		proj.OwnerName = p.Owner.Name
+	}
+	return proj
+}
+
+// ToAPIProjectList converts project_model.Project list to api.Project list.
+func ToAPIProjectList(p []*project_model.Project) []*api.Project {
+	var projs []*api.Project
+	for _, project := range p {
+		projs = append(projs, ToAPIProject(project))
+	}
+	return projs
 }
