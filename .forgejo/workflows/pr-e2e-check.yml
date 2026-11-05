@@ -1,0 +1,60 @@
+# Copyright 2026 The Forgejo Authors. All rights reserved.
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+name: pr-e2e-check
+
+jobs:
+  warn-contributors:
+    if: ${{ !contains(forgejo.event.pull_request.labels.*.name, 'run-end-to-end-tests') }}
+    runs-on: docker
+    container:
+      image: data.forgejo.org/oci/ci:3
+    steps:
+      - name: fetch PR diff
+        run: |
+          curl "$DIFF_URL" > pr.diff
+        env:
+          DIFF_URL: ${{ forgejo.event.pull_request.diff_url }}
+
+      - name: check for affected paths
+        id: check
+        run: |
+          suggest_e2e=
+          for p in models/actions services/actions routers/api/actions models/forgefed modules/activitypub modules/forgefed services/federation routers/api/v1/activitypub
+          do
+            # Diff formatting will have a newline followed by +++ b/(filename); here we search for a line that starts
+            # with that prefix to identify if the path in $p is modified in this diff.  If it doesn't match grep returns
+            # a non-zero exit code, which we ignore (|| true).
+            c=$(grep -c "^+++ b/$p" pr.diff || true)
+            if [[ $c -ne 0 ]];
+            then
+              echo "Found modification to $c files in path $p"
+              suggest_e2e=true
+            fi
+          done
+          if [[ $suggest_e2e == '' ]];
+          then
+            echo "No matching paths found."
+          fi
+          echo "suggest_e2e=$suggest_e2e" >> $FORGEJO_OUTPUT
+
+      - name: suggest run-end-to-end-tests label
+        if: steps.check.outputs.suggest_e2e
+        run: |
+          body=$(jq -n '{body: "**Note to [Forgejo Contributors](https://codeberg.org/forgejo/governance/src/branch/main/TEAMS.md#contributors)**: This pull request modifies code that is tested by the end-to-end test suite.  Please add the `run-end-to-end-tests` label to this pull request after it has been reviewed for safe execution of tests."}')
+          curl \
+            --fail \
+            -H "Authorization: bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -X POST \
+            -d "$body" \
+            "$SERVER_URL/api/v1/repos/$REPO/issues/$PR_NUM/comments"
+        env:
+          SERVER_URL: ${{ forgejo.server_url }}
+          REPO: ${{ forgejo.event.repository.full_name }}
+          PR_NUM: ${{ forgejo.event.pull_request.number }}
+          TOKEN: ${{ secrets.forgejo_token }}
