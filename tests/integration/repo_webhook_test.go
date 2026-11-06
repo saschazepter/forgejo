@@ -296,15 +296,19 @@ func TestWebhookForms(t *testing.T) {
 	}))
 
 	t.Run("git_pages/required", func(t *testing.T) {
-		testWebhookFormsGitPages(t, session, map[string]string{
+		testWebhookFormsShared(t, "/user2/repo1/settings/hooks", "git_pages", session, map[string]string{
 			"site_url": "https://username.example.org/",
 		})
 	})
 	t.Run("git_pages/optional", func(t *testing.T) {
-		testWebhookFormsGitPages(t, session, map[string]string{
+		testWebhookFormsShared(t, "/user2/repo1/settings/hooks", "git_pages", session, map[string]string{
 			"site_url": "https://username.example.org/",
 			"server":   "example.org",
 			"password": "123456",
+		}, map[string]string{
+			"site_url": "",
+		}, map[string]string{
+			"site_url": "INVALID",
 		})
 	})
 }
@@ -352,12 +356,13 @@ func testWebhookFormsShared(t *testing.T, endpoint, name string, session *TestSe
 	resp := session.MakeRequest(t, NewRequest(t, "GET", endpoint+"/"+name+"/new"), http.StatusOK)
 	htmlForm := NewHTMLParser(t, resp.Body).Find(`form[action^="` + endpoint + `/"]`)
 
-	testWebhookFormsSharedChooseEvents(t, htmlForm)
+	payload := map[string]string{}
+	if name != "git_pages" {
+		testWebhookFormsSharedChooseEvents(t, htmlForm)
+		payload["events"] = "send_everything"
+	}
 
 	// fill the form
-	payload := map[string]string{
-		"events": "send_everything",
-	}
 	for k, v := range validFields {
 		assertInput(t, htmlForm, k)
 		payload[k] = v
@@ -451,62 +456,6 @@ func testWebhookFormsShared(t *testing.T, endpoint, name string, session *TestSe
 				}
 			})
 		}
-	}
-}
-
-func testWebhookFormsGitPages(t *testing.T, session *TestSession, validFields map[string]string, invalidPatches ...map[string]string) {
-	endpoint, name := "/user2/repo1/settings/hooks", "git_pages"
-
-	// new webhook form
-	resp := session.MakeRequest(t, NewRequest(t, "GET", endpoint+"/"+name+"/new"), http.StatusOK)
-	htmlForm := NewHTMLParser(t, resp.Body).Find(`form[action^="` + endpoint + `/"]`)
-
-	// fill the form
-	payload := map[string]string{}
-	for k, v := range validFields {
-		assertInput(t, htmlForm, k)
-		payload[k] = v
-	}
-	if t.Failed() {
-		t.FailNow() // prevent further execution if the form could not be filled properly
-	}
-
-	// create the webhook (this redirects back to the hook list)
-	resp = session.MakeRequest(t, NewRequestWithValues(t, "POST", endpoint+"/"+name+"/new", payload), http.StatusSeeOther)
-	assertHasFlashMessages(t, resp, "success")
-	listEndpoint := resp.Header().Get("Location")
-	updateEndpoint := endpoint + "/"
-
-	// find last created hook in the hook list
-	// (a bit hacky, but the list should be sorted)
-	resp = session.MakeRequest(t, NewRequest(t, "GET", listEndpoint), http.StatusOK)
-	htmlDoc := NewHTMLParser(t, resp.Body)
-	selector := `a[href^="` + updateEndpoint + `"]`
-	editFormURL := htmlDoc.Find(selector).Last().AttrOr("href", "")
-	assert.NotEmpty(t, editFormURL)
-
-	// edit webhook form
-	resp = session.MakeRequest(t, NewRequest(t, "GET", editFormURL), http.StatusOK)
-	htmlForm = NewHTMLParser(t, resp.Body).Find(`form[action^="` + updateEndpoint + `"]`)
-	editPostURL := htmlForm.AttrOr("action", "")
-	assert.NotEmpty(t, editPostURL)
-
-	// fill the form
-	payload = map[string]string{}
-	for k, v := range validFields {
-		assert.Equal(t, v, assertInput(t, htmlForm, k), "input %q did not contain value %q", k, v)
-		payload[k] = v
-	}
-
-	// update the webhook
-	resp = session.MakeRequest(t, NewRequestWithValues(t, "POST", editPostURL, payload), http.StatusSeeOther)
-	assertHasFlashMessages(t, resp, "success")
-
-	// check the updated webhook
-	resp = session.MakeRequest(t, NewRequest(t, "GET", editFormURL), http.StatusOK)
-	htmlForm = NewHTMLParser(t, resp.Body).Find(`form[action^="` + updateEndpoint + `"]`)
-	for k, v := range validFields {
-		assert.Equal(t, v, assertInput(t, htmlForm, k), "input %q did not contain value %q", k, v)
 	}
 }
 
