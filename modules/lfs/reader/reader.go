@@ -5,7 +5,7 @@ package reader
 
 import (
 	"bytes"
-	gocontext "context"
+	"context"
 	"io"
 
 	git_model "forgejo.org/models/git"
@@ -24,7 +24,7 @@ type FileInfo struct {
 	SniffedType typesniffer.SniffedType
 }
 
-func OpenReaderFromMaybeLFSBlob(ctx gocontext.Context, repoID int64, blob *git.Blob) (io.ReadCloser, *FileInfo, error) {
+func OpenReaderFromMaybeLFSBlob(ctx context.Context, repoID int64, blob *git.Blob) (io.ReadCloser, *FileInfo, error) {
 	dataRc, err := blob.DataAsync()
 	if err != nil {
 		return nil, nil, err

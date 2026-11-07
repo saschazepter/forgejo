@@ -41,7 +41,7 @@ import (
 	"forgejo.org/modules/gitrepo"
 	"forgejo.org/modules/highlight"
 	code_indexer "forgejo.org/modules/indexer/code"
-	"forgejo.org/modules/lfs"
+	lfs_reader "forgejo.org/modules/lfs/reader"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/markup"
 	repo_module "forgejo.org/modules/repository"
@@ -49,7 +49,6 @@ import (
 	"forgejo.org/modules/structs"
 	"forgejo.org/modules/svg"
 	"forgejo.org/modules/translation"
-	"forgejo.org/modules/typesniffer"
 	"forgejo.org/modules/util"
 	"forgejo.org/routers/web/feed"
 	"forgejo.org/services/context"
@@ -212,68 +211,6 @@ func localizedExtensions(ext, languageCode string) (localizedExts []string) {
 	return []string{lowerLangCode + ext, ext}
 }
 
-type fileInfo struct {
-	isTextFile bool
-	isLFSFile  bool
-	fileSize   int64
-	lfsMeta    *lfs.Pointer
-	st         typesniffer.SniffedType
-}
-
-func getFileReader(ctx gocontext.Context, repoID int64, blob *git.Blob) ([]byte, io.ReadCloser, *fileInfo, error) {
-	dataRc, err := blob.DataAsync()
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	// FIXME: Shouldn't this use BlobSizeCutOff?
-	buf := make([]byte, 1024)
-	n, _ := util.ReadAtMost(dataRc, buf)
-	buf = buf[:n]
-
-	// FIXME: For the /render/ endpoint and other places, if the LFS server is
-	// disabled, we should declare the content type to be merely text (as we'd be
-	// showing the pointer), otherwise the rendering is different depending on
-	// e.g. whether the LFS pointer file has the file extension of an image or a
-	// Markdown file.
-	st := typesniffer.DetectContentType(buf, blob.Name())
-	isTextFile := st.IsText()
-
-	// FIXME: what happens when README file is an image?
-	if !isTextFile || !setting.LFS.StartServer {
-		return buf, dataRc, &fileInfo{isTextFile, false, blob.Size(), nil, st}, nil
-	}
-
-	pointer, err := lfs.ReadPointerFromBuffer(buf)
-	if pointer == nil || err != nil { // fallback to plain file
-		return buf, dataRc, &fileInfo{isTextFile, false, blob.Size(), nil, st}, nil
-	}
-
-	meta, err := git_model.GetLFSMetaObjectByOid(ctx, repoID, pointer.Oid)
-	if err != nil { // fallback to plain file
-		log.Warn("Unable to access LFS pointer %s in repo %d: %v", pointer.Oid, repoID, err)
-		return buf, dataRc, &fileInfo{isTextFile, false, blob.Size(), nil, st}, nil
-	}
-
-	dataRc.Close()
-
-	dataRc, err = lfs.ReadMetaObject(*pointer)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	buf = make([]byte, 1024)
-	n, err = util.ReadAtMost(dataRc, buf)
-	if err != nil {
-		dataRc.Close()
-		return nil, nil, nil, err
-	}
-	buf = buf[:n]
-
-	st = typesniffer.DetectContentType(buf, blob.Name())
-	return buf, dataRc, &fileInfo{st.IsText(), true, meta.Size, &meta.Pointer, st}, nil
-}
-
 func renderReadmeFile(ctx *context.Context, subfolder string, readmeFile *git.TreeEntry) {
 	target := readmeFile
 	if readmeFile != nil && readmeFile.IsLink() {
@@ -290,35 +227,35 @@ func renderReadmeFile(ctx *context.Context, subfolder string, readmeFile *git.Tr
 	ctx.Data["ReadmeExist"] = true
 	ctx.Data["FileIsSymlink"] = readmeFile.IsLink()
 
-	buf, dataRc, fInfo, err := getFileReader(ctx, ctx.Repo.Repository.ID, target.Blob())
+	dataRc, fInfo, err := lfs_reader.OpenReaderFromMaybeLFSBlob(ctx, ctx.Repo.Repository.ID, target.Blob())
 	if err != nil {
-		ctx.ServerError("getFileReader", err)
+		ctx.ServerError("OpenReaderFromMaybeLFSBlob", err)
 		return
 	}
 	defer dataRc.Close()
 
-	ctx.Data["FileIsText"] = fInfo.isTextFile
+	ctx.Data["FileIsText"] = fInfo.SniffedType.IsText()
 	ctx.Data["FileName"] = path.Join(subfolder, readmeFile.Name())
-	ctx.Data["IsLFSFile"] = fInfo.isLFSFile
+	ctx.Data["IsLFSFile"] = fInfo.IsLFSFile
 
-	if fInfo.isLFSFile {
+	if fInfo.IsLFSFile {
 		filenameBase64 := base64.RawURLEncoding.EncodeToString([]byte(readmeFile.Name()))
-		ctx.Data["RawFileLink"] = fmt.Sprintf("%s.git/info/lfs/objects/%s/%s", ctx.Repo.Repository.Link(), url.PathEscape(fInfo.lfsMeta.Oid), url.PathEscape(filenameBase64))
+		ctx.Data["RawFileLink"] = fmt.Sprintf("%s.git/info/lfs/objects/%s/%s", ctx.Repo.Repository.Link(), url.PathEscape(fInfo.LfsMeta.Oid), url.PathEscape(filenameBase64))
 	}
 
-	if !fInfo.isTextFile {
+	if !fInfo.SniffedType.IsText() {
 		return
 	}
 
-	if fInfo.fileSize >= setting.UI.MaxDisplayFileSize {
+	if fInfo.FileSize >= setting.UI.MaxDisplayFileSize {
 		// Pretend that this is a normal text file to display 'This file is too large to be shown'
 		ctx.Data["IsFileTooLarge"] = true
 		ctx.Data["IsTextFile"] = true
-		ctx.Data["FileSize"] = fInfo.fileSize
+		ctx.Data["FileSize"] = fInfo.FileSize
 		return
 	}
 
-	rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc), charset.ConvertOpts{})
+	rd := charset.ToUTF8WithFallbackReader(dataRc, charset.ConvertOpts{})
 
 	if markupType := markup.Type(readmeFile.Name()); markupType != "" {
 		ctx.Data["IsMarkup"] = true
@@ -351,7 +288,7 @@ func renderReadmeFile(ctx *context.Context, subfolder string, readmeFile *git.Tr
 		ctx.Data["EscapeStatus"], ctx.Data["FileContent"] = charset.EscapeControlHTML(template.HTML(contentEscaped), ctx.Locale, charset.FileviewContext)
 	}
 
-	if !fInfo.isLFSFile && ctx.Repo.CanEnableEditor(ctx, ctx.Doer) {
+	if !fInfo.IsLFSFile && ctx.Repo.CanEnableEditor(ctx, ctx.Doer) {
 		ctx.Data["CanEditReadmeFile"] = true
 	}
 }
@@ -388,9 +325,9 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 	ctx.Data["IsViewFile"] = true
 	ctx.Data["HideRepoInfo"] = true
 	blob := entry.Blob()
-	buf, dataRc, fInfo, err := getFileReader(ctx, ctx.Repo.Repository.ID, blob)
+	dataRc, fInfo, err := lfs_reader.OpenReaderFromMaybeLFSBlob(ctx, ctx.Repo.Repository.ID, blob)
 	if err != nil {
-		ctx.ServerError("getFileReader", err)
+		ctx.ServerError("OpenReaderFromMaybeLFSBlob", err)
 		return
 	}
 	defer dataRc.Close()
@@ -456,7 +393,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 			}
 		}
 	} else if ctx.Repo.TreePath == ".gitmodules" {
-		if fInfo.fileSize > git.MaxGitmodulesFileSize {
+		if fInfo.FileSize > git.MaxGitmodulesFileSize {
 			ctx.Data["FileWarning"] = ctx.Locale.Tr("repo.view.gitmodules_too_large")
 		}
 	} else if funding_service.CouldBeFundingConfig(ctx.Repo.TreePath) {
@@ -474,25 +411,25 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 	// We override the link that uses the "/raw" endpoint; which just shows the
 	// contents of the pointer and not the contents of the Git LFS file that the
 	// pointer points at.
-	if fInfo.isLFSFile && setting.LFS.StartServer {
+	if fInfo.IsLFSFile && setting.LFS.StartServer {
 		ctx.Data["RawFileLink"] = ctx.Repo.RepoLink + "/media/" + ctx.Repo.BranchNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
 	}
 
-	isRepresentableAsText := fInfo.st.IsRepresentableAsText()
+	isRepresentableAsText := fInfo.SniffedType.IsRepresentableAsText()
 	if !isRepresentableAsText {
 		// If we can't show plain text, always try to render.
 		isDisplayingSource = false
 		isDisplayingRendered = true
 	}
-	ctx.Data["IsLFSFile"] = fInfo.isLFSFile
-	ctx.Data["FileSize"] = fInfo.fileSize
-	ctx.Data["IsTextFile"] = fInfo.isTextFile
+	ctx.Data["IsLFSFile"] = fInfo.IsLFSFile
+	ctx.Data["FileSize"] = fInfo.FileSize
+	ctx.Data["IsTextFile"] = fInfo.SniffedType.IsText()
 	ctx.Data["IsRepresentableAsText"] = isRepresentableAsText
 	ctx.Data["IsDisplayingSource"] = isDisplayingSource
 	ctx.Data["IsDisplayingRendered"] = isDisplayingRendered
 	ctx.Data["IsExecutable"] = entry.IsExecutable()
 
-	isTextSource := fInfo.isTextFile || isDisplayingSource
+	isTextSource := fInfo.IsTextFile || isDisplayingSource
 	ctx.Data["IsTextSource"] = isTextSource
 	if isTextSource {
 		ctx.Data["CanCopyContent"] = true
@@ -517,7 +454,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 	}
 
 	// Assume file is not editable first.
-	if fInfo.isLFSFile {
+	if fInfo.IsLFSFile {
 		ctx.Data["EditFileTooltip"] = ctx.Tr("repo.editor.cannot_edit_lfs_files")
 	} else if !isRepresentableAsText {
 		ctx.Data["EditFileTooltip"] = ctx.Tr("repo.editor.cannot_edit_non_text_files")
@@ -525,18 +462,18 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 
 	switch {
 	case isRepresentableAsText:
-		if fInfo.st.IsSvgImage() {
+		if fInfo.SniffedType.IsSvgImage() {
 			ctx.Data["IsImageFile"] = true
 			ctx.Data["CanCopyContent"] = true
 			ctx.Data["HasSourceRenderedToggle"] = true
 		}
 
-		if fInfo.fileSize >= setting.UI.MaxDisplayFileSize {
+		if fInfo.FileSize >= setting.UI.MaxDisplayFileSize {
 			ctx.Data["IsFileTooLarge"] = true
 			break
 		}
 
-		rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc), charset.ConvertOpts{})
+		rd := charset.ToUTF8WithFallbackReader(dataRc, charset.ConvertOpts{})
 
 		shouldRenderSource := ctx.FormString("display") == "source"
 		readmeExist := util.IsReadmeFileName(blob.Name())
@@ -548,7 +485,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 		detected := false
 		if markupType == "" {
 			detected = true
-			markupType = markup.DetectRendererType(blob.Name(), bytes.NewReader(buf))
+			markupType = markup.DetectRendererType(blob.Name(), dataRc)
 		}
 		if markupType != "" {
 			ctx.Data["HasSourceRenderedToggle"] = true
@@ -627,7 +564,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 			ctx.Data["LineEscapeStatus"] = statuses
 			ctx.Data["IsCitationFile"] = base.IsCitationFile(entry)
 		}
-		if !fInfo.isLFSFile {
+		if !fInfo.IsLFSFile {
 			if ctx.Repo.CanEnableEditor(ctx, ctx.Doer) {
 				if lfsLock != nil && lfsLock.OwnerID != ctx.Doer.ID {
 					ctx.Data["CanEditFile"] = false
@@ -643,41 +580,40 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 			}
 		}
 
-	case fInfo.st.IsPDF():
+	case fInfo.SniffedType.IsPDF():
 		ctx.Data["IsPDFFile"] = true
-	case fInfo.st.IsVideo():
+	case fInfo.SniffedType.IsVideo():
 		ctx.Data["IsVideoFile"] = true
-	case fInfo.st.IsAudio():
+	case fInfo.SniffedType.IsAudio():
 		ctx.Data["IsAudioFile"] = true
-	case fInfo.st.Is3DModel():
+	case fInfo.SniffedType.Is3DModel():
 		ctx.Data["Is3DModelFile"] = true
 		switch {
-		case fInfo.st.IsGLB():
+		case fInfo.SniffedType.IsGLB():
 			ctx.Data["IsGLBFile"] = true
-		case fInfo.st.IsSTL():
+		case fInfo.SniffedType.IsSTL():
 			ctx.Data["IsSTLFile"] = true
-		case fInfo.st.IsGLTF():
+		case fInfo.SniffedType.IsGLTF():
 			ctx.Data["IsGLTFFile"] = true
-		case fInfo.st.IsOBJ():
+		case fInfo.SniffedType.IsOBJ():
 			ctx.Data["IsOBJFile"] = true
-		case fInfo.st.Is3MF():
+		case fInfo.SniffedType.Is3MF():
 			ctx.Data["Is3MFFile"] = true
 		}
-	case fInfo.st.IsFont() && setting.UI.FontPreviewEnabled:
+	case fInfo.SniffedType.IsFont() && setting.UI.FontPreviewEnabled:
 		ctx.Data["IsFontFile"] = true
 		ctx.Data["FontPreviewPangram"] = setting.UI.FontPreviewPangram
 		ctx.Data["FontPreviewSizes"] = []int{12, 18, 24, 36}
-	case fInfo.st.IsImage() && (setting.UI.SVG.Enabled || !fInfo.st.IsSvgImage()):
+	case fInfo.SniffedType.IsImage() && (setting.UI.SVG.Enabled || !fInfo.SniffedType.IsSvgImage()):
 		ctx.Data["IsImageFile"] = true
 		ctx.Data["CanCopyContent"] = true
 	default:
-		if fInfo.fileSize >= setting.UI.MaxDisplayFileSize {
+		if fInfo.FileSize >= setting.UI.MaxDisplayFileSize {
 			ctx.Data["IsFileTooLarge"] = true
 			break
 		}
 
 		if markupType := markup.Type(blob.Name()); markupType != "" {
-			rd := io.MultiReader(bytes.NewReader(buf), dataRc)
 			ctx.Data["IsMarkup"] = true
 			ctx.Data["MarkupType"] = markupType
 			ctx.Data["EscapeStatus"], ctx.Data["FileContent"], err = markupRender(ctx, &markup.RenderContext{
@@ -690,7 +626,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 				},
 				Metas:   ctx.Repo.Repository.ComposeDocumentMetas(ctx),
 				GitRepo: ctx.Repo.GitRepo,
-			}, rd)
+			}, dataRc)
 			if err != nil {
 				ctx.ServerError("Render", err)
 				return
@@ -708,8 +644,8 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 		}
 	}
 
-	if fInfo.st.IsImage() && !fInfo.st.IsSvgImage() {
-		img, _, err := image.DecodeConfig(bytes.NewReader(buf))
+	if fInfo.SniffedType.IsImage() && !fInfo.SniffedType.IsSvgImage() {
+		img, _, err := image.DecodeConfig(dataRc)
 		if err == nil {
 			// There are Image formats go can't decode
 			// Instead of throwing an error in that case, we show the size only when we can decode

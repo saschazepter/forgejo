@@ -1,4 +1,5 @@
 // Copyright 2019 The Gitea Authors. All rights reserved.
+// Copyright 2026 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package files
@@ -8,8 +9,7 @@ import (
 	"strings"
 
 	repo_model "forgejo.org/models/repo"
-	"forgejo.org/modules/lfs"
-	"forgejo.org/modules/util"
+	lfs_reader "forgejo.org/modules/lfs/reader"
 	"forgejo.org/services/gitdiff"
 )
 
@@ -49,30 +49,18 @@ func GetDiffPreview(ctx context.Context, repo *repo_model.Repository, baseBranch
 	// pointers at the lowest level possible without access to a 'head' and 'base'
 	// commit. Just like the diff preview visible when editing a file over the web
 	// UI, it only supports one file for now.
-	//
-	// TODO: Potentially support Git LFS diffs once 'getFileReader' (from which
-	// we copied and pasted from) is refactored out.
 	if len(diff.Files) == 1 {
 		blob, err := t.gitRepo.GetBlob(objectHash)
 		if err != nil {
 			return diff, err
 		}
 
-		buf := make([]byte, lfs.BlobSizeCutoff)
-		dataRc, err := blob.DataAsync()
+		dataRc, fInfo, err := lfs_reader.OpenReaderFromMaybeLFSBlob(ctx, repo.ID, blob)
 		if err != nil {
 			return diff, err
 		}
-		defer dataRc.Close()
-		n, err := util.ReadAtMost(dataRc, buf)
-		if err != nil {
-			return diff, err
-		}
-		buf = buf[:n]
-		_, err = lfs.ReadPointerFromBuffer(buf)
-		if err == nil {
-			diff.Files[0].IsLFSFile = true
-		}
+		dataRc.Close()
+		diff.Files[0].IsLFSFile = fInfo.IsLFSFile
 	}
 	return diff, nil
 }
