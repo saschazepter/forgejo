@@ -25,6 +25,7 @@ import (
 type RenderMetaMode string
 
 const (
+	sniffLen                           = 1024
 	RenderMetaAsDetails RenderMetaMode = "details" // default
 	RenderMetaAsNone    RenderMetaMode = "none"
 	RenderMetaAsTable   RenderMetaMode = "table"
@@ -243,8 +244,10 @@ func GetRendererByType(tp string) Renderer {
 }
 
 // DetectRendererType detects the markup type of the content
+//
+// Uses 1024 bytes at most.
 func DetectRendererType(filename string, input io.Reader) string {
-	buf, err := io.ReadAll(input)
+	buf, err := io.ReadAll(io.LimitReader(input, sniffLen))
 	if err != nil {
 		return ""
 	}

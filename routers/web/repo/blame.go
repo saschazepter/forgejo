@@ -1,4 +1,5 @@
 // Copyright 2019 The Gitea Authors. All rights reserved.
+// Copyright 2026 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package repo
@@ -14,6 +15,7 @@ import (
 	"forgejo.org/modules/charset"
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/highlight"
+	lfs_reader "forgejo.org/modules/lfs/reader"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/templates"
@@ -77,12 +79,12 @@ func RefBlame(ctx *context.Context) {
 	ctx.Data["FileName"] = blob.Name()
 
 	if setting.LFS.StartServer {
-		_, dataRc, fileInfo, err := getFileReader(ctx.Req.Context(), ctx.Repo.Repository.ID, blob)
+		dataRc, fileInfo, err := lfs_reader.OpenReaderFromMaybeLFSBlob(ctx.Req.Context(), ctx.Repo.Repository.ID, blob)
 		if err != nil {
-			ctx.ServerError("getFileReader", err)
+			ctx.ServerError("OpenReaderFromMaybeLFSBlob", err)
 			return
 		}
-		ctx.Data["IsLFSFile"] = fileInfo.isLFSFile
+		ctx.Data["IsLFSFile"] = fileInfo.IsLFSFile
 		dataRc.Close()
 	}
 

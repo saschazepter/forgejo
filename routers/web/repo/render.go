@@ -1,16 +1,17 @@
 // Copyright 2022 The Gitea Authors. All rights reserved.
+// Copyright 2026 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package repo
 
 import (
-	"bytes"
 	"io"
 	"net/http"
 	"path"
 
 	"forgejo.org/modules/charset"
 	"forgejo.org/modules/git"
+	lfs_reader "forgejo.org/modules/lfs/reader"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/markup"
 	"forgejo.org/services/context"
@@ -28,18 +29,18 @@ func RenderFile(ctx *context.Context) {
 		return
 	}
 
-	buf, dataRc, fInfo, err := getFileReader(ctx, ctx.Repo.Repository.ID, blob)
+	dataRc, fInfo, err := lfs_reader.OpenReaderFromMaybeLFSBlob(ctx, ctx.Repo.Repository.ID, blob)
 	if err != nil {
-		ctx.ServerError("getFileReader", err)
+		ctx.ServerError("OpenReaderFromMaybeLFSBlob", err)
 		return
 	}
 	defer dataRc.Close()
 
-	rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc), charset.ConvertOpts{})
+	rd := charset.ToUTF8WithFallbackReader(dataRc, charset.ConvertOpts{})
 	ctx.Resp.Header().Add("Content-Security-Policy", "frame-src 'self'; sandbox allow-scripts")
 
 	if markupType := markup.Type(blob.Name()); markupType == "" {
-		if fInfo.isTextFile {
+		if fInfo.SniffedType.IsText() {
 			_, _ = io.Copy(ctx.Resp, rd)
 		} else {
 			http.Error(ctx.Resp, "Unsupported file type render", http.StatusInternalServerError)

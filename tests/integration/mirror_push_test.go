@@ -358,9 +358,14 @@ func TestSSHPushMirror(t *testing.T) {
 				htmlDoc := NewHTMLParser(t, resp.Body)
 
 				assert.Contains(t, htmlDoc.Find(".shortsha").Text(), expectedSHA)
+				srcBranch := strings.TrimSpace(htmlDoc.Find(".js-branch-tag-selector > div > button > span").Text())
 
 				assert.Eventually(t, func() bool {
-					req = NewRequest(t, "GET", fmt.Sprintf("/%s", pushToRepo.FullName()))
+					pushToRepoPath := fmt.Sprintf("/%s", pushToRepo.FullName())
+					if srcBranch != "" {
+						pushToRepoPath = fmt.Sprintf("/%s/src/branch/%s", pushToRepo.FullName(), srcBranch)
+					}
+					req = NewRequest(t, "GET", pushToRepoPath)
 					resp = sess.MakeRequest(t, req, NoExpectedStatus)
 					htmlDoc = NewHTMLParser(t, resp.Body)
 

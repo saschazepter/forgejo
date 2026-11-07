@@ -1,0 +1,15 @@
+## filename: pixel.jpg (branch: branch-with-new-image)
+## commit: bb73dde8795fb895e2feaa247c90ba9a808dd7a5
+- id: 1005
+  oid: fb120a8de3b12793515dec8667db380383f1c20429a25f800a3a247212f1577f
+  size: 283
+  repository_id: 54
+  created_unix: 1671607299
+
+## filename: pixel.jpg (branch: branch-with-new-image-modified)
+## commit: 79996bad0d0db13b219610168336f8cfadcd1aba
+- id: 1006
+  oid: 1f98407553d3c43b4a9eea4982c1a673b41eccecfe574bb76d533553fdd723f0
+  size: 283
+  repository_id: 54
+  created_unix: 1671607299
