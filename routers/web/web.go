@@ -1214,12 +1214,12 @@ func registerRoutes(m *web.Route) {
 		m.Group("/milestone", func() {
 			m.Get("/{id}", repo.MilestoneIssuesAndPulls)
 		}, reqRepoIssuesOrPullsReader, context.RepoRef())
-		m.Get("/find/*", repo.FindFiles)
+		m.Get("/find/*", reqRepoCodeReader, repo.FindFiles) // FindFiles doesn't expose data; reqRepoCodeReader isn't technically required, but the UI is useless without /tree-list that does require it
 		m.Group("/tree-list", func() {
 			m.Get("/branch/*", context.RepoRefByType(context.RepoRefBranch), repo.TreeList)
 			m.Get("/tag/*", context.RepoRefByType(context.RepoRefTag), repo.TreeList)
 			m.Get("/commit/*", context.RepoRefByType(context.RepoRefCommit), repo.TreeList)
-		})
+		}, reqRepoCodeReader)
 		m.Get("/compare", repo.MustBeNotEmpty, reqRepoCodeReader, repo.SetEditorconfigIfExists, ignSignIn, repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.CompareDiff)
 		m.Combo("/compare/*", repo.MustBeNotEmpty, reqRepoCodeReader, repo.SetEditorconfigIfExists).
 			Get(repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.CompareDiff).
