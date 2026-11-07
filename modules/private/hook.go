@@ -52,18 +52,20 @@ type SSHLogOption struct {
 
 // HookPostReceiveResult represents an individual result from PostReceive
 type HookPostReceiveResult struct {
-	Results      []HookPostReceiveBranchResult
+	Messages     []HookPostReceiveMessage
 	RepoWasEmpty bool
 	Err          string
 }
 
-// HookPostReceiveBranchResult represents an individual branch result from PostReceive
-type HookPostReceiveBranchResult struct {
-	Message   bool
-	Create    bool
-	Branch    string
+// HookPostReceiveMessage represents an individual branch result from PostReceive.
+// Only for display purposes on 'git push'.
+type HookPostReceiveMessage struct {
+	PullURLS []string
+	Branch   string
+	// Set after a push to a PR-less branch on a fork repo
 	CreateURL string
-	PullURLS  []string
+	// Set after an agit PR creation
+	AgitRef string
 }
 
 // HookProcReceiveResult represents an individual result from ProcReceive

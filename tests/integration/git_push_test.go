@@ -642,15 +642,22 @@ func TestGitPushAGit(t *testing.T) {
 
 		newAgitPR := func(repoPath string) (string, error) {
 			branchName := "agit-pr"
+			topicName := "agit-topic"
 			doGitCreateBranch(repoPath, branchName)(t)
 			doGitAddSomeCommits(repoPath, branchName)(t)
 			_, stdErr, err := git.NewCommand(git.DefaultContext, "push", "origin").
-				AddDynamicArguments(fmt.Sprintf("%s:refs/for/main/%s", branchName, branchName)).RunStdString(&git.RunOpts{Dir: repoPath})
+				AddDynamicArguments(fmt.Sprintf("%s:refs/for/main/%s", branchName, topicName)).RunStdString(&git.RunOpts{Dir: repoPath})
 			if err != nil {
 				return "", err
 			}
 			require.NoError(t, err)
-			return prRegex.FindStringSubmatch(stdErr)[1], nil
+
+			matches := prRegex.FindStringSubmatch(stdErr)
+			require.Len(t, matches, 2, stdErr)
+
+			assert.Contains(t, stdErr, "Visit the created pull request:")
+			assert.Contains(t, stdErr, fmt.Sprintf("git config set branch.%s.merge %s", topicName, matches[0]))
+			return matches[1], nil
 		}
 		fetchAgitPR := func(repoPath, branchName, prIndex string) error {
 			return git.NewCommand(git.DefaultContext, "fetch", "origin").
@@ -664,6 +671,11 @@ func TestGitPushAGit(t *testing.T) {
 			if err != nil {
 				return fmt.Errorf("%s: %w", stdErr, err)
 			}
+			matches := prRegex.FindStringSubmatch(stdErr)
+			require.Len(t, matches, 2, stdErr)
+
+			assert.Contains(t, stdErr, "Visit the existing pull request")
+			assert.NotContains(t, stdErr, "git config set branch.")
 			return nil
 		}
 

@@ -273,6 +273,9 @@ Forgejo or set your environment appropriately.`, "")
 			lastline = 0
 		}
 	}
+	if err := scanner.Err(); err != nil {
+		return fail(ctx, "Failed to read stdin", "HookPreReceive os.Stdin scanner failed: %v", err)
+	}
 
 	if count > 0 {
 		hookOptions.OldCommitIDs = oldCommitIDs[:count]
@@ -360,7 +363,7 @@ Forgejo or set your environment appropriately.`, "")
 	total := 0
 	wasEmpty := false
 	masterPushed := false
-	results := make([]private.HookPostReceiveBranchResult, 0)
+	messages := make([]private.HookPostReceiveMessage, 0)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
@@ -392,13 +395,17 @@ Forgejo or set your environment appropriately.`, "")
 			hookOptions.RefFullNames = refFullNames
 			resp, extra := private.HookPostReceive(ctx, repoUser, repoName, hookOptions)
 			if extra.HasError() {
-				hookPrintResults(results)
+				hookPrintMessages(messages)
 				return fail(ctx, extra.UserMsg, "HookPostReceive failed: %v", extra.Error)
 			}
 			wasEmpty = wasEmpty || resp.RepoWasEmpty
-			results = append(results, resp.Results...)
+			messages = append(messages, resp.Messages...)
 			count = 0
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		hookPrintMessages(messages)
+		return fail(ctx, "Failed to read stdin", "HookPostReceive os.Stdin scanner failed: %v", err)
 	}
 
 	if count == 0 {
@@ -411,7 +418,7 @@ Forgejo or set your environment appropriately.`, "")
 		}
 		fmt.Fprintf(out, "Processed %d references in total\n", total)
 
-		hookPrintResults(results)
+		hookPrintMessages(messages)
 		return nil
 	}
 
@@ -423,11 +430,11 @@ Forgejo or set your environment appropriately.`, "")
 
 	resp, extra := private.HookPostReceive(ctx, repoUser, repoName, hookOptions)
 	if resp == nil {
-		hookPrintResults(results)
+		hookPrintMessages(messages)
 		return fail(ctx, extra.UserMsg, "HookPostReceive failed: %v", extra.Error)
 	}
 	wasEmpty = wasEmpty || resp.RepoWasEmpty
-	results = append(results, resp.Results...)
+	messages = append(messages, resp.Messages...)
 
 	fmt.Fprintf(out, "Processed %d references in total\n", total)
 
@@ -439,29 +446,33 @@ Forgejo or set your environment appropriately.`, "")
 		}
 	}
 
-	hookPrintResults(results)
+	hookPrintMessages(messages)
 	return nil
 }
 
-func hookPrintResults(results []private.HookPostReceiveBranchResult) {
-	for _, res := range results {
-		if !res.Message {
-			continue
-		}
-
+func hookPrintMessages(messages []private.HookPostReceiveMessage) {
+	for _, msg := range messages {
 		fmt.Fprintln(os.Stderr, "")
-		if res.Create {
-			fmt.Fprintf(os.Stderr, "Create a new pull request for '%s':\n", res.Branch)
-			fmt.Fprintf(os.Stderr, "  %s\n", res.CreateURL)
+		if msg.CreateURL != "" {
+			fmt.Fprintf(os.Stderr, "Create a new pull request for '%s':\n", msg.Branch)
+			fmt.Fprintf(os.Stderr, "  %s\n", msg.CreateURL)
 		}
-		if len(res.PullURLS) != 0 {
-			if len(res.PullURLS) >= 2 {
+		if len(msg.PullURLS) != 0 {
+			if len(msg.PullURLS) >= 2 {
 				fmt.Fprint(os.Stderr, "Visit the existing pull requests:\n")
+			} else if msg.AgitRef != "" {
+				fmt.Fprint(os.Stderr, "Visit the created pull request:\n")
 			} else {
 				fmt.Fprint(os.Stderr, "Visit the existing pull request:\n")
 			}
-			for _, url := range res.PullURLS {
+			for _, url := range msg.PullURLS {
 				fmt.Fprintf(os.Stderr, "  %s\n", url)
+			}
+			if msg.AgitRef != "" {
+				// Recently created AGit pull request
+				fmt.Fprintf(os.Stderr, "\nAGit configuration for git push/pull (for a local branch named %q):\n", msg.Branch)
+				fmt.Fprintf(os.Stderr, "  git config set branch.%s.merge %s\n", msg.Branch, msg.AgitRef)
+				fmt.Fprintf(os.Stderr, "  git config set branch.%s.remote origin\n", msg.Branch)
 			}
 		}
 		fmt.Fprintln(os.Stderr, "")
