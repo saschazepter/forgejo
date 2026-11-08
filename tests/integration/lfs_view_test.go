@@ -576,36 +576,38 @@ func iterateAndComparePointerTableCells(t *testing.T, rowNumber int, rowSelectio
 	tableRowColumns := rowSelection.Find("td")
 	assert.Equal(t, 7, tableRowColumns.Length())
 
-	// Important for the JavaScript form
-	selectionCheckbox := rowSelection.Find("td:nth-child(1) input")
-	selectionCheckboxName, _ := selectionCheckbox.Attr("name")
-	assert.Contains(t, selectionCheckboxName, "oid")
-	selectionCheckboxType, _ := selectionCheckbox.Attr("value")
-	assert.Contains(t, selectionCheckboxType, testcases[rowNumber].oid)
-	_, isSelectionCheckboxDisabled := selectionCheckbox.Attr("disabled")
-	assert.Equal(t, !testcases[rowNumber].inRepo, isSelectionCheckboxDisabled)
+	t.Run("OID_"+testcases[rowNumber].oid[0:9], func(t *testing.T) {
+		// Important for the JavaScript form
+		selectionCheckbox := rowSelection.Find("td:nth-child(1) input")
+		selectionCheckboxName, _ := selectionCheckbox.Attr("name")
+		assert.Contains(t, selectionCheckboxName, "oid")
+		selectionCheckboxType, _ := selectionCheckbox.Attr("value")
+		assert.Contains(t, selectionCheckboxType, testcases[rowNumber].oid)
+		_, isSelectionCheckboxDisabled := selectionCheckbox.Attr("disabled")
+		assert.Equal(t, !testcases[rowNumber].inRepo, isSelectionCheckboxDisabled)
 
-	blobHashButton := rowSelection.Find("td:nth-child(2) a")
-	blobHashButtonTitle, blobHashButtonExists := blobHashButton.Attr("title")
-	assert.True(t, blobHashButtonExists)
-	if testcases[rowNumber].blobHash != "" {
-		assert.Contains(t, blobHashButton.Text(), testcases[rowNumber].blobHash[0:9])
-		assert.Contains(t, blobHashButtonTitle, testcases[rowNumber].blobHash)
-	}
+		blobHashButton := rowSelection.Find("td:nth-child(2) a")
+		blobHashButtonTitle, blobHashButtonExists := blobHashButton.Attr("title")
+		assert.True(t, blobHashButtonExists)
+		if testcases[rowNumber].blobHash != "" {
+			assert.Contains(t, blobHashButton.Text(), testcases[rowNumber].blobHash[0:9])
+			assert.Contains(t, blobHashButtonTitle, testcases[rowNumber].blobHash)
+		}
 
-	OIDButton := rowSelection.Find("td:nth-child(3) a")
-	assert.Contains(t, OIDButton.Text(), testcases[rowNumber].oid[0:9])
-	OIDButtonTitle, _ := OIDButton.Attr("title")
-	assert.Contains(t, OIDButtonTitle, testcases[rowNumber].oid)
+		OIDButton := rowSelection.Find("td:nth-child(3) a")
+		assert.Contains(t, OIDButton.Text(), testcases[rowNumber].oid[0:9])
+		OIDButtonTitle, _ := OIDButton.Attr("title")
+		assert.Contains(t, OIDButtonTitle, testcases[rowNumber].oid)
 
-	inRepoStatusSVG := rowSelection.Find("td:nth-child(4) svg")
-	checkOcticonIconBasedOnBoolean(t, testcases[rowNumber].inRepo, inRepoStatusSVG)
-	inStoreStatusSVG := rowSelection.Find("td:nth-child(5) svg")
-	checkOcticonIconBasedOnBoolean(t, testcases[rowNumber].inRepo, inStoreStatusSVG)
-	accessibleStatusSVG := rowSelection.Find("td:nth-child(6) svg")
-	checkOcticonIconBasedOnBoolean(t, testcases[rowNumber].accessible, accessibleStatusSVG)
+		inRepoStatusSVG := rowSelection.Find("td:nth-child(4) svg")
+		checkOcticonIconBasedOnBoolean(t, testcases[rowNumber].inRepo, inRepoStatusSVG)
+		inStoreStatusSVG := rowSelection.Find("td:nth-child(5) svg")
+		checkOcticonIconBasedOnBoolean(t, testcases[rowNumber].inStore, inStoreStatusSVG)
+		accessibleStatusSVG := rowSelection.Find("td:nth-child(6) svg")
+		checkOcticonIconBasedOnBoolean(t, testcases[rowNumber].accessible, accessibleStatusSVG)
 
-	// 'Find commit' button tested elsewhere.
+		// 'Find commit' button tested elsewhere.
+	})
 }
 
 // Checks the Pointer view (and, as a bonus, the 'Find commits' view) of the
@@ -724,6 +726,13 @@ func TestLFSPointerViewSimple(t *testing.T) {
 						accessible: true,
 					},
 					{
+						blobHash:   "561a4b3072e14c9d3c26233bd8bdd9b9a5407abc",
+						oid:        "1f98407553d3c43b4a9eea4982c1a673b41eccecfe574bb76d533553fdd723f0",
+						inRepo:     false, // tests/e2e/fixtures/image-diff/branch.yml
+						inStore:    true,
+						accessible: true,
+					},
+					{
 						blobHash:   "7421a018a7e3f15ee5691f162d0ed87dc19882f0",
 						oid:        "0b8d8b5f15046343fd32f451df93acc2bdd9e6373be478b968e4cad6b6647351",
 						inRepo:     true,
@@ -738,6 +747,13 @@ func TestLFSPointerViewSimple(t *testing.T) {
 						accessible: false,
 					},
 					{
+						blobHash:   "d3472e823ad4a61a5ba8a73ab0f13669bdb92d2c",
+						oid:        "fb120a8de3b12793515dec8667db380383f1c20429a25f800a3a247212f1577f",
+						inRepo:     false, // tests/e2e/fixtures/image-diff/branch.yml
+						inStore:    true,
+						accessible: true,
+					},
+					{
 						blobHash:   "d4a41a0d4db4949e129bd22f871171ea988103ef",
 						oid:        "2eccdb43825d2a49d99d542daa20075cff1d97d9d2349a8977efe9c03661737c",
 						inRepo:     true,
@@ -747,7 +763,7 @@ func TestLFSPointerViewSimple(t *testing.T) {
 				}
 
 				tableRows := doc.Find("table#lfs-files-table > tbody > tr")
-				assert.Equal(t, 5, tableRows.Length())
+				assert.Equal(t, 7, tableRows.Length())
 				tableRowsIter := tableRows.EachIter()
 
 				for rowNumber, rowSelection := range tableRowsIter {
