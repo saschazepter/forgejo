@@ -184,8 +184,15 @@ func DeleteIssue(ctx context.Context, doer *user_model.User, gitRepo *git.Reposi
 
 	// delete pull request related git data
 	if issue.IsPull && gitRepo != nil {
-		if err := gitRepo.RemoveReference(fmt.Sprintf("%s%d/head", git.PullPrefix, issue.PullRequest.Index)); err != nil {
-			return err
+		// Delete refs/pull/N/head & refs/pull/N/comment/M/T references:
+		refs, err := gitRepo.GetRefsFiltered(fmt.Sprintf("%s%d/", git.PullPrefix, issue.PullRequest.Index))
+		if err != nil {
+			return fmt.Errorf("failed to list references: %w", err)
+		}
+		for _, ref := range refs {
+			if err := gitRepo.RemoveReference(ref.Name); err != nil {
+				return fmt.Errorf("failed to remove reference %s: %w", ref.Name, err)
+			}
 		}
 	}
 

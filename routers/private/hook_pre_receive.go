@@ -235,6 +235,11 @@ func HookPreReceive(ctx *app_context.PrivateContext) {
 			preReceiveFor(ourCtx, oldCommitID, newCommitID, refFullName)
 		case refFullName.IsPull():
 			preReceivePull(ourCtx, oldCommitID, newCommitID, refFullName)
+		case refFullName.IsPullComment():
+			ctx.JSON(http.StatusForbidden, private.Response{
+				UserMsg: "Force push comment references (refs/pull/N/comment/D/{new,old}) are read-only, and cannot be written.",
+			})
+			return
 		default:
 			if ourCtx.isOverQuota {
 				ourCtx.quotaExceeded()

@@ -98,7 +98,11 @@ func (ref RefName) IsRemote() bool {
 }
 
 func (ref RefName) IsPull() bool {
-	return strings.HasPrefix(string(ref), PullPrefix) && strings.IndexByte(string(ref)[len(PullPrefix):], '/') > -1
+	return strings.HasPrefix(string(ref), PullPrefix) && strings.IndexByte(string(ref)[len(PullPrefix):], '/') > -1 && !strings.Contains(string(ref), "/comment/")
+}
+
+func (ref RefName) IsPullComment() bool {
+	return strings.HasPrefix(string(ref), PullPrefix) && strings.Contains(string(ref), "/comment/")
 }
 
 func (ref RefName) IsFor() bool {

@@ -88,8 +88,8 @@ func getPullRequestsByHeadSHA(ctx context.Context, sha string, repo *repo_model.
 			parts := strings.Split(ref[len(git.PullPrefix):], "/")
 
 			// e.g. 'refs/pull/1/head' would be []string{"1", "head"}
-			if len(parts) != 2 {
-				log.Error("getPullRequestsByHeadSHA found broken pull ref [%s] on repo [%-v]", ref, repo)
+			if len(parts) != 2 || parts[1] != "head" {
+				// expect to find refs/pull/1/comment/N/[old/new] and ignore them
 				continue
 			}
 

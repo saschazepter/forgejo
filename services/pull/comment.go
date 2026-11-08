@@ -5,6 +5,7 @@ package pull
 
 import (
 	"context"
+	"fmt"
 	"slices"
 
 	issues_model "forgejo.org/models/issues"
@@ -12,6 +13,7 @@ import (
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/gitrepo"
 	"forgejo.org/modules/json"
+	"forgejo.org/modules/setting"
 )
 
 // getCommitIDsFromRepo get commit IDs from repo in between oldCommitID and newCommitID
@@ -94,6 +96,21 @@ func CreatePushPullComment(ctx context.Context, pusher *user_model.User, pr *iss
 	ops.Content = string(dataJSON)
 
 	comment, err = issues_model.CreateComment(ctx, ops)
+
+	if data.IsForcePush && setting.Repository.PullRequest.KeepForcePushRefs {
+		comment.Issue = pr.Issue
+		gitRepo, closer, err := gitrepo.RepositoryFromContextOrOpen(ctx, pr.BaseRepo)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open repository: %w", err)
+		}
+		defer closer.Close()
+		if err := gitRepo.SetReference(comment.ForcePushOldCommitGitRefName(), data.CommitIDs[0]); err != nil {
+			return nil, fmt.Errorf("failed to update ref in repository for force-push comment: %w", err)
+		}
+		if err := gitRepo.SetReference(comment.ForcePushNewCommitGitRefName(), data.CommitIDs[1]); err != nil {
+			return nil, fmt.Errorf("failed to update ref in repository for force-push comment: %w", err)
+		}
+	}
 
 	return comment, err
 }

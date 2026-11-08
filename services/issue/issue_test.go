@@ -4,6 +4,7 @@
 package issue
 
 import (
+	"slices"
 	"testing"
 
 	"forgejo.org/models/db"
@@ -11,6 +12,8 @@ import (
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/git"
+	"forgejo.org/modules/gitrepo"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -84,4 +87,58 @@ func TestIssue_DeleteIssue(t *testing.T) {
 	left, err = issues_model.IssueNoDependenciesLeft(db.DefaultContext, issue1)
 	require.NoError(t, err)
 	assert.True(t, left)
+}
+
+func TestIssue_DeleteIssue_PullRequestRefs(t *testing.T) {
+	unittest.PrepareTestEnv(t)
+
+	doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	// Pull request #2 in user2/repo1
+	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 2})
+	require.True(t, issue.IsPull)
+	require.NoError(t, issue.LoadRepo(t.Context()))
+
+	gitRepo, err := gitrepo.OpenRepository(t.Context(), issue.Repo)
+	require.NoError(t, err)
+	defer gitRepo.Close()
+
+	const commitID = "4a357436d925b5c974181ff12a994538ddc5a269"
+
+	// refs belonging to PR #2 which should be removed
+	removedRefs := []string{
+		git.PullPrefix + "2/head",
+		git.PullPrefix + "2/comment/100/old",
+		git.PullPrefix + "2/comment/100/new",
+		git.PullPrefix + "2/comment/101/old",
+		git.PullPrefix + "2/comment/101/new",
+	}
+	// refs belonging to other PRs which must be retained -- including PR #20 & #200, which share a prefix with PR #2
+	retainedRefs := []string{
+		git.PullPrefix + "3/head",
+		git.PullPrefix + "5/head",
+		git.PullPrefix + "20/head",
+		git.PullPrefix + "20/comment/100/old",
+		git.PullPrefix + "200/head",
+	}
+	for _, ref := range append(slices.Clone(removedRefs), retainedRefs...) {
+		require.NoError(t, gitRepo.SetReference(ref, commitID))
+	}
+
+	require.NoError(t, DeleteIssue(t.Context(), doer, gitRepo, issue))
+
+	refs, err := gitRepo.GetRefs()
+	require.NoError(t, err)
+	refNames := make([]string, 0, len(refs))
+	for _, ref := range refs {
+		refNames = append(refNames, ref.Name)
+	}
+
+	for _, ref := range removedRefs {
+		assert.NotContains(t, refNames, ref)
+	}
+	for _, ref := range retainedRefs {
+		assert.Contains(t, refNames, ref)
+	}
+
+	unittest.AssertNotExistsBean(t, &issues_model.Issue{ID: 2})
 }
