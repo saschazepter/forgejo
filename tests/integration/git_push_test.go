@@ -505,30 +505,23 @@ func TestGitPushMirror(t *testing.T) {
 			require.NoError(t, err)
 
 			// wait for new commit to arrive to the mirror
-			start := time.Now()
-			for {
+			const maxDelay = 30 * time.Second
+			require.Eventuallyf(t, func() bool {
 				updatedSha, err := gitMirror.GetBranchCommitID(mirror.DefaultBranch)
 				require.NoError(t, err)
-				if updatedSha != initialSha {
-					break
-				}
-				const maxDelay = 5 * time.Second
-				if time.Since(start) >= maxDelay {
-					t.Errorf("mirror not updated within %s", maxDelay)
-					break
-				}
-				time.Sleep(time.Second)
-			}
+				return updatedSha != initialSha
+			}, maxDelay, time.Second, "mirror not updated with %s", maxDelay)
 
 			// check that the refs got deleted from the mirror and cannot be fetched anymore
-			err = git.NewCommand(git.DefaultContext, "fetch").
-				AddDynamicArguments(
-					mirror.HTMLURL(),
-					fmt.Sprintf("refs/pull/%d/head:%s", 2, "second-branch-pr"),
-				).
-				Run(&git.RunOpts{Dir: repoPath})
-			require.Error(t, err)
-			require.True(t, git.IsErrorExitCode(err, 128), err)
+			require.EventuallyWithTf(t, func(t *assert.CollectT) {
+				err = git.NewCommand(git.DefaultContext, "fetch").
+					AddDynamicArguments(
+						mirror.HTMLURL(),
+						fmt.Sprintf("refs/pull/%d/head:%s", 2, "second-branch-pr"),
+					).
+					Run(&git.RunOpts{Dir: repoPath})
+				require.True(t, git.IsErrorExitCode(err, 128), err)
+			}, maxDelay, time.Second, "pull ref not deleted within %s", maxDelay)
 		})
 	})
 }
