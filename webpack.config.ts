@@ -35,7 +35,7 @@ if (isProduction) {
   licenseChecker({
     start: baseDirectory,
     production: true,
-    onlyAllow: 'Apache-2.0; 0BSD; BSD-2-Clause; BSD-3-Clause; BlueOak-1.0.0; MIT; ISC; Unlicense; CC-BY-4.0',
+    onlyAllow: 'Apache-2.0; 0BSD; BSD-2-Clause; BSD-3-Clause; BlueOak-1.0.0; MIT; ISC; Unlicense; CC-BY-4.0; GPL-3.0-or-later',
     // argparse@2.0.1 - Python-2.0. It's used in the CLI file of markdown-it and js-yaml and not in the library code.
     // idiomorph@0.3.0. See https://github.com/bigskysoftware/idiomorph/pull/37
     excludePackages: 'argparse@2.0.1;idiomorph@0.3.0',
