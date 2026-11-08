@@ -1349,6 +1349,7 @@ func registerRoutes(m *web.Route) {
 				m.Get("/", repo_setting.LFSFiles)
 				m.Get("/show/{oid}", repo_setting.LFSFileGet)
 				m.Post("/delete/{oid}", repo_setting.LFSDelete)
+				m.Post("/delete", repo_setting.LFSDelete)
 				m.Get("/pointers", repo_setting.LFSPointerFiles)
 				m.Post("/pointers/associate", repo_setting.LFSAutoAssociate)
 				m.Get("/find", repo_setting.LFSFileFind)

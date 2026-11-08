@@ -364,26 +364,40 @@ func LFSDelete(ctx *context.Context) {
 		ctx.NotFound("LFSDelete", nil)
 		return
 	}
-	oid := ctx.Params("oid")
-	p := lfs.Pointer{Oid: oid}
-	if !p.IsOIDValid() {
-		ctx.NotFound("LFSDelete", lfs.ErrInvalidOIDFormat)
-		return
+
+	oids := ctx.FormStrings("oid")
+
+	// For backwards compatibility, also support receiving one oid via path (/delete/oid-here)
+	pathOid := ctx.Params("oid")
+	if pathOid != "" {
+		oids = append(oids, pathOid)
 	}
 
-	count, err := git_model.RemoveLFSMetaObjectByOid(ctx, ctx.Repo.Repository.ID, oid)
-	if err != nil {
-		ctx.ServerError("LFSDelete", err)
-		return
+	for _, oid := range oids {
+		// First, validate that all oids are found before starting the removal
+
+		p := lfs.Pointer{Oid: oid}
+		if !p.IsOIDValid() {
+			ctx.NotFound("LFSDelete", lfs.ErrInvalidOIDFormat)
+			return
+		}
 	}
-	// FIXME: Warning: the LFS store is not locked - and can't be locked - there could be a race condition here
-	// Please note a similar condition happens in models/repo.go DeleteRepository
-	if count == 0 {
-		oidPath := path.Join(oid[0:2], oid[2:4], oid[4:])
-		err = storage.LFS.Delete(oidPath)
+
+	for _, oid := range oids {
+		count, err := git_model.RemoveLFSMetaObjectByOid(ctx, ctx.Repo.Repository.ID, oid)
 		if err != nil {
 			ctx.ServerError("LFSDelete", err)
 			return
+		}
+		// FIXME: Warning: the LFS store is not locked - and can't be locked - there could be a race condition here
+		// Please note a similar condition happens in models/repo.go DeleteRepository
+		if count == 0 {
+			oidPath := path.Join(oid[0:2], oid[2:4], oid[4:])
+			err = storage.LFS.Delete(oidPath)
+			if err != nil {
+				ctx.ServerError("LFSDelete", err)
+				return
+			}
 		}
 	}
 	ctx.Redirect(ctx.Repo.RepoLink + "/settings/lfs")

@@ -4,6 +4,8 @@
 // web_src/css/{form,repo}.css
 // web_src/css/modules/grid.css
 // web_src/js/features/comp/WebHookEditor.js
+// web_src/js/features/repo-legacy.js
+// web_src/js/features/repo-settings.js
 // @watch end
 
 import {expect} from '@playwright/test';
@@ -131,6 +133,82 @@ test.describe('repo actions variables settings', () => {
 
     await modal.getByText('Confirm').click();
     await expect(page.getByText('There are no variables yet.')).toBeVisible();
+  });
+});
+
+test.describe('repo lfs settings', () => {
+  test('pointer settings', async ({page}) => {
+    const response = await page.goto('/user2/lfs/settings/lfs/pointers');
+    expect(response?.status()).toBe(200);
+    await screenshot(page);
+
+    // Expect that the checkbox of a not-in-repo Git LFS file is disabled
+    const disabledCheckbox = page.locator('input[aria-label="9d178b5f15"]');
+    await expect(disabledCheckbox).toBeDisabled();
+    const togglableCheckbox = page.locator('input[aria-label="7b6b2c88db"]');
+
+    // We haven't selected anything yet, so this should be disabled.
+    const deleteSelectedFiles = page.locator('#lfs-files-delete-button');
+    await expect(deleteSelectedFiles).toBeDisabled();
+
+    // Check a checkbox
+    await togglableCheckbox.check();
+    await expect(togglableCheckbox).toBeChecked({checked: true});
+    await screenshot(page);
+
+    // Now check the modal behavior
+    await expect(deleteSelectedFiles).toBeEnabled();
+    await deleteSelectedFiles.click();
+    await expect(page.locator('dialog#lfs-files-delete.modal')).toBeVisible();
+    await screenshot(page);
+
+    await page.locator('dialog#lfs-files-delete.modal article > div.actions > button.cancel').click();
+    await expect(page.locator('dialog#lfs-files-delete.modal')).toBeHidden();
+    await screenshot(page);
+  });
+
+  test('pointer settings - (un)select all', async ({page}) => {
+    const response = await page.goto('/user2/lfs/settings/lfs/pointers');
+    expect(response?.status()).toBe(200);
+    await screenshot(page);
+
+    const checkbox1 = page.locator('input[aria-label="9d172e5c64"]');
+    const checkbox2 = page.locator('input[aria-label="7b6b2c88db"]');
+    const checkbox3 = page.locator('input[aria-label="0b8d8b5f15"]');
+    const checkbox4 = page.locator('input[aria-label="9d178b5f15"]');
+    const checkbox5 = page.locator('input[aria-label="2eccdb4382"]');
+
+    // Default state
+    await expect(checkbox1).toBeChecked({checked: false});
+    await expect(checkbox2).toBeChecked({checked: false});
+    await expect(checkbox3).toBeChecked({checked: false});
+    await expect(checkbox4).toBeChecked({checked: false});
+    await expect(checkbox5).toBeChecked({checked: false});
+
+    // Let's "select all" (out of those that are in-repo)
+    const selectAllCheckbox = page.locator('input.select-all');
+    await selectAllCheckbox.click();
+
+    // Everything that we could've selected is now selected.
+    await expect(checkbox1).toBeChecked({checked: true});
+    await expect(checkbox2).toBeChecked({checked: true});
+    await expect(checkbox3).toBeChecked({checked: true});
+    await expect(checkbox4).toBeChecked({checked: false});
+    await expect(checkbox5).toBeChecked({checked: true});
+
+    await screenshot(page);
+
+    // Let's unselect everything for good measure, and see if we're back where
+    // we started.
+    await selectAllCheckbox.click();
+
+    await expect(checkbox1).toBeChecked({checked: false});
+    await expect(checkbox2).toBeChecked({checked: false});
+    await expect(checkbox3).toBeChecked({checked: false});
+    await expect(checkbox4).toBeChecked({checked: false});
+    await expect(checkbox5).toBeChecked({checked: false});
+
+    await screenshot(page);
   });
 });
 

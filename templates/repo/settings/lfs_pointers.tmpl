@@ -2,58 +2,96 @@
 	<div class="repo-setting-content">
 		<h4 class="ui top attached header">
 			{{ctx.Locale.Tr "repo.settings.lfs_pointers.found" .NumPointers .NumAssociated .NumNotAssociated .NumNoExist}}
-			{{if gt .NumAssociatable 0}}
 				<div class="ui right">
-					<form class="ui form" method="post" action="{{$.Link}}/associate">
-						{{range .Pointers}}
-							{{if .Associatable}}
-								<input type="hidden" name="oid" value="{{.Oid}} {{.Size}}">
-							{{end}}
-						{{end}}
-						<button class="ui primary tiny button">{{ctx.Locale.Tr "repo.settings.lfs_pointers.associateAccessible" $.NumAssociatable}}</button>
-					</form>
-				</div>
-			{{end}}
-		</h4>
-		<div class="ui attached segment">
-			<table id="lfs-files-table" class="ui very basic table unstackable">
-				<thead>
-					<tr>
-						<th class="three wide">{{ctx.Locale.Tr "repo.settings.lfs_pointers.sha"}}</th>
-						<th class="four wide">{{ctx.Locale.Tr "repo.settings.lfs_pointers.oid"}}</th>
-						<th class="two wide" data-tooltip-content="{{ctx.Locale.Tr "repo.settings.lfs_pointers.inRepo"}}">{{ctx.Locale.Tr "repo.settings.lfs_pointers.inRepo"}}</th>
-						<th class="two wide" data-tooltip-content="{{ctx.Locale.Tr "repo.settings.lfs_pointers.exists"}}">{{ctx.Locale.Tr "repo.settings.lfs_pointers.exists"}}</th>
-						<th class="two wide" data-tooltip-content="{{ctx.Locale.Tr "repo.settings.lfs_pointers.accessible"}}">{{ctx.Locale.Tr "repo.settings.lfs_pointers.accessible"}}</th>
-						<th class="three wide"></th>
-					</tr>
-				</thead>
-				<tbody>
-					{{range .Pointers}}
-						<tr>
-							<td>
-								<a href="{{$.RepoLink}}/raw/blob/{{.SHA}}" rel="nofollow" target="_blank" title="{{.SHA}}" class="ui button tw-font-mono">
-									{{ShortSha .SHA}}
-								</a>
-							</td>
-							<td>
-								<a {{if and .Exists .InRepo}}href="{{$.LFSFilesLink}}/show/{{.Oid}}" rel="nofollow" target="_blank"{{end}} title="{{.Oid}}" class="ui brown button tw-font-mono">
-									{{ShortSha .Oid}}
-								</a>
-							</td>
-							<td>{{if .InRepo}}{{svg "octicon-check"}}{{else}}{{svg "octicon-x"}}{{end}}</td>
-							<td>{{if .Exists}}{{svg "octicon-check"}}{{else}}{{svg "octicon-x"}}{{end}}</td>
-							<td>{{if .Accessible}}{{svg "octicon-check"}}{{else}}{{svg "octicon-x"}}{{end}}</td>
-							<td class="tw-text-right">
-								<a class="ui primary button" href="{{$.LFSFilesLink}}/find?oid={{.Oid}}&size={{.Size}}&sha={{.SHA}}">{{ctx.Locale.Tr "repo.settings.lfs_findcommits"}}</a>
-							</td>
-						</tr>
-					{{else}}
-						<tr>
-							<td colspan="6" class="tw-text-center">{{ctx.Locale.Tr "repo.settings.lfs.no_pointers"}}</td>
-						</tr>
+					{{if gt .NumAssociated 0}}
+						<button id="lfs-files-delete-button" class="ui tiny red show-modal button" data-modal="#lfs-files-delete">
+							{{svg "octicon-trash"}} {{ctx.Locale.Tr "repo.settings.lfs.pointers.delete_selection"}}
+						</button>
 					{{end}}
-				</tbody>
-			</table>
-		</div>
+					{{if gt .NumAssociatable 0}}
+						<form class="ui form" method="post" action="{{$.Link}}/associate">
+							{{range .Pointers}}
+								{{if .Associatable}}
+									<input type="hidden" name="oid" value="{{.Oid}} {{.Size}}">
+								{{end}}
+							{{end}}
+							<button class="ui primary tiny button">{{ctx.Locale.Tr "repo.settings.lfs_pointers.associateAccessible" $.NumAssociatable}}</button>
+						</form>
+					{{end}}
+				</div>
+			</div>
+		</h4>
+		<form id="lfs-files-delete-form" action="{{$.LFSFilesLink}}/delete" method="POST">
+			<div class="ui attached segment">
+				<table id="lfs-files-table" class="ui very basic table unstackable">
+					<thead>
+						<tr>
+							<th>
+								<input
+									class="select-all" type="checkbox"
+									aria-label="{{ctx.Locale.Tr "repo.settings.lfs.pointers.select_all"}}"
+									{{if eq .NumAssociated 0}}disabled{{end}}
+									data-select-all-name="oid"
+								/>
+							</th>
+							<th class="three wide">{{ctx.Locale.Tr "repo.settings.lfs_pointers.sha"}}</th>
+							<th class="three wide">{{ctx.Locale.Tr "repo.settings.lfs_pointers.oid"}}</th>
+							<th class="two wide" data-tooltip-content="{{ctx.Locale.Tr "repo.settings.lfs_pointers.inRepo"}}">{{ctx.Locale.Tr "repo.settings.lfs_pointers.inRepo"}}</th>
+							<th class="two wide" data-tooltip-content="{{ctx.Locale.Tr "repo.settings.lfs_pointers.exists"}}">{{ctx.Locale.Tr "repo.settings.lfs_pointers.exists"}}</th>
+							<th class="two wide" data-tooltip-content="{{ctx.Locale.Tr "repo.settings.lfs_pointers.accessible"}}">{{ctx.Locale.Tr "repo.settings.lfs_pointers.accessible"}}</th>
+							<th class="four wide"></th>
+						</tr>
+					</thead>
+					<tbody>
+						{{range .Pointers}}
+							<tr>
+								<td>
+									<input
+										type="checkbox"
+										{{if not .InRepo}}disabled class="gray"{{end}}
+										name="oid" value="{{.Oid}}" aria-label="{{ShortSha .Oid}}"
+									/>
+								</td>
+								<td>
+									<a href="{{$.RepoLink}}/raw/blob/{{.SHA}}" rel="nofollow" target="_blank" title="{{.SHA}}" class="ui button tw-font-mono">
+										{{ShortSha .SHA}}
+									</a>
+								</td>
+								<td>
+								<a {{if and .Exists .InRepo}}href="{{$.LFSFilesLink}}/show/{{.Oid}}" rel="nofollow" target="_blank"{{end}} title="{{.Oid}}" class="ui brown button tw-font-mono">
+										{{ShortSha .Oid}}
+									</a>
+								</td>
+								<td>{{if .InRepo}}{{svg "octicon-check"}}{{else}}{{svg "octicon-x"}}{{end}}</td>
+								<td>{{if .Exists}}{{svg "octicon-check"}}{{else}}{{svg "octicon-x"}}{{end}}</td>
+								<td>{{if .Accessible}}{{svg "octicon-check"}}{{else}}{{svg "octicon-x"}}{{end}}</td>
+								<td class="tw-text-right">
+									<a class="ui primary button" href="{{$.LFSFilesLink}}/find?oid={{.Oid}}&size={{.Size}}&sha={{.SHA}}">{{ctx.Locale.Tr "repo.settings.lfs_findcommits"}}</a>
+								</td>
+							</tr>
+						{{else}}
+							<tr>
+								<td colspan="6" class="tw-text-center">{{ctx.Locale.Tr "repo.settings.lfs.no_pointers"}}</td>
+							</tr>
+						{{end}}
+					</tbody>
+				</table>
+			</div>
+		</form>
 	</div>
+<dialog class="modal" id="lfs-files-delete">
+	<article>
+		<header>
+			{{svg "octicon-trash"}}
+			{{ctx.Locale.Tr "repo.settings.lfs.pointers.delete.modal.header"}}
+		</header>
+		<div class="content">
+			<span>{{ctx.Locale.Tr "repo.settings.lfs.pointers.delete.modal.description"}}</span>
+		</div>
+		<div class="actions">
+			<button type="button" class="ui cancel button">{{svg "octicon-x"}} {{ctx.Locale.Tr "settings.cancel"}}</button>
+			<button type="submit" class="ui red button" form="lfs-files-delete-form">{{svg "octicon-trash"}} {{ctx.Locale.Tr "org.settings.confirm_delete_account"}}</button>
+		</div>
+	</article>
+</dialog>
 {{template "repo/settings/layout_footer" .}}

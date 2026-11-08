@@ -106,3 +106,57 @@ export function initRepoSettingBranches() {
   markMatchedStatusChecks();
   document.getElementById('status_check_contexts').addEventListener('input', onInputDebounce(markMatchedStatusChecks));
 }
+
+export function initRepoSettingLfsPointers() {
+  const lfsFilesTable = document.getElementById('lfs-files-table');
+  if (!lfsFilesTable) return;
+
+  const deleteButton = document.getElementById('lfs-files-delete-button');
+
+  const oidCheckboxes = lfsFilesTable.querySelectorAll('input[type=checkbox][name="oid"]');
+  const selectAllCheckboxes = lfsFilesTable.querySelectorAll('input[type=checkbox].select-all');
+  const allCheckboxes = [...selectAllCheckboxes, ...oidCheckboxes];
+  for (const selectAllCheckbox of selectAllCheckboxes) {
+    const nameOfTarget = selectAllCheckbox.getAttribute('data-select-all-name');
+    if (!nameOfTarget) continue;
+
+    const allTargetedCheckboxes = allCheckboxes.filter((cb) => !cb.disabled && cb.name === nameOfTarget);
+
+    function updateSelectAllCheckboxState() {
+      let allChecked = true;
+      let allUnchecked = true;
+      for (const cb of allTargetedCheckboxes) {
+        if (!cb.checked) {
+          allChecked = false;
+        } else {
+          allUnchecked = false;
+        }
+      }
+      if (allTargetedCheckboxes.length === 0) {
+        allChecked = false;
+      }
+
+      selectAllCheckbox.checked = allChecked;
+      selectAllCheckbox.indeterminate = !allChecked && !allUnchecked;
+
+      if (deleteButton) {
+        deleteButton.disabled = allUnchecked;
+      }
+    }
+
+    selectAllCheckbox.addEventListener('change', (_e) => {
+      for (const cb of allTargetedCheckboxes) {
+        cb.checked = selectAllCheckbox.checked;
+      }
+      updateSelectAllCheckboxState();
+    });
+
+    for (const cb of allTargetedCheckboxes) {
+      cb.addEventListener('change', (_e) => {
+        updateSelectAllCheckboxState();
+      });
+    }
+
+    updateSelectAllCheckboxState();
+  }
+}
