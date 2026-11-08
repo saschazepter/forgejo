@@ -310,16 +310,6 @@ func (c *Commit) FileChangedSinceCommit(filename, pastCommit string) (bool, erro
 	return c.repo.FileChangedBetweenCommits(filename, pastCommit, c.ID.String())
 }
 
-// HasFile returns true if the file given exists on this commit
-// This does only mean it's there - it does not mean the file was changed during the commit.
-func (c *Commit) HasFile(filename string) (bool, error) {
-	_, err := c.GetBlobByPath(filename)
-	if err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
 // GetFileContent reads a file content as a string or returns false if this was not possible
 func (c *Commit) GetFileContent(filename string, limit int) (string, error) {
 	entry, err := c.GetTreeEntryByPath(filename)

@@ -43,16 +43,16 @@ func Unmarshal(filename string, content []byte) (*api.IssueTemplate, error) {
 
 // UnmarshalFromEntry parses out a valid template from the blob in entry
 func UnmarshalFromEntry(entry *git.TreeEntry, dir string) (*api.IssueTemplate, error) {
-	return unmarshalFromEntry(entry, path.Join(dir, entry.Name())) // Filepaths in Git are ALWAYS '/' separated do not use filepath here
+	return unmarshalFromBlob(entry.Blob(), path.Join(dir, entry.Name())) // Filepaths in Git are ALWAYS '/' separated do not use filepath here
 }
 
 // UnmarshalFromCommit parses out a valid template from the commit
 func UnmarshalFromCommit(commit *git.Commit, filename string) (*api.IssueTemplate, error) {
-	entry, err := commit.GetTreeEntryByPath(filename)
+	blob, err := commit.GetBlobByPath(filename)
 	if err != nil {
 		return nil, fmt.Errorf("get entry for %q: %w", filename, err)
 	}
-	return unmarshalFromEntry(entry, filename)
+	return unmarshalFromBlob(blob, filename)
 }
 
 // UnmarshalFromRepo parses out a valid template from the head commit of the branch
@@ -65,20 +65,20 @@ func UnmarshalFromRepo(repo *git.Repository, branch, filename string) (*api.Issu
 	return UnmarshalFromCommit(commit, filename)
 }
 
-func unmarshalFromEntry(entry *git.TreeEntry, filename string) (*api.IssueTemplate, error) {
-	if size := entry.Blob().Size(); size > setting.UI.MaxDisplayFileSize {
-		return nil, fmt.Errorf("too large: %v > MaxDisplayFileSize", size)
-	}
-
-	r, err := entry.Blob().DataAsync()
+func unmarshalFromBlob(blob *git.Blob, filename string) (*api.IssueTemplate, error) {
+	r, size, err := blob.NewReader(setting.UI.MaxDisplayFileSize)
 	if err != nil {
-		return nil, fmt.Errorf("data async: %w", err)
+		if size > setting.UI.MaxDisplayFileSize {
+			return nil, fmt.Errorf("too large: %v > MaxDisplayFileSize", size)
+		}
+		return nil, fmt.Errorf("blob NewReader: %w", err)
 	}
 	defer r.Close()
 
-	content, err := io.ReadAll(r)
+	content := make([]byte, size)
+	_, err = io.ReadFull(r, content)
 	if err != nil {
-		return nil, fmt.Errorf("read all: %w", err)
+		return nil, fmt.Errorf("read full: %w", err)
 	}
 
 	return Unmarshal(filename, content)
