@@ -65,5 +65,5 @@ func TestActionsForcePushCommitStatus(t *testing.T) {
 	htmlDoc.AssertElement(t, "#issuecomment-17 .forced-push [data-tippy='commit-statuses']:nth-of-type(5) svg.commit-status.octicon-check", true)
 
 	htmlDoc.AssertElement(t, "#issuecomment-1001 .forced-push [data-tippy='commit-statuses']:nth-of-type(3) svg.commit-status.octicon-check", true)
-	htmlDoc.AssertElement(t, "#issuecomment-1001 .forced-push [data-tippy='commit-statuses']:nth-of-type(5) svg.commit-status.octicon-check", true)
+	htmlDoc.AssertElement(t, "#issuecomment-1001 .forced-push [data-tippy='commit-statuses']:nth-of-type(4) svg.commit-status.octicon-check", true)
 }

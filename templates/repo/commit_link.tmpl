@@ -1,0 +1,12 @@
+{{/* Expected inputs: .Repo (repository model), .CommitID (string), .Status, .Statuses, .IsValid */}}
+{{if .IsValid}}
+	<a class="ui sha" href="{{.Repo.CommitLink .CommitID}}">
+		<code>{{ShortSha .CommitID}}</code>
+	</a>
+{{else}}
+	<span data-tooltip-content="{{ctx.Locale.Tr "repo.commit.unavailable.tooltip"}}">
+		<code>{{ShortSha .CommitID}}</code>
+		{{ctx.Locale.Tr "repo.commit.unavailable"}}
+	</span>
+{{end}}
+{{template "repo/commit_statuses" (dict "Status" .Status "Statuses" .Statuses)}}

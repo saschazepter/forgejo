@@ -571,15 +571,32 @@
 				<span class="text grey muted-links">
 					{{if .IsForcePush}}
 						<span class="forced-push">
+							{{$isOldCommitValid := ($.Issue.Repo.IsCommitValid ctx .OldCommit)}}
+							{{$isNewCommitValid := ($.Issue.Repo.IsCommitValid ctx .NewCommit)}}
 							<span>
 								{{
-									template "shared/user/authorlink" .Poster}}
-									{{ctx.Locale.Tr "repo.issues.force_push_codes" $.Issue.PullRequest.HeadBranch (ShortSha .OldCommit) ($.Issue.Repo.CommitLink .OldCommit) (ShortSha .NewCommit) ($.Issue.Repo.CommitLink .NewCommit) $createdStr "ui sha"
-									(ExecuteTemplate ctx "repo/commit_statuses" (dict "Status" (index .Commits 0).Status "Statuses" (index .Commits 0).Statuses))
-									(ExecuteTemplate ctx "repo/commit_statuses" (dict "Status" (index .Commits 1).Status "Statuses" (index .Commits 1).Statuses))
+									ctx.Locale.Tr
+									"repo.issues.force_push_comment"
+									(ExecuteTemplate ctx "shared/user/authorlink" .Poster)
+									$.Issue.PullRequest.HeadBranch
+									(ExecuteTemplate ctx "repo/commit_link" (dict
+										"Repo" $.Issue.Repo
+										"CommitID" .OldCommit
+										"Status" (index .Commits 0).Status
+										"Statuses" (index .Commits 0).Statuses
+										"IsValid" $isOldCommitValid
+									))
+									(ExecuteTemplate ctx "repo/commit_link" (dict
+										"Repo" $.Issue.Repo
+										"CommitID" .NewCommit
+										"Status" (index .Commits 1).Status
+										"Statuses" (index .Commits 1).Statuses
+										"IsValid" $isNewCommitValid
+									))
+									$createdStr
 								}}
 							</span>
-							{{if $.Issue.PullRequest.BaseRepo.Name}}
+							{{if and $.Issue.PullRequest.BaseRepo.Name $isOldCommitValid $isNewCommitValid}}
 								<span class="compare">
 									<a href="{{$.Issue.PullRequest.BaseRepo.Link}}/compare/{{PathEscape .OldCommit}}..{{PathEscape .NewCommit}}" rel="nofollow" class="ui compare label">{{ctx.Locale.Tr "repo.issues.force_push_compare"}}</a>
 								</span>

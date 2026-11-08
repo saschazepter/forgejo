@@ -23,6 +23,7 @@ import (
 	"forgejo.org/modules/cache"
 	"forgejo.org/modules/container"
 	"forgejo.org/modules/git"
+	"forgejo.org/modules/gitrepo"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/markup"
 	"forgejo.org/modules/optional"
@@ -359,6 +360,24 @@ func (repo *Repository) CommitLink(commitID string) (result string) {
 		result = repo.Link() + "/commit/" + url.PathEscape(commitID)
 	}
 	return result
+}
+
+func (repo *Repository) IsCommitValid(ctx context.Context, commitID string) bool {
+	gitRepo, closer, err := gitrepo.RepositoryFromContextOrOpen(ctx, repo)
+	if err != nil {
+		log.Error("failed to open repository: %s", err)
+		return false
+	}
+	defer closer.Close()
+	// ConvertToGitID is the most efficient check as it reuses an existing `git cat-file --batch-check` process if one
+	// is already open.
+	if _, err := gitRepo.ConvertToGitID(commitID); git.IsErrNotExist(err) {
+		return false
+	} else if err != nil {
+		log.Error("ConvertToGitID failed while checking commit validity for %s in %s: %v", commitID, gitRepo.Path, err)
+		return false
+	}
+	return true
 }
 
 // APIURL returns the repository API URL

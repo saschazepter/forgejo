@@ -8,10 +8,12 @@ import (
 	"testing"
 
 	"forgejo.org/models/db"
+	issues_model "forgejo.org/models/issues"
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/unit"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/json"
 	"forgejo.org/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -79,6 +81,64 @@ func TestPullViewConversation(t *testing.T) {
 		fifthCommitShaHref, _ := fifthCommit.Find("a.sha.label").Attr("href")
 		assert.Equal(t, "/user2/commitsonpr/commit/3e64625bd6eb5bcba69ac97de6c8f507402df861", fifthCommitMessageHref)
 		assert.Equal(t, "/user2/commitsonpr/commit/3e64625bd6eb5bcba69ac97de6c8f507402df861", fifthCommitShaHref)
+	})
+
+	t.Run("ForcePush", func(t *testing.T) {
+		forcePush := htmlDoc.Find("#issuecomment-17")
+		require.Equal(t, 1, forcePush.Length())
+		html, err := forcePush.Html()
+		require.NoError(t, err)
+		t.Logf("issuecomment-17 HTML = %s", html) // useful for figuring out errors in the assertions
+
+		// match sections of the markup "user2 force-pushed branch 1 from 1978192d98 to 9b93963cf6 2025-06-...
+		assert.Equal(t, 1, forcePush.Find("svg.octicon-repo-push").Length())
+		assert.Equal(t, "user2", forcePush.Find("a.author").Text())
+		assert.Contains(t, forcePush.Text(), "force-pushed branch1 from")
+		assert.Equal(t, "1978192d98", forcePush.Find("a.ui.sha[href='/user2/commitsonpr/commit/1978192d98bb1b65e11c2cf37da854fbf94bffd6'] code").Text())
+		assert.Equal(t, "9b93963cf6", forcePush.Find("a.ui.sha[href='/user2/commitsonpr/commit/9b93963cf6de4dc33f915bb67f192d099c301f43'] code").Text())
+		assert.Contains(t, forcePush.Text(), "2025-06-")
+
+		// followed by a Compare button:
+		assert.Equal(t, 1, forcePush.Find("span.compare a[href='/user2/commitsonpr/compare/1978192d98bb1b65e11c2cf37da854fbf94bffd6..9b93963cf6de4dc33f915bb67f192d099c301f43']").Length())
+	})
+
+	t.Run("ForcePush GC'd Commits", func(t *testing.T) {
+		// Adjust the content of comment #17 so that the old commit ID is one that doesn't exist in the repository.
+		// Commits are stored in the `content` field in a JSON encoded structure matching PushActionContent, which needs
+		// to be decoded, changed, reencoded, then updated in the DB:
+		c17 := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: 17})
+		var data issues_model.PushActionContent
+		require.NoError(t, json.Unmarshal([]byte(c17.Content), &data))
+		require.True(t, data.IsForcePush)
+		require.Len(t, data.CommitIDs, 2)
+		data.CommitIDs[0] = "0123456789012345678901234567890123456789" // invalid commit ID
+		updated, err := json.Marshal(data)
+		require.NoError(t, err)
+		c17.Content = string(updated)
+		_, err = db.GetEngine(t.Context()).ID(c17.ID).Cols("content").Update(c17)
+		require.NoError(t, err)
+
+		// Re-request the PR page after the modified comment:
+		req := NewRequest(t, "GET", "/user2/commitsonpr/pulls/1")
+		resp := MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		// Similar to the "ForcePush" test above, but the markup will vary due to the invalid commit:
+		forcePush := htmlDoc.Find("#issuecomment-17")
+		require.Equal(t, 1, forcePush.Length())
+		html, err := forcePush.Html()
+		require.NoError(t, err)
+		t.Logf("issuecomment-17 HTML = %s", html) // useful for figuring out errors in the assertions
+
+		// match sections of the markup "user2 force-pushed branch 1 from 1978192d98 to 9b93963cf6 2025-06-...
+		assert.Equal(t, 1, forcePush.Find("svg.octicon-repo-push").Length())
+		assert.Equal(t, "user2", forcePush.Find("a.author").Text())
+		assert.Contains(t, forcePush.Text(), "force-pushed branch1 from")
+		assert.Equal(t, "0123456789", forcePush.Find("span[data-tooltip-content] code").Text())
+		assert.Contains(t, forcePush.Find("span[data-tooltip-content]").Text(), "(unavailable)")
+		assert.Equal(t, "9b93963cf6", forcePush.Find("a.ui.sha[href='/user2/commitsonpr/commit/9b93963cf6de4dc33f915bb67f192d099c301f43'] code").Text())
+		assert.Contains(t, forcePush.Text(), "2025-06-")
+		assert.NotContains(t, forcePush.Text(), "Compare") // no compare button as one of the commits is invalid
 	})
 }
 
