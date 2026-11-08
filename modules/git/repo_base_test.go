@@ -92,6 +92,18 @@ func TestCatFileBatch(t *testing.T) {
 		cancel2(nil)
 	})
 
+	t.Run("cancel with ErrNotExist can still be reused", func(t *testing.T) {
+		wr1, r1, cancel1, err := repo.CatFileBatch(ctx)
+		require.NoError(t, err)
+		cancel1(ErrNotExist{})
+
+		wr2, r2, cancel2, err := repo.CatFileBatch(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, wr1, wr2)
+		assert.Equal(t, r1, r2)
+		cancel2(nil)
+	})
+
 	t.Run("Request cached cat file batch", func(t *testing.T) {
 		wr, _, cancel3, err := repo.CatFileBatch(ctx)
 		require.NoError(t, err)
@@ -213,6 +225,18 @@ func TestCatFileBatchCheck(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotEqual(t, wr1, wr2)
 		assert.NotEqual(t, r1, r2)
+		cancel2(nil)
+	})
+
+	t.Run("cancel with ErrNotExist can still be reused", func(t *testing.T) {
+		wr1, r1, cancel1, err := repo.CatFileBatchCheck(ctx)
+		require.NoError(t, err)
+		cancel1(ErrNotExist{})
+
+		wr2, r2, cancel2, err := repo.CatFileBatchCheck(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, wr1, wr2)
+		assert.Equal(t, r1, r2)
 		cancel2(nil)
 	})
 
