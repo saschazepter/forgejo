@@ -1,0 +1,10 @@
+Access-Control-Expose-Headers: X-Total-Count
+Cache-Control: max-age=0, private, must-revalidate
+Content-Length: 664
+Content-Type: application/json;charset=utf-8
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+X-Total-Count: 1
+
+[{"user":{"id":89,"login":"oliverpool","login_name":"32636","source_id":1,"full_name":"","email":"git@olivier.pfad.fr","avatar_url":"https://code.forgejo.org/avatars/7fab1d14511553821f6ca0d0749bafddc8c77fa11e20a4040bb29708da1c280c","html_url":"https://code.forgejo.org/oliverpool","language":"en-US","is_admin":false,"last_login":"2026-11-08T14:18:36Z","created":"2023-08-09T08:18:58Z","restricted":false,"active":true,"prohibit_login":false,"location":"","pronouns":"","website":"","description":"","visibility":"public","followers_count":0,"following_count":0,"starred_repos_count":0,"username":"oliverpool"},"content":"+1","created_at":"2026-11-08T19:10:44Z"}]

@@ -351,7 +351,7 @@ func TestForgejoDownloadRepo(t *testing.T) {
 		Number:      1,
 		PosterID:    63,
 		PosterName:  "Gusted",
-		PosterEmail: "postmaster@gusted.xyz",
+		PosterEmail: "gusted@noreply.code.forgejo.org",
 		Title:       "Add extra information",
 		State:       "open",
 		Created:     time.Date(2025, time.April, 1, 20, 28, 45, 0, time.UTC),
@@ -370,6 +370,11 @@ func TestForgejoDownloadRepo(t *testing.T) {
 			RepoName:  "agit-test",
 			OwnerName: "Gusted",
 		},
+		Reactions: []*base.Reaction{{
+			UserID:   89,
+			UserName: "oliverpool",
+			Content:  "+1",
+		}},
 		Flow: 1,
 	}, prs[0])
 }

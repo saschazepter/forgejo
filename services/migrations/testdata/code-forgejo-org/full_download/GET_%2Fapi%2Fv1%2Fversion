@@ -1,7 +1,8 @@
-Cache-Control: max-age=0, private, must-revalidate, no-transform
+Cache-Control: max-age=0, private, must-revalidate
+Content-Length: 48
 Content-Type: application/json;charset=utf-8
+Vary: Accept-Encoding
 X-Content-Type-Options: nosniff
 X-Frame-Options: SAMEORIGIN
-Content-Length: 53
 
-{"version":"11.0.0-dev-617-1d1e0ced3e+gitea-1.22.0"}
+{"version":"17.0.0-26-363f3dc30b+gitea-1.22.0"}
