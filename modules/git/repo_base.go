@@ -88,7 +88,11 @@ func (repo *Repository) internalCatFile(lock *sync.Mutex, lockStack *string, bat
 		var closeOnce sync.Once
 		return (*batch).Writer, (*batch).Reader, func(err error) {
 			closeOnce.Do(func() {
-				if err != nil {
+				if IsErrNotExist(err) {
+					// Omit ErrNotExist error from closing and freeing the subprocess, as this error regularly occurs
+					// from ReadBatchLine and the stream is still safe to continue use.
+				} else if err != nil {
+					log.Debug("internalCatFile closing subprocess as part of error handling for error: %#v", err)
 					// error occurred; the `git cat-file --batch` cmd can't be reused because the pipe states are
 					// unknown after the error
 					(*batch).Close()
@@ -127,6 +131,9 @@ func (repo *Repository) CatFileBatch(ctx context.Context) (io.Writer, *bufio.Rea
 // WithCatFileBatch performs the same work as CatFileBatch, but with a closure-based API which makes error handling a
 // little easier.  It is still necessary to ensure that the entire response from any request sent to the writer is read
 // from the reader, leaving no leftover content in the pipe that the next musage might encounter.
+//
+// Excluding git.ErrNotExist, any error returned from the closure will cause the reusable subprocess to close.  Be
+// careful to only return errors that would indicate the subprocess reader/writer state is unclear.
 func (repo *Repository) WithCatFileBatch(ctx context.Context, closure func(io.Writer, *bufio.Reader) error) error {
 	wr, rd, close, err := repo.CatFileBatch(ctx)
 	if err != nil {
@@ -156,6 +163,9 @@ func (repo *Repository) CatFileBatchCheck(ctx context.Context) (io.Writer, *bufi
 // WithCatFileBatch performs the same work as CatFileBatchCheck, but with a closure-based API which makes error handling
 // a little easier.  It is still necessary to ensure that the entire response from any request sent to the writer is
 // read from the reader, leaving no leftover content in the pipe that the next musage might encounter.
+//
+// Excluding git.ErrNotExist, any error returned from the closure will cause the reusable subprocess to close.  Be
+// careful to only return errors that would indicate the subprocess reader/writer state is unclear.
 func (repo *Repository) WithCatFileBatchCheck(ctx context.Context, closure func(io.Writer, *bufio.Reader) error) error {
 	wr, rd, close, err := repo.CatFileBatchCheck(ctx)
 	if err != nil {
