@@ -304,7 +304,7 @@ func PublicKeyIsExternallyManaged(ctx context.Context, id int64) (bool, error) {
 }
 
 // deleteKeysMarkedForDeletion returns true if ssh keys needs update
-func deleteKeysMarkedForDeletion(ctx context.Context, keys []string) (bool, error) {
+func deleteKeysMarkedForDeletion(ctx context.Context, keys []*PublicKey) (bool, error) {
 	// Start session
 	ctx, committer, err := db.TxContext(ctx)
 	if err != nil {
@@ -314,12 +314,7 @@ func deleteKeysMarkedForDeletion(ctx context.Context, keys []string) (bool, erro
 
 	// Delete keys marked for deletion
 	var sshKeysNeedUpdate bool
-	for _, KeyToDelete := range keys {
-		key, err := SearchPublicKeyByContent(ctx, KeyToDelete)
-		if err != nil {
-			log.Error("SearchPublicKeyByContent: %v", err)
-			continue
-		}
+	for _, key := range keys {
 		if _, err = db.DeleteByID[PublicKey](ctx, key.ID); err != nil {
 			log.Error("DeleteByID[PublicKey]: %v", err)
 			continue
@@ -379,17 +374,12 @@ func SynchronizePublicKeys(ctx context.Context, usr *user_model.User, s *auth.So
 	log.Trace("synchronizePublicKeys[%s]: Handling Public SSH Key synchronization for user %s", s.Name, usr.Name)
 
 	// Get Public Keys from DB with current LDAP source
-	var giteaKeys []string
-	keys, err := db.Find[PublicKey](ctx, FindPublicKeyOptions{
+	giteaKeys, err := db.Find[PublicKey](ctx, FindPublicKeyOptions{
 		OwnerID:       usr.ID,
 		LoginSourceID: s.ID,
 	})
 	if err != nil {
 		log.Error("synchronizePublicKeys[%s]: Error listing Public SSH Keys for user %s: %v", s.Name, usr.Name, err)
-	}
-
-	for _, v := range keys {
-		giteaKeys = append(giteaKeys, v.OmitEmail())
 	}
 
 	// Process the provided keys to remove duplicates and name part
@@ -404,17 +394,16 @@ func SynchronizePublicKeys(ctx context.Context, usr *user_model.User, s *auth.So
 		}
 	}
 
-	// Check if Public Key sync is needed
-	if util.SliceSortedEqual(giteaKeys, providedKeys) {
-		log.Trace("synchronizePublicKeys[%s]: Public Keys are already in sync for %s (Source:%v/DB:%v)", s.Name, usr.Name, len(providedKeys), len(giteaKeys))
-		return false
-	}
-	log.Trace("synchronizePublicKeys[%s]: Public Key needs update for user %s (Source:%v/DB:%v)", s.Name, usr.Name, len(providedKeys), len(giteaKeys))
-
 	// Add new Public SSH Keys that doesn't already exist in DB
 	var newKeys []string
 	for _, key := range providedKeys {
-		if !util.SliceContainsString(giteaKeys, key) {
+		found := false
+		for _, giteaKey := range giteaKeys {
+			if giteaKey.OmitEmail() == key {
+				found = true
+			}
+		}
+		if !found {
 			newKeys = append(newKeys, key)
 		}
 	}
@@ -423,9 +412,15 @@ func SynchronizePublicKeys(ctx context.Context, usr *user_model.User, s *auth.So
 	}
 
 	// Mark keys from DB that no longer exist in the source for deletion
-	var giteaKeysToDelete []string
+	var giteaKeysToDelete []*PublicKey
 	for _, giteaKey := range giteaKeys {
-		if !util.SliceContainsString(providedKeys, giteaKey) {
+		found := false
+		for _, key := range providedKeys {
+			if giteaKey.OmitEmail() == key {
+				found = true
+			}
+		}
+		if !found {
 			log.Trace("synchronizePublicKeys[%s]: Marking Public SSH Key for deletion for user %s: %v", s.Name, usr.Name, giteaKey)
 			giteaKeysToDelete = append(giteaKeysToDelete, giteaKey)
 		}
