@@ -108,7 +108,7 @@ var OAuth2 = struct {
 	RefreshTokenExpirationTime:  730,
 	InvalidateRefreshTokens:     true,
 	MaxTokenLength:              math.MaxInt16,
-	DefaultApplications:         []string{"git-credential-oauth", "git-credential-manager", "tea"},
+	DefaultApplications:         []string{"git-credential-oauth", "git-credential-manager", "tea", "fj"},
 	EnableAdditionalGrantScopes: false,
 }
 

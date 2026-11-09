@@ -73,6 +73,11 @@ func BuiltinApplications() map[string]*BuiltinOAuth2Application {
 		DisplayName:  "tea",
 		RedirectURIs: []string{"http://127.0.0.1", "https://127.0.0.1"},
 	}
+	m["9c072a20-61c7-4c4e-b245-4551afd67696"] = &BuiltinOAuth2Application{
+		ConfigName:   "fj",
+		DisplayName:  "fj CLI",
+		RedirectURIs: []string{"http://127.0.0.1:26218"},
+	}
 	return m
 }
 

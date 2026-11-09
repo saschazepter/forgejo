@@ -320,7 +320,7 @@ func TestOAuth2AuthorizationCode_TableName(t *testing.T) {
 func TestBuiltinApplicationsClientIDs(t *testing.T) {
 	clientIDs := auth_model.BuiltinApplicationsClientIDs()
 	slices.Sort(clientIDs)
-	assert.Equal(t, []string{"a4792ccc-144e-407e-86c9-5e7d8d9c3269", "d57cb8c4-630c-4168-8324-ec79935e18d4", "e90ee53c-94e2-48ac-9358-a874fb9e0662"}, clientIDs)
+	assert.Equal(t, []string{"9c072a20-61c7-4c4e-b245-4551afd67696", "a4792ccc-144e-407e-86c9-5e7d8d9c3269", "d57cb8c4-630c-4168-8324-ec79935e18d4", "e90ee53c-94e2-48ac-9358-a874fb9e0662"}, clientIDs)
 }
 
 func TestOrphanedOAuth2Applications(t *testing.T) {
