@@ -10,7 +10,6 @@
 
 # Javascript and CSS code.
 web_src/.* @beowulf @gusted
-web_src/css/modules/.* @0ko
 
 # HTML templates used by the backend.
 templates/.* @beowulf @gusted
@@ -33,10 +32,6 @@ models/.* @gusted
 # of how Forgejo comes together. It's tedious to write good integration testing
 # for code that lives in here.
 routers/.* @gusted
-
-# Let locale changes be checked by the translation team.
-options/locale/.* @0ko
-options/locale_next/.* @0ko
 
 # lint-locale-usage
 build/lint-locale-usage/.* @fogti
