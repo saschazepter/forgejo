@@ -6,6 +6,7 @@ package asymkey
 
 import (
 	"context"
+	"crypto/subtle"
 	"fmt"
 	"strings"
 	"time"
@@ -149,18 +150,34 @@ func GetPublicKeyByID(ctx context.Context, keyID int64) (*PublicKey, error) {
 	return key, nil
 }
 
-// SearchPublicKeyByContent searches content as prefix (leak e-mail part)
+// SearchPublicKeyForSSH searches content as prefix (leak e-mail part)
 // and returns public key found.
-func SearchPublicKeyByContent(ctx context.Context, content string) (*PublicKey, error) {
+func SearchPublicKeyForSSH(ctx context.Context, inputKey ssh.PublicKey) (*PublicKey, error) {
+	fingerprint, err := CalcFingerprint(string(ssh.MarshalAuthorizedKey(inputKey)))
+	if err != nil {
+		return nil, err
+	}
+
 	key := new(PublicKey)
 	has, err := db.GetEngine(ctx).
-		Where("content like ?", content+"%").
+		Where("fingerprint = ?", fingerprint).
 		Get(key)
 	if err != nil {
 		return nil, err
 	} else if !has {
 		return nil, ErrKeyNotExist{}
 	}
+
+	// It's extremely unlikely that someone could generate a public key with the same fingerprint as another authorized
+	// public key, but, we'll compare the actual key contents here as a safety check.
+	outputKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(key.Content))
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse internally stored key: %w", err)
+	}
+	if subtle.ConstantTimeCompare(inputKey.Marshal(), outputKey.Marshal()) == 0 {
+		return nil, fmt.Errorf("key %d had matching fingerprint but not matching key", key.ID)
+	}
+
 	return key, nil
 }
 
