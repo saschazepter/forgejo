@@ -130,10 +130,9 @@ func registerDeleteOldActions() {
 	})
 }
 
-func registerUpdateGiteaChecker() {
+func registerUpdateChecker() {
 	type UpdateCheckerConfig struct {
 		BaseConfig
-		HTTPEndpoint   string
 		DomainEndpoint string
 	}
 	RegisterTaskFatal("update_checker", &UpdateCheckerConfig{
@@ -142,11 +141,10 @@ func registerUpdateGiteaChecker() {
 			RunAtStart: false,
 			Schedule:   "@every 168h",
 		},
-		HTTPEndpoint:   "https://dl.gitea.com/gitea/version.json",
 		DomainEndpoint: "release.forgejo.org",
 	}, func(ctx context.Context, _ *user_model.User, config Config) error {
 		updateCheckerConfig := config.(*UpdateCheckerConfig)
-		return updatechecker.GiteaUpdateChecker(updateCheckerConfig.HTTPEndpoint, updateCheckerConfig.DomainEndpoint)
+		return updatechecker.UpdateChecker(updateCheckerConfig.DomainEndpoint)
 	})
 }
 
@@ -245,7 +243,7 @@ func initExtendedTasks() {
 	registerDeleteMissingRepositories()
 	registerRemoveRandomAvatars()
 	registerDeleteOldActions()
-	registerUpdateGiteaChecker()
+	registerUpdateChecker()
 	registerDeleteOldSystemNotices()
 	registerGCLFS()
 	registerRebuildIssueIndexer()

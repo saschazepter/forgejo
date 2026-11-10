@@ -7,15 +7,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net"
-	"net/http"
 	"strings"
 
-	"forgejo.org/modules/json"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/optional"
-	"forgejo.org/modules/proxy"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/system"
 
@@ -33,20 +29,9 @@ func (r *CheckerState) Name() string {
 	return "update-checker"
 }
 
-// GiteaUpdateChecker returns error when new version of Gitea is available
-func GiteaUpdateChecker(httpEndpoint, domainEndpoint string) error {
-	var version []string
-	var err error
-	if domainEndpoint != "" {
-		version, err = getVersionDNS(domainEndpoint)
-	} else {
-		v, err := getVersionHTTP(httpEndpoint)
-		if err != nil {
-			return nil
-		}
-		version = []string{v}
-	}
-
+// UpdateChecker returns error when new version of Forgejo is available
+func UpdateChecker(domainEndpoint string) error {
+	version, err := getVersionDNS(domainEndpoint)
 	return UpdateRemoteVersion(context.Background(), version, err)
 }
 
@@ -81,44 +66,7 @@ func getVersionDNS(domainEndpoint string) (version []string, err error) {
 	return supportedVersions, nil
 }
 
-// getVersionHTTP will make an HTTP request to the endpoint, and the returned
-// content is JSON. The "latest.version" path's value will be used as the latest
-// version available.
-func getVersionHTTP(httpEndpoint string) (version string, err error) {
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			Proxy: proxy.Proxy(),
-		},
-	}
-
-	req, err := http.NewRequest("GET", httpEndpoint, nil)
-	if err != nil {
-		return "", err
-	}
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	type respType struct {
-		Latest struct {
-			Version string `json:"version"`
-		} `json:"latest"`
-	}
-	respData := respType{}
-	err = json.Unmarshal(body, &respData)
-	if err != nil {
-		return "", err
-	}
-	return respData.Latest.Version, nil
-}
-
-// UpdateRemoteVersion updates the latest available version of Gitea
+// UpdateRemoteVersion updates the latest available version of Forgejo
 func UpdateRemoteVersion(ctx context.Context, versions []string, err error) error {
 	var state CheckerState
 	if err != nil {
