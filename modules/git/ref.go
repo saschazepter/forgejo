@@ -15,6 +15,8 @@ const (
 	RemotePrefix = "refs/remotes/"
 	// PullPrefix is the base directory of the pull information of git.
 	PullPrefix = "refs/pull/"
+	// PullRequestForcePush is the prefix for references to force pushes that occurred on open pull requests.
+	PullRequestForcePush = "refs/pr-force-push/"
 )
 
 // refNamePatternInvalid is regular expression with unallowed characters in git reference name
@@ -98,11 +100,11 @@ func (ref RefName) IsRemote() bool {
 }
 
 func (ref RefName) IsPull() bool {
-	return strings.HasPrefix(string(ref), PullPrefix) && strings.IndexByte(string(ref)[len(PullPrefix):], '/') > -1 && !strings.Contains(string(ref), "/comment/")
+	return strings.HasPrefix(string(ref), PullPrefix) && strings.IndexByte(string(ref)[len(PullPrefix):], '/') > -1
 }
 
 func (ref RefName) IsPullComment() bool {
-	return strings.HasPrefix(string(ref), PullPrefix) && strings.Contains(string(ref), "/comment/")
+	return strings.HasPrefix(string(ref), PullRequestForcePush)
 }
 
 func (ref RefName) IsFor() bool {

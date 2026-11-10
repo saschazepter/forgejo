@@ -315,8 +315,8 @@ func TestPullUrlHandling(t *testing.T) {
 	})
 }
 
-// TestPullForcePushRef verifies that the refs/pull/N/comment/M/{old,new} refs, created by a force push to a PR, are
-// created correctly.
+// TestPullForcePushRef verifies that the refs/pr-force-push/N/comment/M/{old,new} refs, created by a force push to a
+// PR, are created correctly.
 func TestPullForcePushRef(t *testing.T) {
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
 		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
@@ -517,9 +517,9 @@ func forcePushRefAmendCommit(t *testing.T, dstPath string) string {
 	return forcePushRefRevParse(t, dstPath, "HEAD")
 }
 
-// TestPullForcePushRefAccess verifies how the refs/pull/N/comment/M/{old,new} refs created by a force push to a PR can
-// be accessed: they can be fetched by a git client, they cannot be modified by a git client, and they are not sent to a
-// push mirror.
+// TestPullForcePushRefAccess verifies how the refs/pr-force-push/N/comment/M/{old,new} refs created by a force push to
+// a PR can be accessed: they can be fetched by a git client, they cannot be modified by a git client, and they are not
+// sent to a push mirror.
 func TestPullForcePushRefAccess(t *testing.T) {
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
 		defer test.MockVariableValue(&setting.Repository.PullRequest.KeepForcePushRefs, true)()
@@ -560,7 +560,7 @@ func TestPullForcePushRefAccess(t *testing.T) {
 		forcePushComment := forcePushRefGetSingleComment(t, pr)
 		oldRef := forcePushComment.ForcePushOldCommitGitRefName()
 		newRef := forcePushComment.ForcePushNewCommitGitRefName()
-		commentRefPrefix := fmt.Sprintf("%s%d/comment/", git.PullPrefix, pr.Index)
+		commentRefPrefix := fmt.Sprintf("%s%d/comment/", git.PullRequestForcePush, pr.Index)
 
 		t.Run("Fetch", func(t *testing.T) {
 			// A fresh clone doesn't fetch refs/pull/* by default, but they're advertised & can be fetched explicitly:
@@ -611,7 +611,7 @@ func TestPullForcePushRefAccess(t *testing.T) {
 				{name: "Delete new ref", refspec: ":" + newRef},
 				{name: "Create new ref for existing comment", refspec: fmt.Sprintf("%s:%s%d/other", thirdCommitID, commentRefPrefix, forcePushComment.ID)},
 				{name: "Create new ref for unknown comment", refspec: fmt.Sprintf("%s:%s%d/old", thirdCommitID, commentRefPrefix, forcePushComment.ID+1000)},
-				{name: "Create new ref for unknown PR", refspec: fmt.Sprintf("%s:%s%d/comment/1/old", thirdCommitID, git.PullPrefix, pr.Index+1000)},
+				{name: "Create new ref for unknown PR", refspec: fmt.Sprintf("%s:%s%d/comment/1/old", thirdCommitID, git.PullRequestForcePush, pr.Index+1000)},
 			}
 			for _, pc := range pushCases {
 				t.Run(pc.name, func(t *testing.T) {
@@ -621,7 +621,7 @@ func TestPullForcePushRefAccess(t *testing.T) {
 						AddDynamicArguments(pc.refspec).
 						Run(&git.RunOpts{Dir: clonePath, Stdout: stdout, Stderr: stderr})
 					require.Error(t, err)
-					assert.Contains(t, stderr.String(), "Force push comment references (refs/pull/N/comment/D/{new,old}) are read-only, and cannot be written")
+					assert.Contains(t, stderr.String(), "Force push comment references (refs/pr-force-push/N/comment/D/{new,old}) are read-only, and cannot be written")
 				})
 			}
 

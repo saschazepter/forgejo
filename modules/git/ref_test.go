@@ -22,8 +22,8 @@ func TestRefName(t *testing.T) {
 	assert.Equal(t, "1", RefName("refs/pull/1/head").PullName())
 	assert.True(t, RefName("refs/pull/1/head").IsPull())
 	assert.True(t, RefName("refs/pull/1/merge").IsPull())
-	assert.False(t, RefName("refs/pull/1/comment/123/old").IsPull())
-	assert.False(t, RefName("refs/pull/1/comment/123/new").IsPull())
+	assert.False(t, RefName("refs/pr-force-push/1/comment/123/old").IsPull())
+	assert.False(t, RefName("refs/pr-force-push/1/comment/123/new").IsPull())
 	assert.Equal(t, "my/pull", RefName("refs/pull/my/pull/head").PullName())
 
 	// Test for branch names
@@ -34,8 +34,8 @@ func TestRefName(t *testing.T) {
 	assert.Equal(t, "c0ffee", RefName("c0ffee").ShortName())
 
 	// Test pull comment refs.
-	assert.True(t, RefName("refs/pull/1/comment/123/old").IsPullComment())
-	assert.True(t, RefName("refs/pull/1/comment/123/new").IsPullComment())
+	assert.True(t, RefName("refs/pr-force-push/1/comment/123/old").IsPullComment())
+	assert.True(t, RefName("refs/pr-force-push/1/comment/123/new").IsPullComment())
 	assert.False(t, RefName("refs/pull/1/head").IsPullComment())
 	assert.False(t, RefName("refs/pull/1/merge").IsPullComment())
 }

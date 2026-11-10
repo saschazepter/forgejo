@@ -237,7 +237,7 @@ func HookPreReceive(ctx *app_context.PrivateContext) {
 			preReceivePull(ourCtx, oldCommitID, newCommitID, refFullName)
 		case refFullName.IsPullComment():
 			ctx.JSON(http.StatusForbidden, private.Response{
-				UserMsg: "Force push comment references (refs/pull/N/comment/D/{new,old}) are read-only, and cannot be written.",
+				UserMsg: fmt.Sprintf("Force push comment references (%sN/comment/D/{new,old}) are read-only, and cannot be written.", git.PullRequestForcePush),
 			})
 			return
 		default:

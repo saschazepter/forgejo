@@ -324,6 +324,11 @@ func syncGitConfig() (err error) {
 	if err = configUnsetAll("receive.hideRefs", ""); err != nil {
 		return err
 	}
+	// Hide PullRequestForcePush prefix so that `git push --mirror` from a remote into a Forgejo repository doesn't find
+	// and attempt to delete the force-push commit references; those references are read-only.
+	if err = configSet("receive.hideRefs", PullRequestForcePush); err != nil {
+		return err
+	}
 
 	if !setting.Git.DisablePartialClone {
 		if err = configSet("uploadpack.allowfilter", "true"); err != nil {

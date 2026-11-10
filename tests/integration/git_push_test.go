@@ -408,9 +408,19 @@ func TestGitPushMirror(t *testing.T) {
 		doGitCreateBranch(repoPath, branchName)(t)
 		doGitAddSomeCommits(repoPath, branchName)(t)
 
+		divergingBranch := "diverging-branch"
+		doGitCheckoutBranch(repoPath, "main")(t)
+		doGitCreateBranch(repoPath, divergingBranch)(t)
+		doGitAddSomeCommits(repoPath, divergingBranch)(t)
+
 		// create an agit PR (1)
 		err := git.NewCommand(git.DefaultContext, "push", "origin").
 			AddDynamicArguments(fmt.Sprintf("%s:refs/for/main/first-pr", branchName)).Run(&git.RunOpts{Dir: repoPath})
+		require.NoError(t, err)
+
+		// force-push to this PR to create a refs/pr-force-push/XX/comment/YY/{old,new} reference
+		err = git.NewCommand(git.DefaultContext, "push", "origin", "-o", "force-push=true").
+			AddDynamicArguments(fmt.Sprintf("%s:refs/for/main/first-pr", divergingBranch)).Run(&git.RunOpts{Dir: repoPath})
 		require.NoError(t, err)
 
 		// create a branch PR (2)
@@ -441,6 +451,7 @@ func TestGitPushMirror(t *testing.T) {
 		var stderr bytes.Buffer
 		err = git.NewCommand(git.DefaultContext, "push", "--mirror").Run(&git.RunOpts{Dir: repoPath, Stderr: &stderr})
 		assert.Contains(t, stderr.String(), "(Forgejo ignored PR deletion attempt)")
+		assert.NotContains(t, stderr.String(), git.PullRequestForcePush) // refs/pull-force-push should be hidden
 		require.NoError(t, err, stderr.String())
 
 		// ensure both PRs can still be fetched

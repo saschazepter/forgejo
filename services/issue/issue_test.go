@@ -107,17 +107,17 @@ func TestIssue_DeleteIssue_PullRequestRefs(t *testing.T) {
 	// refs belonging to PR #2 which should be removed
 	removedRefs := []string{
 		git.PullPrefix + "2/head",
-		git.PullPrefix + "2/comment/100/old",
-		git.PullPrefix + "2/comment/100/new",
-		git.PullPrefix + "2/comment/101/old",
-		git.PullPrefix + "2/comment/101/new",
+		git.PullRequestForcePush + "2/comment/100/old",
+		git.PullRequestForcePush + "2/comment/100/new",
+		git.PullRequestForcePush + "2/comment/101/old",
+		git.PullRequestForcePush + "2/comment/101/new",
 	}
 	// refs belonging to other PRs which must be retained -- including PR #20 & #200, which share a prefix with PR #2
 	retainedRefs := []string{
 		git.PullPrefix + "3/head",
 		git.PullPrefix + "5/head",
 		git.PullPrefix + "20/head",
-		git.PullPrefix + "20/comment/100/old",
+		git.PullRequestForcePush + "20/comment/100/old",
 		git.PullPrefix + "200/head",
 	}
 	for _, ref := range append(slices.Clone(removedRefs), retainedRefs...) {
