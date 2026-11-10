@@ -357,23 +357,6 @@ jobs:
           path: coverage/textfmt.out
           retention-days: 1
 
-  security-check:
-    if: vars.ROLE == 'forgejo-coding' || vars.ROLE == 'forgejo-testing'
-    runs-on: docker
-    needs:
-      - test-sqlite
-      - test-pgsql
-      - test-mysql
-      - test-remote-cacher
-      - test-unit
-    container:
-      image: 'data.forgejo.org/oci/node:24-trixie'
-      # options: --tmpfs /tmp:exec,noatime # Too much memory usage
-    steps:
-      - uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: ./.forgejo/workflows-composite/setup-env
-      - run: su forgejo -c 'make deps-backend deps-tools'
-      - run: su forgejo -c 'make security-check'
   semgrep:
     if: vars.ROLE == 'forgejo-coding' || vars.ROLE == 'forgejo-testing'
     name: semgrep/ci

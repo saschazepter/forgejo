@@ -1,0 +1,29 @@
+name: security-check
+enable-email-notifications: true
+
+on:
+  pull_request:
+    # Avoid running the job on PRs which don't change the Go dependencies,
+    # as failures are likely to be unrelated to what they do.
+    # See https://codeberg.org/forgejo/forgejo/pulls/15199
+    paths:
+      - 'go.mod'
+      - 'go.sum'
+  push:
+    branches:
+      - 'forgejo*'
+      - 'v*/forgejo*'
+  workflow_dispatch:
+
+jobs:
+  security-check:
+    if: vars.ROLE == 'forgejo-coding' || vars.ROLE == 'forgejo-testing'
+    runs-on: docker
+    container:
+      image: 'data.forgejo.org/oci/node:24-trixie'
+      # options: --tmpfs /tmp:exec,noatime # Too much memory usage
+    steps:
+      - uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.forgejo/workflows-composite/setup-env
+      - run: su forgejo -c 'make security-check'
+
