@@ -16,6 +16,8 @@ cloud.google.com/go/pubsub v1.0.1/go.mod h1:R0Gpsv3s54REJCy4fxDixWD93lHJMoZTyQ2k
 cloud.google.com/go/pubsub v1.1.0/go.mod h1:EwwdRX2sKPjnvnqCa270oGRyludottCI76h+R3AArQw=
 cloud.google.com/go/storage v1.0.0/go.mod h1:IhtSnM/ZTZV8YYJWCY8RULGVqBDmpoyjwiyrjsg+URw=
 cloud.google.com/go/storage v1.5.0/go.mod h1:tpKbwo567HUNpVclU5sGELwQWBDZ8gh0ZeosJ0Rtdos=
+code.forgejo.org/crystal/ar v0.0.0-20190502131153-809d4375e1fb h1:xRcIMB2MX283L2e9GwNazOFEISxuglLcxN7e/3Zq7jc=
+code.forgejo.org/crystal/ar v0.0.0-20190502131153-809d4375e1fb/go.mod h1:He62Wgwets8yT2m2YeZnNS7MBbbZ6i40j9XejZXZNcM=
 code.forgejo.org/f3/gof3/v3 v3.11.15 h1:/EzJWRQUhVVia1EmCWRZHCuW8qdAX1DEXY0M1n0mECc=
 code.forgejo.org/f3/gof3/v3 v3.11.15/go.mod h1:k99wl7QiI9LjS3qEd1RXLdcZPE3wZP5gkVhy8/WhzJ4=
 code.forgejo.org/forgejo-contrib/go-libravatar v0.0.0-20260301104140-add494e31dab h1:g/uf/tNOvCdGL9EuYV9EJQglEH8n572P1ZwH4lBBkjI=
@@ -98,8 +100,6 @@ github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6r
 github.com/bits-and-blooms/bitset v1.12.0/go.mod h1:7hO7Gc7Pp1vODcmWvKMRA9BNmbv6a/7QIWpPxHddWR8=
 github.com/bits-and-blooms/bitset v1.22.0 h1:Tquv9S8+SGaS3EhyA+up3FXzmkhxPGjQQCkcs2uw7w4=
 github.com/bits-and-blooms/bitset v1.22.0/go.mod h1:7hO7Gc7Pp1vODcmWvKMRA9BNmbv6a/7QIWpPxHddWR8=
-github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb h1:m935MPodAbYS46DG4pJSv7WO+VECIWUQ7OJYSoTrMh4=
-github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb/go.mod h1:PkYb9DJNAwrSvRx5DYA+gUcOIgTGVMNkfSCbZM8cWpI=
 github.com/blevesearch/bleve/v2 v2.5.7 h1:2d9YrL5zrX5EBBW++GOaEKjE+NPWeZGaX77IM26m1Z8=
 github.com/blevesearch/bleve/v2 v2.5.7/go.mod h1:yj0NlS7ocGC4VOSAedqDDMktdh2935v2CSWOCDMHdSA=
 github.com/blevesearch/bleve_index_api v1.2.11 h1:bXQ54kVuwP8hdrXUSOnvTQfgK0KI1+f9A0ITJT8tX1s=

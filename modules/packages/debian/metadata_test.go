@@ -12,7 +12,7 @@ import (
 
 	"forgejo.org/modules/zstd"
 
-	"github.com/blakesmith/ar"
+	"code.forgejo.org/crystal/ar"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/ulikunitz/xz"
