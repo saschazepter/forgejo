@@ -15,6 +15,7 @@ import (
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/git"
+	"forgejo.org/modules/optional"
 	"forgejo.org/modules/paginator"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/translation"
@@ -534,7 +535,6 @@ func TestGetDiffNameStatus_GetsAllChangedFiles(t *testing.T) {
 	gitRepo, err := git.OpenRepository(git.DefaultContext, "./../../modules/git/tests/repos/language_stats_repo")
 	require.NoError(t, err)
 
-	defer gitRepo.Close()
 	files, _ := GetDiffNameStatus(db.DefaultContext, gitRepo, "8fee858da5796dfb37704761701bb8e800ad9ef3", "5684d0c8cfdfb17fcd59101826efc9ff54b80df4", 1)
 
 	assert.Len(t, files, 3)
@@ -556,6 +556,24 @@ func TestGetDiffNameStatus_GetsAllChangedFiles(t *testing.T) {
 			NameHash: "5bf400e6197d3c0d5bf4aec2345abf4161d1c07a",
 			Type:     DiffFileAdd,
 			OnPage:   3,
+		},
+	})
+
+	gitRepo.Close()
+	gitRepo, err = git.OpenRepository(git.DefaultContext, "./../../modules/git/tests/repos/renames")
+	require.NoError(t, err)
+
+	defer gitRepo.Close()
+	files, _ = GetDiffNameStatus(db.DefaultContext, gitRepo, "bc40f00489096a7d4090a609a6572f528e1acb76", "f667f3a24223414e3bfbe01ab6e445c703ab8e25", 1)
+
+	assert.Len(t, files, 1)
+	assert.ElementsMatch(t, files, []*DiffFileMetadata{
+		{
+			Name:     "README.md",
+			OldName:  optional.Some("REAMDE"),
+			NameHash: "8ec9a00bfd09b3190ac6b22251dbb1aa95a0579d",
+			Type:     DiffFileRename,
+			OnPage:   1,
 		},
 	})
 }
@@ -801,10 +819,11 @@ func TestGetFileNames(t *testing.T) {
 		{Name: "a.go"},
 		{Name: "b/c.go"},
 		{Name: "d.go"},
+		{Name: "README.md", OldName: optional.Some("README")},
 	}
 
 	got := GetFileNames(files)
-	want := []string{"a.go", "b/c.go", "d.go"}
+	want := []string{"a.go", "b/c.go", "d.go", "README.md", "README"}
 	assert.Equal(t, want, got)
 }
 

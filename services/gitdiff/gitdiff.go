@@ -27,6 +27,7 @@ import (
 	"forgejo.org/modules/highlight"
 	"forgejo.org/modules/lfs"
 	"forgejo.org/modules/log"
+	"forgejo.org/modules/optional"
 	"forgejo.org/modules/paginator"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/translation"
@@ -1051,6 +1052,7 @@ type DiffOptions struct {
 
 type DiffFileMetadata struct {
 	Name     string
+	OldName  optional.Option[string]
 	NameHash string
 	Type     DiffFileType
 	IsViewed bool
@@ -1170,10 +1172,12 @@ func parseNameStatusFileListSplit(output string, pageSize int) ([]*DiffFileMetad
 			file.Type = DiffFileDel
 		case 'R':
 			file.Type = DiffFileRename
+			file.OldName = optional.Some(file.Name)
 			file.Name = newName
 			file.NameHash = git.HashFilePathForWebUI(newName)
 		case 'C':
 			file.Type = DiffFileCopy
+			file.OldName = optional.Some(file.Name)
 			file.Name = newName
 			file.NameHash = git.HashFilePathForWebUI(newName)
 		}
@@ -1184,9 +1188,12 @@ func parseNameStatusFileListSplit(output string, pageSize int) ([]*DiffFileMetad
 }
 
 func GetFileNames(files []*DiffFileMetadata) []string {
-	fileNames := make([]string, len(files))
-	for i, v := range files {
-		fileNames[i] = v.Name
+	fileNames := make([]string, 0, len(files))
+	for _, v := range files {
+		fileNames = append(fileNames, v.Name)
+		if has, n := v.OldName.Get(); has {
+			fileNames = append(fileNames, n)
+		}
 	}
 	return fileNames
 }

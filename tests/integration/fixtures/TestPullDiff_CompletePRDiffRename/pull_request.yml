@@ -1,0 +1,12 @@
+-
+  id: 500
+  type: 0 # gitea pull request
+  status: 2 # mergeable
+  issue_id: 500
+  index: 2
+  head_repo_id: 58
+  base_repo_id: 58
+  head_branch: branch2
+  base_branch: branch1
+  merge_base: 9b93963cf6de4dc33f915bb67f192d099c301f43
+  has_merged: false

@@ -1,0 +1,15 @@
+- id: 500
+  repo_id: 58
+  index: 2
+  poster_id: 2
+  original_author_id: 0
+  name: issue for pr
+  content: content
+  milestone_id: 0
+  priority: 0
+  is_closed: false
+  is_pull: true
+  num_comments: 0
+  created_unix: 1794037290
+  updated_unix: 1794037290
+  is_locked: false
