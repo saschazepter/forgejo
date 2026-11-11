@@ -16,6 +16,7 @@ import (
 	unit_model "forgejo.org/models/unit"
 	"forgejo.org/models/unittest"
 	"forgejo.org/modules/git"
+	"forgejo.org/modules/json"
 	"forgejo.org/modules/setting"
 	"forgejo.org/tests"
 	"forgejo.org/tests/forgery"
@@ -27,6 +28,35 @@ import (
 
 func TestPullDiff_CompletePRDiff(t *testing.T) {
 	doTestPRDiff(t, "/user2/commitsonpr/pulls/1/files", []string{"test1.txt", "test10.txt", "test2.txt", "test3.txt", "test4.txt", "test5.txt", "test6.txt", "test7.txt", "test8.txt", "test9.txt"}, true)
+}
+
+func TestPullDiff_CompletePRDiffRename(t *testing.T) {
+	defer unittest.OverrideFixtures("tests/integration/fixtures/TestPullDiff_CompletePRDiffRename")()
+	defer tests.PrepareTestEnv(t)()
+
+	session := loginUser(t, "user2")
+
+	for _, url := range []string{"/user2/commitsonpr/pulls/2/files", "user2/commitsonpr/commit/19dad474fe6ea2df3584d62ab570b6bd55e8cb36"} {
+		req := NewRequest(t, "GET", url)
+		session.MakeRequest(t, req, http.StatusOK)
+
+		resp := session.MakeRequest(t, req, http.StatusOK)
+		assert.Contains(t, resp.Body.String(), "test1.txt → test0.txt")
+	}
+
+	req := NewRequest(t, "GET", "/api/v1/repos/user2/commitsonpr/pulls/2/files")
+	resp := session.MakeRequest(t, req, http.StatusOK)
+	var jsonMap []struct {
+		Status           string `json:"status"`
+		Filename         string `json:"filename"`
+		PreviousFilename string `json:"previous_filename"`
+	}
+
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &jsonMap))
+
+	assert.Equal(t, "renamed", jsonMap[0].Status)
+	assert.Equal(t, "test0.txt", jsonMap[0].Filename)
+	assert.Equal(t, "test1.txt", jsonMap[0].PreviousFilename)
 }
 
 func TestPullDiff_PaginatesPRDiff(t *testing.T) {
