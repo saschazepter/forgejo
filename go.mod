@@ -2,7 +2,7 @@ module forgejo.org
 
 go 1.26.0
 
-toolchain go1.27.3
+toolchain go1.27.4
 
 require (
 	code.forgejo.org/crystal/ar v0.0.0-20190502131153-809d4375e1fb
