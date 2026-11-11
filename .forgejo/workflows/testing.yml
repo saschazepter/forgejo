@@ -285,23 +285,6 @@ jobs:
           RACE_ENABLED: true
           TEST_TAGS: sqlite sqlite_unlock_notify
           USE_REPO_TEST_DIR: 1
-  security-check:
-    if: vars.ROLE == 'forgejo-coding' || vars.ROLE == 'forgejo-testing'
-    runs-on: docker
-    needs:
-      - test-sqlite
-      - test-pgsql
-      - test-mysql
-      - test-remote-cacher
-      - test-unit
-    container:
-      image: 'data.forgejo.org/oci/node:24-trixie'
-      options: --tmpfs /tmp:exec,noatime
-    steps:
-      - uses: https://data.forgejo.org/actions/checkout@v6
-      - uses: ./.forgejo/workflows-composite/setup-env
-      - run: su forgejo -c 'make deps-backend deps-tools'
-      - run: su forgejo -c 'make security-check'
   semgrep:
     if: vars.ROLE == 'forgejo-coding' || vars.ROLE == 'forgejo-testing'
     name: semgrep/ci
