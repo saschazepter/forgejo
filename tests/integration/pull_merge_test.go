@@ -1579,7 +1579,7 @@ func TestMergeClosesIssueInOtherRepo(t *testing.T) {
 		user := forgery.CreateUser(t, &forgery.CreateUserOptions{
 			EmailNotificationsPreference: user_model.EmailNotificationsAndYourOwn,
 		})
-		org := forgery.CreateOrganisation(t, user)
+		org := forgery.CreateOrganisation(t, user, nil)
 
 		// create repo where the PR that closes the issue will be
 		repoPR := forgery.CreateRepository(t, org.AsUser(), &forgery.CreateRepositoryOptions{

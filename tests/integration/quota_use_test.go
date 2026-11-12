@@ -1176,7 +1176,7 @@ func createQuotaWebEnv(t *testing.T) *quotaWebEnv {
 		org := quotaWebEnvOrg{}
 
 		// Create the org
-		org.Org = forgery.CreateOrganisation(t, owner)
+		org.Org = forgery.CreateOrganisation(t, owner, nil)
 
 		// Create a repository for the org
 		repo := forgery.CreateRepository(t, org.Org.AsUser(), &forgery.CreateRepositoryOptions{
