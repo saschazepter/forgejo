@@ -22,7 +22,7 @@ func TestAPIOrgVariablesCreateOrganizationVariable(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
 	owner := forgery.CreateUser(t, nil)
-	org := forgery.CreateOrganisation(t, owner)
+	org := forgery.CreateOrganisation(t, owner, nil)
 	session := loginUser(t, owner.Name)
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteOrganization)
 
@@ -99,7 +99,7 @@ func TestAPIOrgVariablesUpdateOrganizationVariable(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
 	owner := forgery.CreateUser(t, nil)
-	org := forgery.CreateOrganisation(t, owner)
+	org := forgery.CreateOrganisation(t, owner, nil)
 	session := loginUser(t, owner.Name)
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteOrganization)
 
@@ -196,7 +196,7 @@ func TestAPIOrgVariablesDeleteOrganizationVariable(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
 	owner := forgery.CreateUser(t, nil)
-	org := forgery.CreateOrganisation(t, owner)
+	org := forgery.CreateOrganisation(t, owner, nil)
 
 	variable, err := actions_model.InsertVariable(t.Context(), org.ID, 0, "FORGEJO_FORBIDDEN", "illegal")
 	require.NoError(t, err)
@@ -230,7 +230,7 @@ func TestAPIOrgVariablesGetSingleOrganizationVariable(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
 	owner := forgery.CreateUser(t, nil)
-	org := forgery.CreateOrganisation(t, owner)
+	org := forgery.CreateOrganisation(t, owner, nil)
 	session := loginUser(t, owner.Name)
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteOrganization)
 
@@ -263,7 +263,7 @@ func TestAPIOrgVariablesGetAllOrganizationVariables(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
 	owner := forgery.CreateUser(t, nil)
-	org := forgery.CreateOrganisation(t, owner)
+	org := forgery.CreateOrganisation(t, owner, nil)
 	session := loginUser(t, owner.Name)
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteOrganization)
 
