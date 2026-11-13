@@ -19,6 +19,7 @@ import (
 	"forgejo.org/modules/translation"
 	"forgejo.org/services/auth"
 	"forgejo.org/services/auth/source/ldap"
+	org_service "forgejo.org/services/org"
 	"forgejo.org/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -485,7 +486,8 @@ func TestLDAPGroupTeamSyncRemoveMember(t *testing.T) {
 	})
 	err = organization.AddOrgUser(db.DefaultContext, org.ID, user.ID)
 	require.NoError(t, err)
-	err = models.AddTeamMemberByCooptation(db.DefaultContext, team, user.ID, 1)
+	inviterUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+	err = org_service.AddTeamMemberByCooptation(db.DefaultContext, team, user, inviterUser)
 	require.NoError(t, err)
 	isMember, err := organization.IsOrganizationMember(db.DefaultContext, org.ID, user.ID)
 	require.NoError(t, err)

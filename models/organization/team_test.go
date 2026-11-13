@@ -104,8 +104,10 @@ func TestTeam_GetTeamMemberships(t *testing.T) {
 	_, err := db.GetEngine(db.DefaultContext).Insert(loginSource)
 	require.NoError(t, err)
 
-	require.NoError(t, models.AddTeamMemberByCooptation(db.DefaultContext, team, user28.ID, user2.ID))
-	require.NoError(t, models.AddTeamMemberByLoginSource(db.DefaultContext, team, user30.ID, loginSource.ID))
+	_, err = models.InsertTeamMember(db.DefaultContext, team, user28.ID, organization.MembershipReasonAddedByUser, optional.Some(user2.ID), optional.None[int64]())
+	require.NoError(t, err)
+	_, err = models.InsertTeamMember(db.DefaultContext, team, user30.ID, organization.MembershipReasonAddedByAuthProvider, optional.None[int64](), optional.Some(loginSource.ID))
+	require.NoError(t, err)
 
 	memberships, err := organization.GetTeamMemberships(db.DefaultContext, &organization.SearchMembersOptions{TeamID: team.ID, ListOptions: db.ListOptionsAll})
 	require.NoError(t, err)

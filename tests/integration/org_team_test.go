@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"forgejo.org/models"
 	auth_model "forgejo.org/models/auth"
 	"forgejo.org/models/db"
 	"forgejo.org/models/organization"
@@ -18,6 +17,7 @@ import (
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/test"
 	auth_service "forgejo.org/services/auth"
+	org_service "forgejo.org/services/org"
 	user_service "forgejo.org/services/user"
 	"forgejo.org/tests"
 
@@ -187,8 +187,8 @@ func TestShowMembershipProvenance(t *testing.T) {
 	loginSource := auth_model.Source{ID: 1, Name: "Keycloak"}
 	unittest.AssertSuccessfulInsert(t, &loginSource)
 
-	require.NoError(t, models.AddTeamMemberByCooptation(t.Context(), team, user28.ID, user2.ID))
-	require.NoError(t, models.AddTeamMemberByLoginSource(t.Context(), team, user30.ID, loginSource.ID))
+	require.NoError(t, org_service.AddTeamMemberByCooptation(t.Context(), team, user28, user2))
+	require.NoError(t, org_service.AddTeamMemberByLoginSource(t.Context(), team, user30.ID, loginSource.ID))
 
 	session := loginUser(t, "user30")
 

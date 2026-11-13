@@ -463,7 +463,8 @@ func TestDeleteUserCleansUpMembershipProvenance(t *testing.T) {
 	user28 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 28})
 	team1 := unittest.AssertExistsAndLoadBean(t, &organization.Team{ID: 1})
 
-	require.NoError(t, models.AddTeamMemberByCooptation(db.DefaultContext, team1, user28.ID, user2.ID))
+	_, err := models.InsertTeamMember(db.DefaultContext, team1, user28.ID, organization.MembershipReasonAddedByUser, optional.Some(user2.ID), optional.None[int64]())
+	require.NoError(t, err)
 
 	require.NoError(t, DeleteUser(db.DefaultContext, user2, true))
 

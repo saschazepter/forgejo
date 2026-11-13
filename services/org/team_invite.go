@@ -6,7 +6,6 @@ package org
 import (
 	"context"
 
-	"forgejo.org/models"
 	org_model "forgejo.org/models/organization"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/log"
@@ -43,11 +42,11 @@ func InviteOrAddTeamMember(ctx context.Context, inviter, invited *user_model.Use
 		}
 		if isAlreadyOrgMember {
 			// the user has already consented to being part of the org: we add them to the team directly
-			return models.AddTeamMemberByCooptation(ctx, team, invited.ID, inviter.ID)
+			return AddTeamMemberByCooptation(ctx, team, invited, inviter)
 		}
 		return CreateTeamInviteByUser(ctx, inviter, invited, team)
 	}
-	return models.AddTeamMemberByCooptation(ctx, team, invited.ID, inviter.ID)
+	return AddTeamMemberByCooptation(ctx, team, invited, inviter)
 }
 
 // AcceptInvite adds the doer to the invited team, deleting the invite
@@ -62,7 +61,10 @@ func AcceptInvite(ctx context.Context, team *org_model.Team, invite *org_model.T
 	if invite.IsExpired() {
 		return org_model.ErrTeamInviteExpired{}
 	}
-	if err := models.AddTeamMemberByCooptation(ctx, team, doer.ID, invite.InviterID); err != nil {
+	if err := invite.LoadInviterUser(ctx); err != nil {
+		return err
+	}
+	if err := AddTeamMemberByCooptation(ctx, team, doer, invite.InviterUser); err != nil {
 		return err
 	}
 

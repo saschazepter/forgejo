@@ -25,7 +25,8 @@ func TestDeleteSourceCleansUpMembershipProvenance(t *testing.T) {
 	user28 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 28})
 	team1 := unittest.AssertExistsAndLoadBean(t, &org_model.Team{ID: 1})
 
-	require.NoError(t, models.AddTeamMemberByLoginSource(db.DefaultContext, team1, user28.ID, loginSource.ID))
+	_, err := models.InsertTeamMember(db.DefaultContext, team1, user28.ID, org_model.MembershipReasonAddedByAuthProvider, optional.None[int64](), optional.Some(loginSource.ID))
+	require.NoError(t, err)
 
 	require.NoError(t, DeleteSource(db.DefaultContext, &loginSource))
 
