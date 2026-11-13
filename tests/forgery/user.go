@@ -12,6 +12,7 @@ import (
 
 	org_model "forgejo.org/models/organization"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/structs"
 
 	"github.com/stretchr/testify/require"
 )
@@ -56,13 +57,22 @@ func CreateUser(t testing.TB, opts *CreateUserOptions) *user_model.User {
 	return u
 }
 
-func CreateOrganisation(t testing.TB, owner *user_model.User) *org_model.Organization {
+type CreateOrganisationOptions struct {
+	Visibility structs.VisibleType
+}
+
+func CreateOrganisation(t testing.TB, owner *user_model.User, opts *CreateOrganisationOptions) *org_model.Organization {
 	t.Helper()
 
+	if opts == nil {
+		opts = &CreateOrganisationOptions{}
+	}
 	if owner == nil {
 		owner = CreateUser(t, nil) // if specific options are needed, create the owner manually
 	}
-	o := &org_model.Organization{}
+	o := &org_model.Organization{
+		Visibility: opts.Visibility,
+	}
 
 	name := "org-" + uniqueSafeName(t.Name())
 

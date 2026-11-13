@@ -24,7 +24,7 @@ func TestOrgSettingsRepos(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
 	owner := forgery.CreateUser(t, nil)
-	org := forgery.CreateOrganisation(t, owner)
+	org := forgery.CreateOrganisation(t, owner, nil)
 
 	normal := forgery.CreateRepository(t, org.AsUser(), &forgery.CreateRepositoryOptions{Name: "repo-normal"})
 	private := forgery.CreateRepository(t, org.AsUser(), &forgery.CreateRepositoryOptions{Name: "repo-private", IsPrivate: true})
@@ -84,7 +84,7 @@ func TestOrgSettingsReposEmptyState(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
 	owner := forgery.CreateUser(t, nil)
-	org := forgery.CreateOrganisation(t, owner)
+	org := forgery.CreateOrganisation(t, owner, nil)
 
 	session := loginUser(t, owner.Name)
 

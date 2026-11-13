@@ -34,7 +34,7 @@ func createOwner(t *testing.T) *user_model.User {
 func createOrgWithRepos(t *testing.T) (*organization.Organization, *user_model.User) {
 	t.Helper()
 	owner := createOwner(t)
-	org := forgery.CreateOrganisation(t, owner)
+	org := forgery.CreateOrganisation(t, owner, nil)
 	forgery.CreateRepository(t, org.AsUser(), &forgery.CreateRepositoryOptions{Name: "repo-a"})
 	forgery.CreateRepository(t, org.AsUser(), &forgery.CreateRepositoryOptions{Name: "repo-b", IsPrivate: true})
 	forgery.CreateRepository(t, org.AsUser(), &forgery.CreateRepositoryOptions{Name: "repo-c"})
@@ -159,7 +159,7 @@ func TestReposPagination(t *testing.T) {
 func TestReposNoRepos(t *testing.T) {
 	unittest.PrepareTestEnv(t)
 	owner := createOwner(t)
-	org := forgery.CreateOrganisation(t, owner)
+	org := forgery.CreateOrganisation(t, owner, nil)
 
 	ctx := runRepos(t, "", org, owner)
 	assert.Empty(t, ctx.Data["Repos"].(repo_model.RepositoryList))

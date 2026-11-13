@@ -50,7 +50,7 @@ func TestNewIssueValidateProject(t *testing.T) {
 	}
 
 	userRepo := forgery.CreateRepository(t, user, nil)
-	userOrg := forgery.CreateOrganisation(t, user)
+	userOrg := forgery.CreateOrganisation(t, user, nil)
 	orgRepo := forgery.CreateRepository(t, userOrg.AsUser(), nil)
 	t.Run("Project belongs to repository", func(t *testing.T) {
 		p := forgery.CreateProject(t, userRepo, nil)
