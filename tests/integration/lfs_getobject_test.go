@@ -148,7 +148,7 @@ func checkResponseTestContentEncoding(t *testing.T, content *[]byte, resp *httpt
 	}
 }
 
-func TestGetLFSSmall(t *testing.T) {
+func TestLFSGetSmall(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	content := []byte("A very small file\n")
 
@@ -156,7 +156,7 @@ func TestGetLFSSmall(t *testing.T) {
 	checkResponseTestContentEncoding(t, &content, resp, false)
 }
 
-func TestGetLFSSmallToken(t *testing.T) {
+func TestLFSGetSmallToken(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	content := []byte("A very small file\n")
 
@@ -164,14 +164,14 @@ func TestGetLFSSmallToken(t *testing.T) {
 	checkResponseTestContentEncoding(t, &content, resp, false)
 }
 
-func TestGetLFSSmallTokenFail(t *testing.T) {
+func TestLFSGetSmallTokenFail(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	content := []byte("A very small file\n")
 
 	storeAndGetLfsToken(t, &content, nil, http.StatusForbidden, auth.AccessTokenScopeReadNotification)
 }
 
-func TestGetLFSSmallOAuthToken(t *testing.T) {
+func TestLFSGetSmallOauthToken(t *testing.T) {
 	for _, a := range []oauth2AuthMode{oauth2ViaBasic, oauth2ViaBearer} {
 		t.Run(string(a), func(t *testing.T) {
 			defer tests.PrepareTestEnv(t)()
@@ -183,7 +183,7 @@ func TestGetLFSSmallOAuthToken(t *testing.T) {
 	}
 }
 
-func TestGetLFSSmallOAuthTokenFail(t *testing.T) {
+func TestLFSGetSmallOAuthTokenFail(t *testing.T) {
 	for _, a := range []oauth2AuthMode{oauth2ViaBasic, oauth2ViaBearer} {
 		t.Run(string(a), func(t *testing.T) {
 			defer tests.PrepareTestEnv(t)()
@@ -194,7 +194,7 @@ func TestGetLFSSmallOAuthTokenFail(t *testing.T) {
 	}
 }
 
-func TestGetLFSLarge(t *testing.T) {
+func TestLFSGetLarge(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	content := make([]byte, gzhttp.DefaultMinSize*10)
 	for i := range content {
@@ -205,7 +205,7 @@ func TestGetLFSLarge(t *testing.T) {
 	checkResponseTestContentEncoding(t, &content, resp, true)
 }
 
-func TestGetLFSGzip(t *testing.T) {
+func TestLFSGetGzip(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	b := make([]byte, gzhttp.DefaultMinSize*10)
 	for i := range b {
@@ -221,7 +221,7 @@ func TestGetLFSGzip(t *testing.T) {
 	checkResponseTestContentEncoding(t, &content, resp, false)
 }
 
-func TestGetLFSZip(t *testing.T) {
+func TestLFSGetZip(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	b := make([]byte, gzhttp.DefaultMinSize*10)
 	for i := range b {
@@ -239,7 +239,7 @@ func TestGetLFSZip(t *testing.T) {
 	checkResponseTestContentEncoding(t, &content, resp, false)
 }
 
-func TestGetLFSRangeNo(t *testing.T) {
+func TestLFSGetRangeNo(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	content := []byte("123456789\n")
 
@@ -247,7 +247,7 @@ func TestGetLFSRangeNo(t *testing.T) {
 	assert.Equal(t, content, resp.Body.Bytes())
 }
 
-func TestGetLFSRange(t *testing.T) {
+func TestLFSGetRange(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	content := []byte("123456789\n")
 

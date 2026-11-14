@@ -49,6 +49,11 @@ func (l *LFSLock) LoadAttributes(ctx context.Context) error {
 	return nil
 }
 
+// Converts a single [LFSLock] to a [LFSLockList].
+func (l *LFSLock) AsLockList() *LFSLockList {
+	return &LFSLockList{l}
+}
+
 // LoadOwner loads owner of the lock.
 func (l *LFSLock) LoadOwner(ctx context.Context) error {
 	if l.Owner != nil {
@@ -124,8 +129,8 @@ func GetLFSLockByIDAndRepo(ctx context.Context, id, repoID int64) (*LFSLock, err
 	return lock, nil
 }
 
-// GetLFSLockByRepoID returns a list of locks of repository.
-func GetLFSLockByRepoID(ctx context.Context, repoID int64, page, pageSize int) (LFSLockList, error) {
+// GetLFSLockListByRepoID returns a list of locks of repository.
+func GetLFSLockListByRepoID(ctx context.Context, repoID int64, page, pageSize int) (LFSLockList, error) {
 	e := db.GetEngine(ctx)
 	if page >= 0 && pageSize > 0 {
 		start := 0
@@ -144,7 +149,7 @@ func GetTreePathLock(ctx context.Context, repoID int64, treePath string) (*LFSLo
 		return nil, nil
 	}
 
-	locks, err := GetLFSLockByRepoID(ctx, repoID, 0, 0)
+	locks, err := GetLFSLockListByRepoID(ctx, repoID, 0, 0)
 	if err != nil {
 		return nil, err
 	}

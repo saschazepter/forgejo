@@ -50,11 +50,13 @@ type LFSLockListVerify struct {
 }
 
 // LFSLockError contains information on the error that occurs
+// Very similar to ErrorResponse of "forgejo.org/modules/lfs", but this includes
+// a lock.
 type LFSLockError struct {
-	Message       string   `json:"message"`
-	Lock          *LFSLock `json:"lock,omitempty"`
-	Documentation string   `json:"documentation_url,omitempty"`
-	RequestID     string   `json:"request_id,omitempty"`
+	Message          string   `json:"message"`
+	Lock             *LFSLock `json:"lock,omitempty"`
+	DocumentationURL string   `json:"documentation_url,omitempty"`
+	RequestID        string   `json:"request_id,omitempty"`
 }
 
 // LFSLockDeleteRequest contains params of a delete request

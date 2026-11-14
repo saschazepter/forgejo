@@ -701,7 +701,7 @@ func TestAPIRepoMigrate(t *testing.T) {
 		{ctxUserID: 2, userID: 1, cloneURL: "https://code.forgejo.org/forgejo/migration-test.git", repoName: "git-bad", expectedStatus: http.StatusForbidden},
 		{ctxUserID: 2, userID: 3, cloneURL: "https://code.forgejo.org/forgejo/migration-test.git", repoName: "git-org", expectedStatus: http.StatusCreated},
 		{ctxUserID: 2, userID: 6, cloneURL: "https://code.forgejo.org/forgejo/migration-test.git", repoName: "git-bad-org", expectedStatus: http.StatusForbidden},
-		{ctxUserID: 2, userID: 3, cloneURL: "https://localhost:3000/user/test_repo.git", repoName: "private-ip", expectedStatus: http.StatusUnprocessableEntity},
+		{ctxUserID: 2, userID: 3, cloneURL: "https://localhost:3000/user/test_repo.git", repoName: "private-ip-localhost", expectedStatus: http.StatusUnprocessableEntity},
 		{ctxUserID: 2, userID: 3, cloneURL: "https://10.0.0.1/user/test_repo.git", repoName: "private-ip", expectedStatus: http.StatusUnprocessableEntity},
 	}
 
@@ -717,7 +717,7 @@ func TestAPIRepoMigrate(t *testing.T) {
 			Wiki:        true,
 		}).AddTokenAuth(token)
 		resp := MakeRequest(t, req, NoExpectedStatus)
-		require.Equalf(t, testCase.expectedStatus, resp.Code, "unexpected status (may be due to throttling): '%v' on url '%s'", resp.Body.String(), testCase.cloneURL)
+		require.Equalf(t, testCase.expectedStatus, resp.Code, "unexpected status for %s (may be due to throttling): '%v' on url '%s'", testCase.repoName, resp.Body.String(), testCase.cloneURL)
 	}
 }
 

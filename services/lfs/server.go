@@ -31,6 +31,7 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/storage"
+	api "forgejo.org/modules/structs"
 	"forgejo.org/services/context"
 )
 
@@ -289,7 +290,7 @@ func UploadHandler(ctx *context.Context) {
 
 	if err = p.Validate(); err != nil {
 		log.Trace("Attempt to access invalid LFS OID[%s] in %s/%s", p.Oid, rc.User, rc.Repo)
-		writeStatusMessage(ctx, http.StatusUnprocessableEntity, err.Error())
+		writeStatusMessage(ctx, http.StatusUnprocessableEntity, "Oid or size are invalid")
 		return
 	}
 
@@ -449,7 +450,7 @@ func getAuthenticatedRepository(ctx *context.Context, rc *requestContext, requir
 	}
 
 	if !authenticate(ctx, repository, false, requireWrite) {
-		requireAuth(ctx)
+		writeStatus(ctx, http.StatusUnauthorized)
 		return nil
 	}
 
@@ -511,23 +512,48 @@ func buildObjectResponse(rc *requestContext, pointer lfs_module.Pointer, downloa
 	return rep
 }
 
-func writeStatus(ctx *context.Context, status int) {
-	writeStatusMessage(ctx, status, http.StatusText(status))
+func writeStatusMessageUsingJSON[
+	JSON *api.LFSLockList |
+		*api.LFSLockError |
+		*api.LFSLockResponse |
+		*api.LFSLockListVerify |
+		*lfs_module.ErrorResponse](ctx *context.Context, statusCode int, input JSON) {
+	// See: https://github.com/git-lfs/git-lfs/blob/0043a645047926f4bd7f7091299095528253d575/docs/api/batch.md?plain=1#L256-L259
+	if statusCode == http.StatusUnauthorized {
+		ctx.Resp.Header().Set("LFS-Authenticate", "Basic realm=forgejo-lfs")
+	}
+
+	if statusCode != http.StatusOK {
+		const documentationURL = "https://codeberg.org/forgejo/forgejo/issues"
+		if errorResponse, ok := any(input).(*lfs_module.ErrorResponse); ok {
+			errorResponse.DocumentationURL = documentationURL
+		} else if lockError, ok := any(input).(*api.LFSLockError); ok {
+			lockError.DocumentationURL = documentationURL
+		}
+	}
+
+	ctx.JSONWithContentType(statusCode, lfs_module.MediaType, input)
 }
 
-func writeStatusMessage(ctx *context.Context, status int, message string) {
-	ctx.Resp.Header().Set("Content-Type", lfs_module.MediaType)
-	ctx.Resp.WriteHeader(status)
-
-	er := lfs_module.ErrorResponse{
-		Message:          message,
-		DocumentationURL: "https://codeberg.org/forgejo/forgejo/issues",
+// Creates an [lfs_module.ErrorResponse] from the status and the message.
+// The resulting message always starts with http.StatusText(status); if the
+// message is an empty string, then the final JSON should only contain the
+// http.StatusText(status) (e.g. "Unauthorized"). Otherwise, the string's
+// structure should look something like "Unauthorized: Contents of message var".
+func writeStatusMessage(ctx *context.Context, statusCode int, message string) {
+	var messageForErrorResponse string
+	if len(message) == 0 {
+		messageForErrorResponse = http.StatusText(statusCode)
+	} else {
+		messageForErrorResponse = fmt.Sprintf("%s: %s", http.StatusText(statusCode), message)
 	}
+	inputJSON := lfs_module.ErrorResponse{Message: messageForErrorResponse}
 
-	enc := json.NewEncoder(ctx.Resp)
-	if err := enc.Encode(er); err != nil {
-		log.Error("Failed to encode error response as json. Error: %v", err)
-	}
+	writeStatusMessageUsingJSON(ctx, statusCode, &inputJSON)
+}
+
+func writeStatus(ctx *context.Context, statusCode int) {
+	writeStatusMessage(ctx, statusCode, "")
 }
 
 // authenticate uses the authorization string to determine whether
@@ -569,9 +595,4 @@ func authenticate(ctx *context.Context, repository *repo_model.Repository, requi
 	}
 
 	return false
-}
-
-func requireAuth(ctx *context.Context) {
-	ctx.Resp.Header().Set("WWW-Authenticate", "Basic realm=gitea-lfs")
-	writeStatus(ctx, http.StatusUnauthorized)
 }

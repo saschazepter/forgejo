@@ -28,7 +28,7 @@ func createTestLock(t *testing.T, repo *repo_model.Repository, owner *user_model
 	return lock
 }
 
-func TestGetLFSLockByIDAndRepo(t *testing.T) {
+func TestLFSGetLockByIDAndRepo(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 
 	repo1 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
@@ -53,7 +53,7 @@ func TestGetLFSLockByIDAndRepo(t *testing.T) {
 	assert.True(t, IsErrLFSLockNotExist(err))
 }
 
-func TestDeleteLFSLockByIDRequiresRepoMatch(t *testing.T) {
+func TestLFSDeleteLockByIDRequiresRepoMatch(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 
 	repo1 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})

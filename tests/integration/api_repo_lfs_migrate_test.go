@@ -14,6 +14,7 @@ import (
 	"forgejo.org/modules/lfs"
 	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
+	"forgejo.org/modules/test"
 	migrations_allowlist "forgejo.org/services/migrations/allowlist"
 	"forgejo.org/tests"
 
@@ -24,10 +25,10 @@ import (
 func TestAPIRepoLFSMigrateLocal(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	oldImportLocalPaths := setting.ImportLocalPaths
-	oldAllowLocalNetworks := setting.Migrations.AllowLocalNetworks
-	setting.ImportLocalPaths = true
-	setting.Migrations.AllowLocalNetworks = true
+	defer test.MockVariableValue(&setting.LFS.StartServer, true)()
+	defer test.MockVariableValue(&setting.ImportLocalPaths, true)()
+	defer test.MockVariableValue(&setting.Migrations.AllowLocalNetworks, true)()
+
 	require.NoError(t, migrations_allowlist.Init())
 
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
@@ -49,7 +50,5 @@ func TestAPIRepoLFSMigrateLocal(t *testing.T) {
 	ok, _ = store.Verify(lfs.Pointer{Oid: "d6f175817f886ec6fbbc1515326465fa96c3bfd54a4ea06cfd6dbbd8340e0152", Size: 6})
 	assert.True(t, ok)
 
-	setting.ImportLocalPaths = oldImportLocalPaths
-	setting.Migrations.AllowLocalNetworks = oldAllowLocalNetworks
 	require.NoError(t, migrations_allowlist.Init()) // reset old migration settings
 }

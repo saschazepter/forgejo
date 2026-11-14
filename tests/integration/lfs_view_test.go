@@ -499,6 +499,7 @@ func TestLFSLockView(t *testing.T) {
 		req.Header.Set("Accept", lfs.AcceptHeader)
 		req.Header.Set("Content-Type", lfs.MediaType)
 		resp := MakeRequest(t, req, http.StatusCreated)
+		assert.Equal(t, lfs.MediaType, resp.Header().Get("Content-Type"))
 		lockResp := &api.LFSLockResponse{}
 		DecodeJSON(t, resp, lockResp)
 		lockID = lockResp.Lock.ID
@@ -509,7 +510,8 @@ func TestLFSLockView(t *testing.T) {
 		req.AddBasicAuth(user2.Name)
 		req.Header.Set("Accept", lfs.AcceptHeader)
 		req.Header.Set("Content-Type", lfs.MediaType)
-		MakeRequest(t, req, http.StatusOK)
+		resp := MakeRequest(t, req, http.StatusOK)
+		assert.Equal(t, lfs.MediaType, resp.Header().Get("Content-Type"))
 	}()
 
 	t.Run("no locks message", func(t *testing.T) {
