@@ -87,7 +87,7 @@ func TeamsAction(ctx *context.Context) {
 		}
 		err = org_service.AddTeamMemberByCooptation(ctx, ctx.Org.Team, ctx.Doer, ctx.Doer)
 	case "leave":
-		err = models.RemoveTeamMember(ctx, ctx.Org.Team, ctx.Doer.ID)
+		err = org_service.RemoveTeamMember(ctx, ctx.Org.Team, ctx.Doer, ctx.Doer)
 		if err != nil {
 			if org_model.IsErrLastOrgOwner(err) {
 				ctx.Flash.Error(ctx.Tr("form.last_org_owner"))
@@ -114,7 +114,12 @@ func TeamsAction(ctx *context.Context) {
 			return
 		}
 
-		err = models.RemoveTeamMember(ctx, ctx.Org.Team, uid)
+		u, err := user_model.GetUserByID(ctx, uid)
+		if err != nil {
+			ctx.Error(http.StatusNotAcceptable)
+			return
+		}
+		err = org_service.RemoveTeamMember(ctx, ctx.Org.Team, u, ctx.Doer)
 		if err != nil {
 			if org_model.IsErrLastOrgOwner(err) {
 				ctx.Flash.Error(ctx.Tr("form.last_org_owner"))
@@ -268,7 +273,7 @@ func TeamsRepoAction(ctx *context.Context) {
 	case "addall":
 		err = models.AddAllRepositories(ctx, ctx.Org.Team)
 	case "removeall":
-		err = models.RemoveAllRepositories(ctx, ctx.Org.Team)
+		err = org_service.RemoveAllRepositories(ctx, ctx.Org.Team)
 	}
 
 	if err != nil {
@@ -597,7 +602,7 @@ func EditTeamPost(ctx *context.Context) {
 
 // DeleteTeam response for the delete team request
 func DeleteTeam(ctx *context.Context) {
-	if err := models.DeleteTeam(ctx, ctx.Org.Team); err != nil {
+	if err := org_service.DeleteTeam(ctx, ctx.Org.Team); err != nil {
 		ctx.Flash.Error("DeleteTeam: " + err.Error())
 	} else {
 		ctx.Flash.Success(ctx.Tr("org.teams.delete_team_success"))

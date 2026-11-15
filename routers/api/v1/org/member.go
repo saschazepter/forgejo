@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"forgejo.org/models"
 	"forgejo.org/models/organization"
 	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
@@ -15,6 +14,7 @@ import (
 	"forgejo.org/routers/api/v1/utils"
 	"forgejo.org/services/context"
 	"forgejo.org/services/convert"
+	org_service "forgejo.org/services/org"
 )
 
 // listMembers list an organization's members
@@ -322,7 +322,7 @@ func DeleteMember(ctx *context.APIContext) {
 	if ctx.Written() {
 		return
 	}
-	if err := models.RemoveOrgUser(ctx, ctx.Org().Organization.ID, member.ID); err != nil {
+	if err := org_service.RemoveOrgUser(ctx, ctx.Org().Organization.ID, member.ID); err != nil {
 		ctx.Error(http.StatusInternalServerError, "RemoveOrgUser", err)
 		return
 	}

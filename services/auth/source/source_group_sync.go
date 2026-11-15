@@ -11,7 +11,6 @@ import (
 	"strings"
 	"sync"
 
-	"forgejo.org/models"
 	"forgejo.org/models/organization"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/container"
@@ -335,7 +334,7 @@ func syncGroupsToTeamsCached(ctx context.Context, user *user_model.User, loginSo
 					return err
 				}
 			} else if action == syncRemove && isMember {
-				if err := models.RemoveTeamMember(ctx, team, user.ID); err != nil {
+				if err := org_service.RemoveTeamMember(ctx, team, user, user); err != nil {
 					log.Error("group sync: Could not remove user from team: %v", err)
 					return err
 				}

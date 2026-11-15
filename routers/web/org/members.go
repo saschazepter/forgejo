@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"forgejo.org/models"
 	"forgejo.org/models/organization"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/base"
@@ -111,7 +110,7 @@ func MembersAction(ctx *context.Context) {
 			ctx.Error(http.StatusNotFound)
 			return
 		}
-		err = models.RemoveOrgUser(ctx, org.ID, uid)
+		err = org_service.RemoveOrgUser(ctx, org.ID, uid)
 		if organization.IsErrLastOrgOwner(err) {
 			ctx.Flash.Error(ctx.Tr("form.last_org_owner"))
 			ctx.JSONRedirect(ctx.Org.OrgLink + "/members")
@@ -186,7 +185,7 @@ func MembersAction(ctx *context.Context) {
 		ctx.Redirect(ctx.Org.OrgLink + "/members")
 		return
 	case "leave":
-		err = models.RemoveOrgUser(ctx, org.ID, ctx.Doer.ID)
+		err = org_service.RemoveOrgUser(ctx, org.ID, ctx.Doer.ID)
 		if err == nil {
 			ctx.Flash.Success(ctx.Tr("form.organization_leave_success", org.DisplayName()))
 			ctx.JSON(http.StatusOK, map[string]any{

@@ -29,6 +29,7 @@ import (
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
 	"forgejo.org/services/auth/source/oauth2"
+	org_service "forgejo.org/services/org"
 	redirect_service "forgejo.org/services/redirect"
 
 	"github.com/stretchr/testify/assert"
@@ -74,7 +75,7 @@ func TestDeleteUser(t *testing.T) {
 			orgUsers := make([]*organization.OrgUser, 0, 10)
 			require.NoError(t, db.GetEngine(db.DefaultContext).Find(&orgUsers, &organization.OrgUser{UID: tc.userID}))
 			for _, orgUser := range orgUsers {
-				err := models.RemoveOrgUser(db.DefaultContext, orgUser.OrgID, orgUser.UID)
+				err := org_service.RemoveOrgUser(db.DefaultContext, orgUser.OrgID, orgUser.UID)
 				require.NoError(t, err)
 			}
 

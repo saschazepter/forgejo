@@ -365,7 +365,7 @@ func DeleteTeam(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	if err := models.DeleteTeam(ctx, ctx.Org().Team); err != nil {
+	if err := org_service.DeleteTeam(ctx, ctx.Org().Team); err != nil {
 		ctx.Error(http.StatusInternalServerError, "DeleteTeam", err)
 		return
 	}
@@ -540,7 +540,7 @@ func RemoveTeamMember(ctx *context.APIContext) {
 		return
 	}
 
-	if err := models.RemoveTeamMember(ctx, ctx.Org().Team, u.ID); err != nil {
+	if err := org_service.RemoveTeamMember(ctx, ctx.Org().Team, u, ctx.Doer()); err != nil {
 		ctx.Error(http.StatusInternalServerError, "RemoveTeamMember", err)
 		return
 	}
