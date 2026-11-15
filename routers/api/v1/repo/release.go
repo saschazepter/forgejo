@@ -175,6 +175,7 @@ func ListReleases(ctx *context.APIContext) {
 	}
 	rels := make([]*api.Release, len(releases))
 	for i, release := range releases {
+		release.Repo = ctx.Repo().Repository
 		if err := release.LoadAttributes(ctx); err != nil {
 			ctx.Error(http.StatusInternalServerError, "LoadAttributes", err)
 			return
