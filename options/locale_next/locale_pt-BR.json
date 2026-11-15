@@ -988,5 +988,7 @@
 	"admin.config.federation.signature_enforced": "Requer assinaturas HTTP",
 	"settings.access_token.resource_all_help": "Permitir acesso a todos os recursos.",
 	"settings.access_token.resource_public_only_help": "Limite o acesso a repositórios e organizações públicas.",
-	"settings.access_token.admin_disabled": "Permissões administrativas são desativadas."
+	"settings.access_token.admin_disabled": "Permissões administrativas são desativadas.",
+	"funding.action.button": "Doar",
+	"funding.action.title": "Doar para %[1]s"
 }

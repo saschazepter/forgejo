@@ -1103,5 +1103,13 @@
 	"form.RunnerName": "Izena",
 	"form.website.valid_url_schemes": "Baimendutako URL eskemak: %s",
 	"graphs.recent_commits.title": "Azken urteko commit kopurua",
-	"graphs.code_frequency.title": "{0}-ren historian zeharreko kode-maiztasuna"
+	"graphs.code_frequency.title": "{0}-ren historian zeharreko kode-maiztasuna",
+	"auth.signup.username.prefix.info": "(%s) aurrizkia zure erabiltzaile-izenera lehenitseko da eta ezin da aldatu.",
+	"repo.issues.review.apply_suggestion": "Proposamena ezarri",
+	"repo.issues.review.suggested_change_commit": "Proposamena ezarri",
+	"repo.issues.review.add_suggestion_to_batch": "Propesamena sortari gehitu",
+	"repo.issues.review.remove_suggestion_from_batch": "Sortatik kendu",
+	"repo.issues.review.commit_batch_suggestions": "Commit proposamenak",
+	"repo.issues.review.discard_batch_suggestions": "Ezeztatu",
+	"repo.issues.review.batch_only_on_files_tab": "Sorten proposamenak fitxategi erlaitzetik egin behar dira"
 }
