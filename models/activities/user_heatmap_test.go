@@ -86,7 +86,7 @@ func TestGetUserHeatmapDataByUser(t *testing.T) {
 		require.NoError(t, err)
 
 		// Get the heatmap and compare
-		heatmap, err := activities_model.GetUserHeatmapDataByUser(db.DefaultContext, user, doer)
+		heatmap, err := activities_model.GetUserHeatmapDataByUser(db.DefaultContext, user, doer, nil)
 		var contributions int
 		for _, hm := range heatmap {
 			contributions += int(hm.Contributions)

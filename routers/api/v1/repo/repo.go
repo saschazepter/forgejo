@@ -1414,6 +1414,7 @@ func ListRepoActivityFeeds(ctx *context.APIContext) {
 		IncludePrivate:       true,
 		Date:                 ctx.FormString("date"),
 		ListOptions:          listOptions,
+		AuthorizationReducer: ctx.Reducer(),
 	}
 
 	feeds, count, err := activities_model.GetFeeds(ctx, opts)
