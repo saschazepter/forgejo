@@ -12,12 +12,11 @@ import (
 	"forgejo.org/tests"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // A token limited to public repo1 must not learn about private repo2.
 // List endpoints already hide repo2. The activity feed still returns it.
-func TestAPIUserActivityFeedRestrictedTokenPrivateRepo(t *testing.T) {
+func TestAPIActivityFeedUserRestrictedTokenPrivateRepo(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
 	token := createFineGrainedRepoAccessToken(t, "user2",
@@ -48,15 +47,10 @@ func TestAPIUserActivityFeedRestrictedTokenPrivateRepo(t *testing.T) {
 			break
 		}
 	}
-	require.NotNil(t, leaked, "restricted token received no user2/repo2 activity; feed ids=%v", activityRepoNames(activities))
-	assert.True(t, leaked.IsPrivate)
-	assert.True(t, leaked.Repo.Private)
-	assert.NotEmpty(t, leaked.OpType)
-	assert.Equal(t, "user2/repo2", leaked.Repo.FullName)
-	t.Logf("leaked op=%s private=%v repo_private=%v content=%q perm=%+v", leaked.OpType, leaked.IsPrivate, leaked.Repo.Private, leaked.Content, leaked.Repo.Permissions)
+	assert.Nil(t, leaked, "restricted token expected no user2/repo2 activity; feed ids=%v", activityRepoNames(activities))
 }
 
-func TestAPIUserActivityFeedPublicOnlyPrivateRepo(t *testing.T) {
+func TestAPIActivityFeedUserPublicOnlyPrivateRepo(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
 	session := loginUser(t, "user2")
@@ -81,12 +75,10 @@ func TestAPIUserActivityFeedPublicOnlyPrivateRepo(t *testing.T) {
 			break
 		}
 	}
-	require.NotNil(t, leaked, "public-only token received no user2/repo2 activity; feed ids=%v", activityRepoNames(activities))
-	assert.True(t, leaked.Repo.Private)
-	t.Logf("public-only leaked op=%s content=%q perm=%+v", leaked.OpType, leaked.Content, leaked.Repo.Permissions)
+	assert.Nil(t, leaked, "public-only token expected no user2/repo2 activity; feed ids=%v", activityRepoNames(activities))
 }
 
-func TestAPIOrgActivityFeedPublicOnlyPrivateRepo(t *testing.T) {
+func TestAPIActivityFeedOrgPublicOnlyPrivateRepo(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
 	session := loginUser(t, "user2")
@@ -111,9 +103,7 @@ func TestAPIOrgActivityFeedPublicOnlyPrivateRepo(t *testing.T) {
 			break
 		}
 	}
-	require.NotNil(t, leaked, "public-only org token received no org3/repo3 activity; feed ids=%v", activityRepoNames(activities))
-	assert.True(t, leaked.Repo.Private)
-	t.Logf("org leaked op=%s content=%q perm=%+v", leaked.OpType, leaked.Content, leaked.Repo.Permissions)
+	assert.Nil(t, leaked, "public-only org token expected no org3/repo3 activity; feed ids=%v", activityRepoNames(activities))
 }
 
 func activityRepoNames(activities []api.Activity) []string {
