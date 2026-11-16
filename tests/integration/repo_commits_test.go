@@ -206,6 +206,88 @@ func TestRepoCommitsStatusMultiple(t *testing.T) {
 	assert.Equal(t, 1, sel.Length())
 }
 
+func TestRepoCommitStatusesLimit(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	session := loginUser(t, "user2")
+
+	// Request repository commits page
+	req := NewRequest(t, "GET", "/user2/repo1/commits/branch/master")
+	resp := session.MakeRequest(t, req, http.StatusOK)
+
+	doc := NewHTMLParser(t, resp.Body)
+	// Get first commit URL
+	commitURL, exists := doc.doc.Find("#commits-table tbody tr td.sha a").Attr("href")
+	assert.True(t, exists)
+	assert.NotEmpty(t, commitURL)
+
+	// Call API to add status for commit
+	ctx := NewAPITestContext(t, "user2", "repo1", auth_model.AccessTokenScopeWriteRepository)
+	t.Run("CreateStatus", doAPICreateCommitStatus(ctx, path.Base(commitURL), api.CreateStatusOption{
+		State:       api.CommitStatusState("failure"),
+		TargetURL:   "http://test.ci/",
+		Description: "",
+		Context:     "testci",
+	}))
+	t.Run("CreateStatus", doAPICreateCommitStatus(ctx, path.Base(commitURL), api.CreateStatusOption{
+		State:       api.CommitStatusState("warning"),
+		TargetURL:   "http://test.ci/",
+		Description: "",
+		Context:     "other_context",
+	}))
+
+	// By SHA with limit #9783
+	req = NewRequest(t, "GET", "/api/v1/repos/user2/repo1/commits/"+path.Base(commitURL)+"/statuses?limit=1")
+	resp = session.MakeRequest(t, req, http.StatusOK)
+
+	var statusesSha []*api.CommitStatus
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &statusesSha))
+
+	assert.Len(t, statusesSha, 1)
+	assert.Equal(t, "2", resp.Header().Get("X-Total-Count"))
+}
+
+func TestRepoStatusesBySHALimit(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	session := loginUser(t, "user2")
+
+	// Request repository commits page
+	req := NewRequest(t, "GET", "/user2/repo1/commits/branch/master")
+	resp := session.MakeRequest(t, req, http.StatusOK)
+
+	doc := NewHTMLParser(t, resp.Body)
+	// Get first commit URL
+	commitURL, exists := doc.doc.Find("#commits-table tbody tr td.sha a").Attr("href")
+	assert.True(t, exists)
+	assert.NotEmpty(t, commitURL)
+
+	// Call API to add status for commit
+	ctx := NewAPITestContext(t, "user2", "repo1", auth_model.AccessTokenScopeWriteRepository)
+	t.Run("CreateStatus", doAPICreateCommitStatus(ctx, path.Base(commitURL), api.CreateStatusOption{
+		State:       api.CommitStatusState("failure"),
+		TargetURL:   "http://test.ci/",
+		Description: "",
+		Context:     "testci",
+	}))
+	t.Run("CreateStatus", doAPICreateCommitStatus(ctx, path.Base(commitURL), api.CreateStatusOption{
+		State:       api.CommitStatusState("warning"),
+		TargetURL:   "http://test.ci/",
+		Description: "",
+		Context:     "other_context",
+	}))
+
+	// Statuses endpoint
+	req = NewRequest(t, "GET", "/api/v1/repos/user2/repo1/statuses/"+path.Base(commitURL)+"?limit=1")
+	resp = session.MakeRequest(t, req, http.StatusOK)
+
+	var statuses []*api.CommitStatus
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &statuses))
+
+	assert.Len(t, statuses, 1)
+	assert.Equal(t, "2", resp.Header().Get("X-Total-Count"))
+}
+
 func TestCreateCommitStatusNonExistingSHA(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 

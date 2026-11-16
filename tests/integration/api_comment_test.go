@@ -17,6 +17,7 @@ import (
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/references"
+	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
 	"forgejo.org/services/convert"
 	"forgejo.org/tests"
@@ -475,16 +476,23 @@ func TestAPIListIssueTimeline(t *testing.T) {
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: issue.RepoID})
 	repoOwner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
 
-	// make request
+	// The default request returns the first page.
 	req := NewRequestf(t, "GET", "/api/v1/repos/%s/%s/issues/%d/timeline", repoOwner.Name, repo.Name, issue.Index)
 	resp := MakeRequest(t, req, http.StatusOK)
 
-	// check if lens of list returned by API and
-	// lists extracted directly from DB are the same
 	var comments []*api.TimelineComment
 	DecodeJSON(t, resp, &comments)
 	expectedCount := unittest.GetCount(t, &issues_model.Comment{IssueID: issue.ID})
-	assert.Len(t, comments, expectedCount)
+	require.Greater(t, expectedCount, setting.API.DefaultPagingNum)
+	assert.Len(t, comments, setting.API.DefaultPagingNum)
+
+	// The next page returns the remaining timeline entries.
+	req = NewRequestf(t, "GET", "/api/v1/repos/%s/%s/issues/%d/timeline?page=2", repoOwner.Name, repo.Name, issue.Index)
+	resp = MakeRequest(t, req, http.StatusOK)
+
+	var commentsPageTwo []*api.TimelineComment
+	DecodeJSON(t, resp, &commentsPageTwo)
+	assert.Len(t, commentsPageTwo, expectedCount-setting.API.DefaultPagingNum)
 
 	req = NewRequestf(t, "GET", "/api/v1/repos/%s/%s/issues/%d/timeline", repoOwner.Name, repo.Name, IssueIDNotExist)
 	MakeRequest(t, req, http.StatusNotFound)
