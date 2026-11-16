@@ -179,7 +179,7 @@ func prepareUserProfileTabData(ctx *context.Context, showPrivate bool, profileDb
 	case "activity":
 		// prepare heatmap data
 		if setting.Service.EnableUserHeatmap {
-			data, err := activities_model.GetUserHeatmapDataByUser(ctx, ctx.ContextUser, ctx.Doer)
+			data, err := activities_model.GetUserHeatmapDataByUser(ctx, ctx.ContextUser, ctx.Doer, nil)
 			if err != nil {
 				ctx.ServerError("GetUserHeatmapDataByUser", err)
 				return
