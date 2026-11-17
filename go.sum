@@ -246,8 +246,8 @@ github.com/go-ap/activitypub v0.0.0-20260208110334-902f6cf8c2cc h1:yLe7YJhK+XNjN
 github.com/go-ap/activitypub v0.0.0-20260208110334-902f6cf8c2cc/go.mod h1:jUs8eczo1EAT4ByRpZ4mQmNvjarw9eNf7Nm5udpMRhY=
 github.com/go-ap/errors v0.0.0-20260208110149-e1b309365966 h1:tV+3kZgqFMKVUf+JPKBV400ISM8440+6y/SQCS0WZwQ=
 github.com/go-ap/errors v0.0.0-20260208110149-e1b309365966/go.mod h1:zkp58Q5yXpCxZbh3d0GDvwqiYclfVuHEHjc9SZKAj6I=
-github.com/go-ap/jsonld v0.0.0-20251216162253-e38fa664ea77 h1:yHAmoR6avNy84PlLmjHt1z9flAp2Qs2ens5QDE/CNWk=
-github.com/go-ap/jsonld v0.0.0-20251216162253-e38fa664ea77/go.mod h1:4h93IBxgfnE/DEleMLgJ/XCeu/RtQ+MUh3ucANseeXA=
+github.com/go-ap/jsonld v0.0.0-20261107170435-a7bb5ba3f894 h1:+LsrWlcFus3LiSUSkYOmJ5TQplAKO7q7jmzQr1xnhLs=
+github.com/go-ap/jsonld v0.0.0-20261107170435-a7bb5ba3f894/go.mod h1:4h93IBxgfnE/DEleMLgJ/XCeu/RtQ+MUh3ucANseeXA=
 github.com/go-asn1-ber/asn1-ber v1.5.8 h1:H9AZkK22UOmfX8J84ubyaZxKJZ3FMHVwn8swoMML7iQ=
 github.com/go-asn1-ber/asn1-ber v1.5.8/go.mod h1:hEBeB/ic+5LoWskz+yKT7vGhhPYkProFKoKdwZRWMe0=
 github.com/go-chi/chi/v5 v5.0.1/go.mod h1:DslCQbL2OYiznFReuXYUmQ2hGd1aDpCnlMNITLSKoi8=
