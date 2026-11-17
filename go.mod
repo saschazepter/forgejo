@@ -5,7 +5,6 @@ go 1.26.0
 toolchain go1.27.4
 
 require (
-	code.forgejo.org/crystal/ar v0.0.0-20190502131153-809d4375e1fb
 	code.forgejo.org/forgejo-contrib/go-libravatar v0.0.0-20260301104140-add494e31dab
 	code.forgejo.org/forgejo/actions-proto v0.8.0
 	code.forgejo.org/forgejo/go-rpmutils v1.0.0
@@ -23,10 +22,11 @@ require (
 	github.com/42wim/httpsig v1.3.0
 	github.com/42wim/sshsig v0.0.0-20250502153856-5100632e8920
 	github.com/Azure/go-ntlmssp v0.1.1
-	github.com/ProtonMail/go-crypto v1.4.1
+	github.com/ProtonMail/go-crypto v1.5.2
 	github.com/PuerkitoBio/goquery v1.13.0
 	github.com/SaveTheRbtz/zstd-seekable-format-go/pkg v0.9.0
 	github.com/alecthomas/chroma/v2 v2.27.0
+	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb
 	github.com/blevesearch/bleve/v2 v2.6.1
 	github.com/buildkite/terminal-to-html/v3 v3.17.1
 	github.com/caddyserver/certmagic v0.25.6
@@ -112,6 +112,7 @@ require (
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/ini.v1 v1.67.3
 	mvdan.cc/xurls/v2 v2.6.0
+	pault.ag/go/debian v0.21.4
 	xorm.io/builder v0.3.13
 )
 
@@ -155,7 +156,7 @@ require (
 	github.com/cention-sany/utf7 v0.0.0-20170124080048-26cad61bd60a // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
-	github.com/cloudflare/circl v1.6.3 // indirect
+	github.com/cloudflare/circl v1.6.5 // indirect
 	github.com/cockroachdb/errors v1.11.3 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20241215232642-bb51bb14a506 // indirect
 	github.com/cockroachdb/redact v1.1.5 // indirect
@@ -252,6 +253,7 @@ require (
 	github.com/wasilibs/go-re2 v1.10.0 // indirect
 	github.com/wasilibs/wazero-helpers v0.0.0-20240620070341-3dff1577cd52 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
+	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
 	go.etcd.io/bbolt v1.5.0 // indirect
@@ -266,6 +268,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 	google.golang.org/grpc v1.83.2 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	pault.ag/go/topsort v0.1.1 // indirect
 )
 
 replace github.com/hashicorp/go-version => github.com/6543/go-version v1.3.1
