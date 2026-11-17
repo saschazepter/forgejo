@@ -926,5 +926,19 @@
 	"migrate.in_progress.issues.progress": {
 		"one": "Na-migrate ang %[1] isyu",
 		"other": "Na-migrate ang %[1] (na) isyu"
-	}
+	},
+	"auth.signup.username.prefix.info": "Ilalagay ang prefix na %s sa dulo ng iyong username at hindi ito mababago.",
+	"repo.empty_commit_message": "Walang laman ang mensahe ng commit",
+	"repo.issues.context.copy_markdown": "Kopyahin ang Markdown",
+	"repo.rss.issue_feed_title": "Isyu %s: %s",
+	"repo.rss.pull_feed_title": "Pull request %s: %s",
+	"repo.rss.updates_on_issue": "Mga update sa isyu %s ni/ng %s",
+	"repo.rss.updates_on_pull": "Mga update sa pull request %s ni/ng %s",
+	"migrate.bitbucketdc.description": "I-migrate ang data mula sa isang Bitbucket Datacenter instance.",
+	"migrate.bitbucketdc.auth_username_helper": "Kinakailangan na may token ng user (ang username ng may-ari ng token). Iwanang walang laman para sa isang project o repository token.",
+	"search.verb": "Maghanap",
+	"search.match_inside_quotes": "Ipakita lang ang mga resulta na tumutugma sa termino sa loob ng quote",
+	"search.docs": "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">Tignan ang dokumentasyon</a> para sa higit pang detalye tungkol sa paghahanap, operator, at filter.",
+	"repo.settings.event_action_do_not_use_label": "huwag gamitin",
+	"repo.settings.event_action_do_not_use_tooltip": "Huwag gamitin ang action run events. Gamitin ang workflow run sa halip."
 }

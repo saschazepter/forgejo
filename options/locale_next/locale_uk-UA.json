@@ -124,7 +124,7 @@
 	"mde.buttons.new_table.tooltip": "Додати таблицю",
 	"mde.buttons.unindent.tooltip": "Викласти елемент на один рівень",
 	"mde.buttons.indent.tooltip": "Вкласти елемент на один рівень",
-	"mde.buttons.switch_to_legacy.tooltip": "Використовувати застарілий редактор замість поточного",
+	"mde.buttons.switch_to_legacy.tooltip": "Використовувати старий редактор",
 	"mde.buttons.ref.tooltip": "Послатися на задачу або запит на злиття",
 	"mde.buttons.mention.tooltip": "Згадати користувача чи команду",
 	"mde.buttons.list.task.tooltip": "Додати список завдань",
