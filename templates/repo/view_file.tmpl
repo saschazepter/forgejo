@@ -53,7 +53,10 @@
 					{{if .SymlinkURL}}
 						<a class="ui mini basic button" href="{{$.SymlinkURL}}" data-kind="follow-symlink">{{ctx.Locale.Tr "repo.file_follow"}}</a>
 					{{end}}
-					<a class="ui mini basic button" href="{{$.RawFileLink}}">{{ctx.Locale.Tr "repo.file_raw"}}</a>
+					{{if .RawFileLink}}
+						<a class="ui mini basic button" href="{{$.RawFileLink}}" data-test-name="pointer">{{ctx.Locale.Tr "repo.file_raw.lfs_pointer"}}</a>
+					{{end}}
+					<a class="ui mini basic button" href="{{$.TargetFileLink}}" data-test-name="media">{{ctx.Locale.Tr "repo.file_raw"}}</a>
 					{{if not .IsViewCommit}}
 						<a class="ui mini basic button" href="{{.RepoLink}}/src/commit/{{PathEscape .CommitID}}/{{PathEscapeSegments .TreePath}}">{{ctx.Locale.Tr "repo.file_permalink"}}</a>
 					{{end}}
@@ -66,10 +69,10 @@
 						<button class="ui mini basic button escape-button">{{ctx.Locale.Tr "repo.escape_control_characters"}}</button>
 					{{end}}
 				</div>
-				<a download class="btn-octicon" href="{{$.RawFileLink}}" data-tooltip-content="{{ctx.Locale.Tr "repo.download_file"}}">
+				<a download class="btn-octicon" href="{{$.TargetFileLink}}" data-tooltip-content="{{ctx.Locale.Tr "repo.download_file"}}">
 					{{svg "octicon-download"}}
 				</a>
-				<a href="#" id="copy-content" class="btn-octicon {{if not .CanCopyContent}} disabled{{end}}"{{if or .IsImageFile (and .HasSourceRenderedToggle (not .IsDisplayingSource))}} data-link="{{$.RawFileLink}}"{{end}} data-tooltip-content="{{if .CanCopyContent}}{{ctx.Locale.Tr "copy_content"}}{{else}}{{ctx.Locale.Tr "copy_type_unsupported"}}{{end}}">
+				<a href="#" id="copy-content" class="btn-octicon {{if not .CanCopyContent}} disabled{{end}}"{{if or .IsImageFile (and .HasSourceRenderedToggle (not .IsDisplayingSource))}} data-link="{{$.TargetFileLink}}"{{end}} data-tooltip-content="{{if .CanCopyContent}}{{ctx.Locale.Tr "copy_content"}}{{else}}{{ctx.Locale.Tr "copy_type_unsupported"}}{{end}}">
 					{{svg "octicon-copy" 14}}
 				</a>
 				{{if .EnableFeed}}
@@ -124,30 +127,30 @@
 			{{else if not .IsTextSource}}
 				<div class="view-raw">
 					{{if .IsImageFile}}
-						<img src="{{$.RawFileLink}}">
+						<img src="{{$.TargetFileLink}}">
 					{{else if .IsVideoFile}}
-						<video controls src="{{$.RawFileLink}}">
+						<video controls src="{{$.TargetFileLink}}">
 							<strong>{{ctx.Locale.Tr "repo.video_not_supported_in_browser"}}</strong>
 						</video>
 					{{else if .IsAudioFile}}
-						<audio controls src="{{$.RawFileLink}}">
+						<audio controls src="{{$.TargetFileLink}}">
 							<strong>{{ctx.Locale.Tr "repo.audio_not_supported_in_browser"}}</strong>
 						</audio>
 					{{else if .IsPDFFile}}
-						<lazy-webc tag="pdf-object" src="{{$.RawFileLink}}">
-							<a href="{{$.RawFileLink}}" class="ui basic button">{{ctx.Locale.Tr "repo.diff.view_file"}}</a>
+						<lazy-webc tag="pdf-object" src="{{$.TargetFileLink}}">
+							<a href="{{$.TargetFileLink}}" class="ui basic button">{{ctx.Locale.Tr "repo.diff.view_file"}}</a>
 						</lazy-webc>
 					{{else if .Is3DModelFile}}
 						{{if .IsGLBFile}}
-							<lazy-webc tag="model-viewer" src="{{$.RawFileLink}}" ar shadow-intensity="2" camera-controls touch-action="pan-y"></lazy-webc>
+							<lazy-webc tag="model-viewer" src="{{$.TargetFileLink}}" ar shadow-intensity="2" camera-controls touch-action="pan-y"></lazy-webc>
 						{{else}}
-							<a href="{{$.RawFileLink}}" rel="nofollow">{{ctx.Locale.Tr "repo.file_view_raw"}}</a>
+							<a href="{{$.TargetFileLink}}" rel="nofollow">{{ctx.Locale.Tr "repo.file_view_raw"}}</a>
 						{{end}}
 					{{else if .IsFontFile}}
 						<style>
 							@font-face {
 								font-family: preview-font;
-								src: url("{{$.RawFileLink}}");
+								src: url("{{$.TargetFileLink}}");
 							}
 						</style>
 						<div class="font-preview">
@@ -164,7 +167,7 @@
 							{{end}}
 						</div>
 					{{else}}
-						<a href="{{$.RawFileLink}}" rel="nofollow">{{ctx.Locale.Tr "repo.file_view_raw"}}</a>
+						<a href="{{$.TargetFileLink}}" rel="nofollow">{{ctx.Locale.Tr "repo.file_view_raw"}}</a>
 					{{end}}
 				</div>
 			{{else if .FileSize}}

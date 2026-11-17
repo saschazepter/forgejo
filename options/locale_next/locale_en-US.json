@@ -702,6 +702,7 @@
 	"repo.commit.unavailable": "(unavailable)",
 	"repo.commit.unavailable.tooltip": "This commit is no longer present in the repository.",
 	"repo.commit.load_tags_failed": "Load tags failed because of internal error",
+	"repo.file_raw.lfs_pointer": "Raw LFS Pointer",
 	"compare.branches.title": "Compare branches",
 	"migrate.pagure.description": "Migrate data from pagure.io or other Pagure instances.",
 	"migrate.pagure.incorrect_url": "Incorrect source repository URL has been provided",

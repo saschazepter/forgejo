@@ -222,7 +222,7 @@ func renderReadmeFile(ctx *context.Context, subfolder string, readmeFile *git.Tr
 		return
 	}
 
-	ctx.Data["RawFileLink"] = ""
+	ctx.Data["TargetFileLink"] = ""
 	ctx.Data["ReadmeInList"] = true
 	ctx.Data["ReadmeExist"] = true
 	ctx.Data["FileIsSymlink"] = readmeFile.IsLink()
@@ -240,7 +240,8 @@ func renderReadmeFile(ctx *context.Context, subfolder string, readmeFile *git.Tr
 
 	if fInfo.IsLFSFile {
 		filenameBase64 := base64.RawURLEncoding.EncodeToString([]byte(readmeFile.Name()))
-		ctx.Data["RawFileLink"] = fmt.Sprintf("%s.git/info/lfs/objects/%s/%s", ctx.Repo.Repository.Link(), url.PathEscape(fInfo.LfsMeta.Oid), url.PathEscape(filenameBase64))
+		ctx.Data["RawFileLink"] = ctx.Repo.RepoLink + "/raw/" + ctx.Repo.BranchNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
+		ctx.Data["TargetFileLink"] = fmt.Sprintf("%s.git/info/lfs/objects/%s/%s", ctx.Repo.Repository.Link(), url.PathEscape(fInfo.LfsMeta.Oid), url.PathEscape(filenameBase64))
 	}
 
 	if !fInfo.SniffedType.IsText() {
@@ -335,7 +336,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 	ctx.Data["Title"] = ctx.Tr("repo.file.title", ctx.Repo.Repository.Name+"/"+ctx.Repo.TreePath, ctx.Repo.RefName)
 	ctx.Data["FileIsSymlink"] = entry.IsLink()
 	ctx.Data["FileName"] = blob.Name()
-	ctx.Data["RawFileLink"] = ctx.Repo.RepoLink + "/raw/" + ctx.Repo.BranchNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
+	ctx.Data["TargetFileLink"] = ctx.Repo.RepoLink + "/raw/" + ctx.Repo.BranchNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
 
 	ctx.Data["OpenGraphTitle"] = ctx.Data["Title"]
 	ctx.Data["OpenGraphURL"] = fmt.Sprintf("%s%s", setting.AppURL, ctx.Data["Link"])
@@ -412,7 +413,8 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 	// contents of the pointer and not the contents of the Git LFS file that the
 	// pointer points at.
 	if fInfo.IsLFSFile && setting.LFS.StartServer {
-		ctx.Data["RawFileLink"] = ctx.Repo.RepoLink + "/media/" + ctx.Repo.BranchNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
+		ctx.Data["RawFileLink"] = ctx.Repo.RepoLink + "/raw/" + ctx.Repo.BranchNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
+		ctx.Data["TargetFileLink"] = ctx.Repo.RepoLink + "/media/" + ctx.Repo.BranchNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
 	}
 
 	isRepresentableAsText := fInfo.SniffedType.IsRepresentableAsText()

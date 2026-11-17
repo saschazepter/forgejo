@@ -21,27 +21,27 @@
 					{{else if not .IsTextFile}}
 						<div class="view-raw">
 							{{if .IsImageFile}}
-								<img src="{{$.RawFileLink}}" alt="">
+								<img src="{{$.TargetFileLink}}" alt="">
 							{{else if .IsVideoFile}}
-								<video controls src="{{$.RawFileLink}}">
+								<video controls src="{{$.TargetFileLink}}">
 									<strong>{{ctx.Locale.Tr "repo.video_not_supported_in_browser"}}</strong>
 								</video>
 							{{else if .IsAudioFile}}
-								<audio controls src="{{$.RawFileLink}}">
+								<audio controls src="{{$.TargetFileLink}}">
 									<strong>{{ctx.Locale.Tr "repo.audio_not_supported_in_browser"}}</strong>
 								</audio>
 							{{else if .IsPDFFile}}
-								<lazy-webc tag="pdf-object" src="{{$.RawFileLink}}">
-									<a href="{{$.RawFileLink}}" class="ui basic button">{{ctx.Locale.Tr "repo.diff.view_file"}}</a>
+								<lazy-webc tag="pdf-object" src="{{$.TargetFileLink}}">
+									<a href="{{$.TargetFileLink}}" class="ui basic button">{{ctx.Locale.Tr "repo.diff.view_file"}}</a>
 								</lazy-webc>
 							{{else if .Is3DModelFile}}
 								{{if .IsGLBFile}}
-									<lazy-webc tag="model-viewer" src="{{$.RawFileLink}}" ar shadow-intensity="2" camera-controls touch-action="pan-y"></lazy-webc>
+									<lazy-webc tag="model-viewer" src="{{$.TargetFileLink}}" ar shadow-intensity="2" camera-controls touch-action="pan-y"></lazy-webc>
 								{{else}}
-									<a href="{{$.RawFileLink}}" rel="nofollow">{{ctx.Locale.Tr "repo.file_view_raw"}}!</a>
+									<a href="{{$.TargetFileLink}}" rel="nofollow">{{ctx.Locale.Tr "repo.file_view_raw"}}!</a>
 								{{end}}
 							{{else}}
-								<a href="{{$.RawFileLink}}" rel="nofollow">{{ctx.Locale.Tr "repo.file_view_raw"}}</a>
+								<a href="{{$.TargetFileLink}}" rel="nofollow">{{ctx.Locale.Tr "repo.file_view_raw"}}</a>
 							{{end}}
 						</div>
 					{{else if .FileSize}}

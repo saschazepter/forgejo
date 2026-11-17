@@ -74,6 +74,8 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 	// Gets the doc corresponding to the urlStr, ensures that the HTTP status
 	// is OK.
 	testGetDocOK := func(t *testing.T, session TestSession, urlStr string) *goquery.Document {
+		t.Helper()
+
 		req := NewRequest(t, "GET", urlStr)
 		resp := session.MakeRequest(t, req, http.StatusOK)
 
@@ -83,6 +85,8 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 
 	// Checks whether the label is present for a single-file view of a given doc.
 	testStoredInGitLFSShown := func(t *testing.T, doc *goquery.Document, newFileName string, contains bool) {
+		t.Helper()
+
 		t.Run("Label", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
@@ -105,6 +109,8 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 	// assert whether said files are accessible in our store; only that the shown
 	// files represent valid pointers.
 	testGitLFSPointerInfoShown := func(t *testing.T, doc *goquery.Document, contains bool) {
+		t.Helper()
+
 		t.Run("Label", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
@@ -114,6 +120,25 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 				assert.Contains(t, fileInfo, locale.TrString("repo.stored_lfs"))
 			} else {
 				assert.NotContains(t, fileInfo, locale.TrString("repo.stored_lfs"))
+			}
+		})
+	}
+
+	// Check the 'Raw LFS Pointer' button's presence.
+	testGitLFSViewPointerButtonShown := func(t *testing.T, doc *goquery.Document, contains bool, expectedURL string) {
+		t.Helper()
+
+		t.Run("ViewLFSPointerButton", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			viewLfsPointerButton := doc.Find(`div.file-header-right > div.buttons > a[data-test-name="pointer"]`)
+			if contains {
+				assert.Contains(t, viewLfsPointerButton.Text(), locale.TrString("repo.file_raw.lfs_pointer"))
+				rawLink, exists := viewLfsPointerButton.Attr("href")
+				assert.True(t, exists)
+				assert.Equal(t, expectedURL, rawLink)
+			} else {
+				assert.Contains(t, viewLfsPointerButton.Text(), "")
 			}
 		})
 	}
@@ -130,17 +155,29 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 	// - rawLinkSelector: Selector for finding the 'Raw'/'View file' button
 	// - replaceBefore: Part of the urlStr that should be replaced
 	// - replaceAfter: What said replaceBefore should be replaced with.
-	testFileRender := func(t *testing.T, isLFSAccessible, showLFSLabel, storedWithGitLFSLabel bool, filenameStr, urlStr, contentSelector, contentStr, rawLinkSelector, replaceBefore, replaceAfter string) {
+	testFileRender := func(t *testing.T, isLFSAccessible, showLFSLabel, testStoredWithGitLFSLabel, testViewLFSPointerButton bool, filenameStr, urlStr, contentSelector, contentStr, mediaLinkSelector, mediaLinkReplaceBefore, mediaLinkReplaceAfter string) {
+		t.Helper()
+
 		doc := testGetDocOK(t, *session, urlStr)
 
 		// 'Stored in Git LFS' is shown in the file info
-		if storedWithGitLFSLabel {
+		if testStoredWithGitLFSLabel {
 			testStoredInGitLFSShown(t, doc, filenameStr, isLFSAccessible || showLFSLabel)
 		} else {
 			testGitLFSPointerInfoShown(t, doc, isLFSAccessible || showLFSLabel)
 		}
 
-		expectedRawLink := strings.Replace(urlStr, replaceBefore, replaceAfter, 1)
+		if testViewLFSPointerButton {
+			// Whether the button is shown or not doesn't matter; the fact that we use
+			// mediaLinkReplaceBefore doesn't matter as we apply the same principle as
+			// with the media link except from the fact that we always replace with
+			// "raw" instead of either "raw" or "media" depending on whether the
+			// file is an LFS file.
+			expectedRawLFSPointerLink := strings.Replace(urlStr, mediaLinkReplaceBefore, "raw", 1)
+			testGitLFSViewPointerButtonShown(t, doc, isLFSAccessible || showLFSLabel, expectedRawLFSPointerLink)
+		}
+
+		expectedMediaLink := strings.Replace(urlStr, mediaLinkReplaceBefore, mediaLinkReplaceAfter, 1)
 
 		t.Run("Content", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
@@ -154,7 +191,7 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 					assert.Equal(t, locale.TrString("repo.file_view_raw"), contentStr)
 					rawLink, exists := doc.Find("div.file-view > div.view-raw > a").Attr("href")
 					assert.True(t, exists, "Download link should render instead of content because this is a binary file")
-					assert.Equal(t, expectedRawLink, rawLink, "The download link should use the proper /media link because it's in LFS")
+					assert.Equal(t, expectedMediaLink, rawLink, "The download link should use the proper /media link because it's in LFS")
 				})
 			}
 		})
@@ -162,9 +199,9 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 		t.Run("Raw button", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			rawLink, _ := doc.Find(rawLinkSelector).First().Attr("href")
+			rawLink, _ := doc.Find(mediaLinkSelector).First().Attr("href")
 			assert.Equal(t,
-				expectedRawLink,
+				expectedMediaLink,
 				rawLink,
 			)
 		})
@@ -172,6 +209,8 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 
 	// Checks whether the README renders for a given URL that shows the repository files.
 	testReadmeUsingURL := func(t *testing.T, isLFS bool, urlStr string) {
+		t.Helper()
+
 		t.Run("Readme", func(t *testing.T) {
 			t.Run("Content", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
@@ -193,6 +232,8 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 
 	// Tests /blame endpoint with different Git LFS scenarios.
 	testBlame := func(t *testing.T, isLFSEnabled bool) {
+		t.Helper()
+
 		t.Run("Blame", func(t *testing.T) {
 			t.Run("Markup", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
@@ -200,6 +241,7 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 				testFileRender(t,
 					isLFSEnabled,
 					isLFSEnabled,
+					false,
 					false,
 					"CONTRIBUTING.md",
 					"/user2/lfs/blame/commit/e9c32647bab825977942598c0efa415de300304b/CONTRIBUTING.md",
@@ -218,6 +260,7 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 					isLFSEnabled,
 					isLFSEnabled,
 					false,
+					false,
 					"crypt.bin",
 					"/user2/lfs/blame/commit/e9c32647bab825977942598c0efa415de300304b/crypt.bin",
 					".file-view > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(2)",
@@ -235,6 +278,7 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 					false,
 					false,
 					false,
+					false,
 					"invalid",
 					"/user2/lfs/blame/commit/e9c32647bab825977942598c0efa415de300304b/invalid",
 					".file-view > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(2)",
@@ -249,6 +293,8 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 
 	// Tests /commit endpoint with different Git LFS scenarios
 	testCommit := func(t *testing.T, isLFSEnabled bool) {
+		t.Helper()
+
 		t.Run("Commit", func(t *testing.T) {
 			t.Run("Markup", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
@@ -257,6 +303,7 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 					isLFSEnabled,
 					true,
 					true,
+					false,
 					"CONTRIBUTING.md",
 					"/user2/lfs/commit/73cf03db6ece34e12bf91e8853dc58f678f2f82d",
 					"div[data-new-filename='CONTRIBUTING.md'] .diff-file-body",
@@ -274,6 +321,7 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 					isLFSEnabled,
 					true,
 					true,
+					false,
 					"crypt.bin",
 					"/user2/lfs/commit/73cf03db6ece34e12bf91e8853dc58f678f2f82d",
 					"div[data-new-filename='crypt.bin'] .diff-file-body",
@@ -291,6 +339,7 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 					false,
 					false,
 					false,
+					false,
 					"invalid",
 					"/user2/lfs/commit/e9c32647bab825977942598c0efa415de300304b",
 					"div[data-new-filename='invalid'] .diff-file-body",
@@ -305,6 +354,8 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 
 	// Tests /src/branch endpoint with different Git LFS scenarios.
 	testSrcBranch := func(t *testing.T, isLFSEnabled bool) {
+		t.Helper()
+
 		t.Run("SrcBranch", func(t *testing.T) {
 			var replaceAfter string
 			if isLFSEnabled {
@@ -327,11 +378,12 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 					isLFSEnabled,
 					false,
 					false,
+					true,
 					"CONTRIBUTING.md",
 					"/user2/lfs/src/branch/master/CONTRIBUTING.md",
 					"div.file-view",
 					contentStr,
-					"div.file-header-right > div.buttons:nth-child(2) > a",
+					`div.file-header-right > div.buttons > a[data-test-name="media"]`,
 					"src",
 					replaceAfter,
 				)
@@ -351,11 +403,12 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 					isLFSEnabled,
 					false,
 					false,
+					true,
 					"crypt.bin",
 					"/user2/lfs/src/branch/master/crypt.bin",
 					"div.file-view",
 					contentStr,
-					"div.file-header-right > div > a",
+					`div.file-header-right > div.buttons > a[data-test-name="media"]`,
 					"src",
 					replaceAfter,
 				)
@@ -368,11 +421,12 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 					false,
 					false,
 					false,
+					true,
 					"invalid",
 					"/user2/lfs/src/branch/master/invalid",
 					"div.file-view",
 					"oid sha256:9d178b5f15046343fd32f451df93acc2bdd9e6373be478b968e4cad6b6647351",
-					"div.file-header-right > div > a",
+					`div.file-header-right > div.buttons > a[data-test-name="media"]`,
 					"src",
 					"raw",
 				)
@@ -384,6 +438,8 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 
 	// Tests /src/commit endpoint with different Git LFS scenarios.
 	testSrcCommit := func(t *testing.T, isLFSEnabled bool) {
+		t.Helper()
+
 		t.Run("SrcCommit", func(t *testing.T) {
 			var replaceAfter string
 			if isLFSEnabled {
@@ -406,11 +462,12 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 					isLFSEnabled,
 					false,
 					false,
+					true,
 					"CONTRIBUTING.md",
 					"/user2/lfs/src/commit/e9c32647bab825977942598c0efa415de300304b/CONTRIBUTING.md",
 					"div.file-view",
 					contentStr,
-					"div.file-header-right > div.buttons:nth-child(2) > a",
+					`div.file-header-right > div.buttons > a[data-test-name="media"]`,
 					"src",
 					replaceAfter,
 				)
@@ -430,11 +487,12 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 					isLFSEnabled,
 					false,
 					false,
+					true,
 					"crypt.bin",
 					"/user2/lfs/src/commit/e9c32647bab825977942598c0efa415de300304b/crypt.bin",
 					"div.file-view",
 					contentStr,
-					"div.file-header-right > div > a",
+					`div.file-header-right > div.buttons > a[data-test-name="media"]`,
 					"src",
 					replaceAfter,
 				)
@@ -447,11 +505,12 @@ func TestLFSFileRenderInRepo(t *testing.T) {
 					false,
 					false,
 					false,
+					true,
 					"invalid",
 					"/user2/lfs/src/commit/e9c32647bab825977942598c0efa415de300304b/invalid",
 					"div.file-view",
 					"oid sha256:9d178b5f15046343fd32f451df93acc2bdd9e6373be478b968e4cad6b6647351",
-					"div.file-header-right > div > a",
+					`div.file-header-right > div.buttons > a[data-test-name="media"]`,
 					"src",
 					"raw",
 				)

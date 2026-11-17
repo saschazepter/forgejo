@@ -286,7 +286,7 @@ func LFSFileGet(ctx *context.Context) {
 
 	fileSize := meta.Size
 	ctx.Data["FileSize"] = meta.Size
-	ctx.Data["RawFileLink"] = fmt.Sprintf(
+	ctx.Data["TargetFileLink"] = fmt.Sprintf(
 		"%s%s/%s.git/info/lfs/objects/%s/%s",
 		setting.AppURL,
 		url.PathEscape(ctx.Repo.Repository.OwnerName),
