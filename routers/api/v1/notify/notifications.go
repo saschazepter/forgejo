@@ -69,6 +69,8 @@ func subjectToSource(value []string) (result []activities_model.NotificationSour
 			result = append(result, activities_model.NotificationSourcePullRequest)
 		case "repository":
 			result = append(result, activities_model.NotificationSourceRepository)
+		case "release":
+			result = append(result, activities_model.NotificationSourceRelease)
 		}
 	}
 	return result

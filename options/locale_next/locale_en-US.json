@@ -1159,7 +1159,6 @@
 	"repo.watch.issues": "Issues",
 	"repo.watch.pull_requests": "Pull requests",
 	"repo.watch.releases": "Releases",
-	"repo.watch.releases.hint": "(Email only)",
 	"org.teams.invite_team_member.expired_list": "Expired invitations",
 	"org.teams.invite_expires_on": "expires on %[1]s",
 	"org.teams.invited_on": "invited on %[1]s",

@@ -30,6 +30,10 @@ func ToNotificationThread(ctx context.Context, n *activities_model.Notification)
 		for repository := result.Repository; repository != nil; repository = repository.Parent {
 			repository.Permissions = nil
 		}
+
+		if n.Release != nil {
+			result.Release = ToAPIRelease(ctx, n.Repository, n.Release, false)
+		}
 	}
 
 	// handle Subject
@@ -73,6 +77,13 @@ func ToNotificationThread(ctx context.Context, n *activities_model.Notification)
 			// FIXME: this is a relative URL, rather useless and inconsistent, but keeping for backwards compat
 			URL:     n.Repository.Link(),
 			HTMLURL: n.Repository.HTMLURL(),
+		}
+	case activities_model.NotificationSourceRelease:
+		result.Subject = &api.NotificationSubject{Type: api.NotifySubjectRelease}
+		if n.Release != nil {
+			result.Subject.Title = n.Release.Title
+			result.Subject.URL = n.Release.APIURL()
+			result.Subject.HTMLURL = n.Release.HTMLURL()
 		}
 	}
 

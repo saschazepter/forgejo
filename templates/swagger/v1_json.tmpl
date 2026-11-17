@@ -2479,7 +2479,8 @@
               "enum": [
                 "issue",
                 "pull",
-                "repository"
+                "repository",
+                "release"
               ],
               "type": "string"
             },
@@ -14952,7 +14953,8 @@
               "enum": [
                 "issue",
                 "pull",
-                "repository"
+                "repository",
+                "release"
               ],
               "type": "string"
             },
@@ -29810,6 +29812,9 @@
         "pinned": {
           "type": "boolean",
           "x-go-name": "Pinned"
+        },
+        "release": {
+          "$ref": "#/definitions/Release"
         },
         "repository": {
           "$ref": "#/definitions/Repository"

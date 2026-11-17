@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	activities_model "forgejo.org/models/activities"
 	"forgejo.org/models/db"
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/unittest"
@@ -538,4 +539,48 @@ func TestCreateNewTag(t *testing.T) {
 
 	require.NoError(t, CreateNewTag(git.DefaultContext, user, repo, "master", "v2.0",
 		"v2.0 is released \n\n BUGFIX: .... \n\n 123"))
+}
+
+func TestRelease_delete(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+
+	gitRepo, err := gitrepo.OpenRepository(git.DefaultContext, repo)
+	require.NoError(t, err)
+	defer gitRepo.Close()
+
+	release := repo_model.Release{
+		RepoID:       repo.ID,
+		Repo:         repo,
+		PublisherID:  user.ID,
+		Publisher:    user,
+		TagName:      "v1.1.1",
+		Target:       "master",
+		Title:        "v1.1.1 is released",
+		Note:         "v1.1.1 is released",
+		IsDraft:      false,
+		IsPrerelease: false,
+		IsTag:        false,
+	}
+	require.NoError(t, CreateRelease(gitRepo, &release, "", []*AttachmentChange{}))
+
+	// create notifications for this release
+	require.NoError(t, activities_model.CreateOrUpdateReleaseNotifications(db.DefaultContext, release.ID))
+
+	// user1 has a notification for the release
+	notif, found, err := activities_model.GetReleaseNotification(t.Context(), 1, release.ID)
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, activities_model.NotificationStatusUnread, notif.Status)
+
+	// delete the release
+	require.NoError(t, DeleteReleaseByID(t.Context(), repo, &release, user, false))
+
+	// user1 no longer has a notification for the release
+	notif, found, err = activities_model.GetReleaseNotification(t.Context(), 1, release.ID)
+	require.NoError(t, err)
+	require.False(t, found)
+	assert.Nil(t, notif)
 }

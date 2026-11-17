@@ -5,6 +5,7 @@ package activities
 
 import (
 	"context"
+	"fmt"
 
 	"forgejo.org/models/db"
 	issues_model "forgejo.org/models/issues"
@@ -24,6 +25,7 @@ type FindNotificationOptions struct {
 	UserID            int64
 	RepoID            int64
 	IssueID           int64
+	ReleaseID         int64
 	Status            []NotificationStatus
 	Source            []NotificationSource
 	UpdatedAfterUnix  int64
@@ -41,6 +43,9 @@ func (opts FindNotificationOptions) ToConds() builder.Cond {
 	}
 	if opts.IssueID != 0 {
 		cond = cond.And(builder.Eq{"notification.issue_id": opts.IssueID})
+	}
+	if opts.ReleaseID != 0 {
+		cond = cond.And(builder.Eq{"notification.release_id": opts.ReleaseID})
 	}
 	if len(opts.Status) > 0 {
 		if len(opts.Status) == 1 {
@@ -176,6 +181,36 @@ func createOrUpdateIssueNotifications(ctx context.Context, issueID, commentID, n
 	return nil
 }
 
+func CreateOrUpdateReleaseNotifications(ctx context.Context, releaseID int64) error {
+	release, err := repo_model.GetReleaseByID(ctx, releaseID)
+	if err != nil {
+		return fmt.Errorf("GetReleaseByID: %w", err)
+	}
+
+	err = release.LoadRepo(ctx)
+	if err != nil {
+		return fmt.Errorf("LoadRepo: %w", err)
+	}
+
+	watcherIDList, err := repo_model.GetSelectWatcherIDs(ctx, release.RepoID, repo_model.WatchSelection{Issues: false, PullRequests: false, Releases: true})
+	if err != nil {
+		return fmt.Errorf("GetSelectWatcherIDs: %w", err)
+	}
+
+	return db.WithTx(ctx, func(ctx context.Context) error {
+		for _, userID := range watcherIDList {
+			if userID != release.PublisherID {
+				err := createOrUpdateReleaseNotificationForUser(ctx, userID, release)
+				if err != nil {
+					log.Error("Can't update notification for release %d for user %s: %v", release.ID, userID, err)
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
 // NotificationList contains a list of notifications
 type NotificationList []*Notification
 
@@ -193,11 +228,14 @@ func (nl NotificationList) LoadAttributes(ctx context.Context) error {
 	if _, err := nl.LoadComments(ctx); err != nil {
 		return err
 	}
+	if _, err := nl.LoadReleases(ctx); err != nil {
+		return fmt.Errorf("LoadReleases: %w", err)
+	}
 	return nil
 }
 
-// getPendingRepoIDs returns all the repositoty ids which haven't been loaded
-func (nl NotificationList) getPendingRepoIDs() []int64 {
+// getRepoIDsToLoad returns all the repositoty ids which haven't been loaded
+func (nl NotificationList) getRepoIDsToLoad() []int64 {
 	return container.FilterSlice(nl, func(n *Notification) (int64, bool) {
 		return n.RepoID, n.Repository == nil
 	})
@@ -209,7 +247,7 @@ func (nl NotificationList) LoadRepos(ctx context.Context) (repo_model.Repository
 		return repo_model.RepositoryList{}, []int{}, nil
 	}
 
-	repoIDs := nl.getPendingRepoIDs()
+	repoIDs := nl.getRepoIDsToLoad()
 	repos, err := db.GetByIDs(ctx, "id", repoIDs, &repo_model.Repository{})
 	if err != nil {
 		return nil, nil, err
@@ -241,7 +279,7 @@ func (nl NotificationList) LoadRepos(ctx context.Context) (repo_model.Repository
 	return reposList, failed, nil
 }
 
-func (nl NotificationList) getPendingIssueIDs() []int64 {
+func (nl NotificationList) getIssueIDsToLoad() []int64 {
 	ids := make(container.Set[int64], len(nl))
 	for _, notification := range nl {
 		if notification.Issue != nil {
@@ -258,7 +296,7 @@ func (nl NotificationList) LoadIssues(ctx context.Context) ([]int, error) {
 		return []int{}, nil
 	}
 
-	issueIDs := nl.getPendingIssueIDs()
+	issueIDs := nl.getIssueIDsToLoad()
 	issues, err := db.GetByIDs(ctx, "id", issueIDs, &issues_model.Issue{})
 	if err != nil {
 		return nil, err
@@ -300,7 +338,7 @@ func (nl NotificationList) Without(failures []int) NotificationList {
 	return remaining
 }
 
-func (nl NotificationList) getPendingCommentIDs() []int64 {
+func (nl NotificationList) getCommentIDsToLoad() []int64 {
 	ids := make(container.Set[int64], len(nl))
 	for _, notification := range nl {
 		if notification.CommentID == 0 || notification.Comment != nil {
@@ -354,7 +392,7 @@ func (nl NotificationList) LoadComments(ctx context.Context) ([]int, error) {
 		return []int{}, nil
 	}
 
-	commentIDs := nl.getPendingCommentIDs()
+	commentIDs := nl.getCommentIDsToLoad()
 	comments, err := db.GetByIDs(ctx, "id", commentIDs, &issues_model.Comment{})
 	if err != nil {
 		return nil, err
@@ -370,6 +408,46 @@ func (nl NotificationList) LoadComments(ctx context.Context) ([]int, error) {
 				continue
 			}
 			notification.Comment.Issue = notification.Issue
+		}
+	}
+	return failures, nil
+}
+
+func (nl NotificationList) getReleaseIDsToLoad() []int64 {
+	ids := make(container.Set[int64], len(nl))
+	for _, notification := range nl {
+		if !notification.ReleaseID.Has() || notification.Release != nil {
+			continue
+		}
+		ids.Add(notification.ReleaseID.ValueOrZeroValue())
+	}
+	return ids.Values()
+}
+
+// LoadReleases loads releases from database
+func (nl NotificationList) LoadReleases(ctx context.Context) ([]int, error) {
+	if len(nl) == 0 {
+		return []int{}, nil
+	}
+
+	releaseIDs := nl.getReleaseIDsToLoad()
+	releases, err := db.GetByIDs(ctx, "id", releaseIDs, &repo_model.Release{})
+	if err != nil {
+		return nil, fmt.Errorf("GetByIDs[Release]: %w", err)
+	}
+
+	failures := []int{}
+
+	for i, notification := range nl {
+		if notification.Release == nil && notification.ReleaseID.Has() {
+			releaseID := notification.ReleaseID.ValueOrZeroValue()
+			notification.Release = releases[releaseID]
+			if notification.Release == nil {
+				log.Error("Notification[%d]: ReleaseID: %d Not Found", notification.ID, notification.ReleaseID)
+				failures = append(failures, i)
+				continue
+			}
+			notification.Release.Repo = notification.Repository
 		}
 	}
 	return failures, nil

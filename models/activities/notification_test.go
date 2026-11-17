@@ -11,6 +11,7 @@ import (
 
 	"forgejo.org/models/db"
 	issues_model "forgejo.org/models/issues"
+	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/timeutil"
@@ -32,6 +33,34 @@ func TestCreateOrUpdateIssueNotifications(t *testing.T) {
 
 	notf = unittest.AssertExistsAndLoadBean(t, &Notification{UserID: 4, IssueID: issue.ID})
 	assert.Equal(t, NotificationStatusUnread, notf.Status)
+}
+
+func TestCreateOrUpdateReleaseNotifications(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	release := unittest.AssertExistsAndLoadBean(t, &repo_model.Release{ID: 1})
+
+	// user8 only watches issues and PRs, not releases
+	updated, err := db.GetEngine(t.Context()).Table("watch").Update(
+		&repo_model.Watch{WatchSelectionIssues: true, WatchSelectionPullRequests: true, WatchSelectionReleases: false},
+		&repo_model.Watch{UserID: 8, RepoID: 1},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), updated)
+
+	require.NoError(t, CreateOrUpdateReleaseNotifications(db.DefaultContext, release.ID))
+
+	notif, found, err := GetReleaseNotification(t.Context(), 1, release.ID)
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, NotificationStatusUnread, notif.Status)
+	notif, found, err = GetReleaseNotification(t.Context(), 4, release.ID)
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, NotificationStatusUnread, notif.Status)
+	notif, found, err = GetReleaseNotification(t.Context(), 8, release.ID)
+	require.NoError(t, err)
+	require.False(t, found)
+	assert.Nil(t, notif)
 }
 
 func TestNotificationsForUser(t *testing.T) {
@@ -174,4 +203,44 @@ func TestUpdateIssueNotification(t *testing.T) {
 		assert.EqualValues(t, 0, notification.CommentID)
 		assert.Equal(t, timeutil.TimeStamp(now.Unix()), notification.UpdatedUnix)
 	})
+}
+
+func TestSetReleaseReadBy(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	user1 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+	user20 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 20})
+	release := unittest.AssertExistsAndLoadBean(t, &repo_model.Release{ID: 1})
+
+	require.NoError(t, CreateOrUpdateReleaseNotifications(db.DefaultContext, release.ID))
+
+	// user1 is notified of a release
+	notif, found, err := GetReleaseNotification(t.Context(), user1.ID, release.ID)
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, NotificationStatusUnread, notif.Status)
+	// user20 isn't notified
+	notif, found, err = GetReleaseNotification(t.Context(), user20.ID, release.ID)
+	require.NoError(t, err)
+	require.False(t, found)
+	assert.Nil(t, notif)
+
+	// user1 visits the release page
+	err = SetReleaseReadBy(t.Context(), release.ID, user1.ID)
+	require.NoError(t, err)
+
+	// it marks the release as read for them
+	notif, found, err = GetReleaseNotification(t.Context(), user1.ID, release.ID)
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, NotificationStatusRead, notif.Status)
+
+	// user20 visits the release page
+	err = SetReleaseReadBy(t.Context(), release.ID, user20.ID)
+	require.NoError(t, err)
+
+	// they still aren't notified
+	notif, found, err = GetReleaseNotification(t.Context(), user20.ID, release.ID)
+	require.NoError(t, err)
+	require.False(t, found)
+	assert.Nil(t, notif)
 }

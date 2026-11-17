@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"forgejo.org/models"
+	activities_model "forgejo.org/models/activities"
 	"forgejo.org/models/asymkey"
 	"forgejo.org/models/db"
 	git_model "forgejo.org/models/git"
@@ -385,6 +386,14 @@ func SingleRelease(ctx *context.Context) {
 	if err != nil {
 		ctx.ServerError("LoadArchiveDownloadCount", err)
 		return
+	}
+
+	if ctx.IsSigned && !release.IsTag {
+		err = activities_model.SetReleaseReadBy(ctx, release.ID, ctx.Doer.ID)
+		if err != nil {
+			ctx.ServerError("SetReleaseReadBy", err)
+			return
+		}
 	}
 
 	ctx.Data["Releases"] = releases
