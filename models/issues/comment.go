@@ -530,6 +530,10 @@ func (c *Comment) EventTag() string {
 
 // LoadLabel if comment.Type is CommentTypeLabel, then load Label
 func (c *Comment) LoadLabel(ctx context.Context) error {
+	if c.Label != nil {
+		return nil
+	}
+
 	var label Label
 	has, err := db.GetEngine(ctx).ID(c.LabelID).Get(&label)
 	if err != nil {
@@ -571,7 +575,7 @@ func (c *Comment) LoadProject(ctx context.Context) error {
 
 // LoadMilestone if comment.Type is CommentTypeMilestone, then load milestone
 func (c *Comment) LoadMilestone(ctx context.Context) error {
-	if c.OldMilestoneID > 0 {
+	if c.OldMilestoneID > 0 && c.OldMilestone == nil {
 		var oldMilestone Milestone
 		has, err := db.GetEngine(ctx).ID(c.OldMilestoneID).Get(&oldMilestone)
 		if err != nil {
@@ -581,7 +585,7 @@ func (c *Comment) LoadMilestone(ctx context.Context) error {
 		}
 	}
 
-	if c.MilestoneID > 0 {
+	if c.MilestoneID > 0 && c.Milestone == nil {
 		var milestone Milestone
 		has, err := db.GetEngine(ctx).ID(c.MilestoneID).Get(&milestone)
 		if err != nil {

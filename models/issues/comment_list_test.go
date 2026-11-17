@@ -192,3 +192,20 @@ func TestCommentListLoadReactions(t *testing.T) {
 	assert.Equal(t, "rocket", comment2.Reactions[0].Type)
 	assert.NotNil(t, comment2.Reactions[0].User)
 }
+
+func TestCommentListLoadLabels(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	// Comments whose ID differ from their label ID, so a lookup by the wrong key
+	// cannot pass by accident, and with different labels, so each comment must
+	// get its own label.
+	comment1 := unittest.AssertExistsAndLoadBean(t, &Comment{ID: 2020, LabelID: 1})
+	comment2 := unittest.AssertExistsAndLoadBean(t, &Comment{ID: 2021, LabelID: 2})
+
+	require.NoError(t, CommentList{comment1, comment2}.loadLabels(db.DefaultContext))
+
+	require.NotNil(t, comment1.Label)
+	assert.EqualValues(t, 1, comment1.Label.ID)
+	require.NotNil(t, comment2.Label)
+	assert.EqualValues(t, 2, comment2.Label.ID)
+}
