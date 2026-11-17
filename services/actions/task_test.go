@@ -10,6 +10,8 @@ import (
 	"forgejo.org/models/unittest"
 	"forgejo.org/models/user"
 	"forgejo.org/modules/actions"
+	"forgejo.org/modules/setting"
+	"forgejo.org/modules/test"
 	"forgejo.org/modules/timeutil"
 	notify_service "forgejo.org/services/notify"
 
@@ -107,6 +109,39 @@ jobs:
 		require.Empty(t, taskContext.Fields["forgejo_actions_id_token_request_url"].GetStringValue())
 		require.NotEmpty(t, taskContext.Fields["gitea_runtime_token"].GetStringValue())
 		require.NotEmpty(t, taskContext.Fields["forgejo_runtime_token"].GetStringValue())
+	})
+
+	t.Run("openid connect id token request url", func(t *testing.T) {
+		for _, tc := range []struct {
+			name      string
+			appURL    string
+			appSubURL string
+			expected  string
+		}{
+			{
+				name:      "without sub-path",
+				appURL:    "https://forgejo.example.com/",
+				appSubURL: "",
+				expected:  "https://forgejo.example.com/api/actions/_apis/pipelines/workflows/1/idtoken?placeholder=true",
+			},
+			{
+				name:      "with sub-path",
+				appURL:    "https://example.com/sub/path/forgejo/",
+				appSubURL: "/sub/path/forgejo",
+				expected:  "https://example.com/sub/path/forgejo/api/actions/_apis/pipelines/workflows/1/idtoken?placeholder=true",
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				defer test.MockVariableValue(&setting.AppURL, tc.appURL)()
+				defer test.MockVariableValue(&setting.AppSubURL, tc.appSubURL)()
+
+				task := createTask(fmt.Sprintf(workflowFormat, "true"), false, "push")
+
+				taskContext, err := generateTaskContext(task, &repo_model.ActionsConfig{})
+				require.NoError(t, err)
+				assert.Equal(t, tc.expected, taskContext.Fields["forgejo_actions_id_token_request_url"].GetStringValue())
+			})
+		}
 	})
 }
 
