@@ -76,6 +76,30 @@ func TestPackageNpm(t *testing.T) {
 				"repository": {
 					"type": "` + repoType + `",
 					"url": "` + repoURL + `"
+				},
+				"peerDependencies": {
+					"tea": "2.x",
+					"soy-milk": "1.2"
+				},
+				"peerDependenciesMeta": {
+					"soy-milk": {
+						"optional": true
+					}
+				},
+				"engines": {
+					"node": ">=22.7.0",
+					"npm": ">=10.8.2"
+				},
+				"cpu": ["x64", "arm64"],
+				"os": ["linux", "darwin"],
+				"libc": ["glibc"],
+				"directories": {
+					"doc": "./doc",
+					"man": "./man"
+				},
+				"funding": "https://example.com/fund",
+				"acceptDependencies": {
+					"left-pad": "1.x"
 				}
 			  }
 			},
@@ -206,6 +230,15 @@ func TestPackageNpm(t *testing.T) {
 		assert.Equal(t, fmt.Sprintf("%s%s/-/%s/%s", setting.AppURL, root[1:], packageVersion, filename), pmv.Dist.Tarball)
 		assert.Equal(t, repoType, result.Repository.Type)
 		assert.Equal(t, repoURL, result.Repository.URL)
+		assert.Equal(t, map[string]string{"tea": "2.x", "soy-milk": "1.2"}, pmv.PeerDependencies)
+		assert.Equal(t, map[string]any{"soy-milk": map[string]any{"optional": true}}, pmv.PeerDependenciesMeta)
+		assert.Equal(t, map[string]string{"node": ">=22.7.0", "npm": ">=10.8.2"}, pmv.Engines)
+		assert.Equal(t, []string{"x64", "arm64"}, pmv.CPU)
+		assert.Equal(t, []string{"linux", "darwin"}, pmv.OS)
+		assert.Equal(t, []string{"glibc"}, pmv.Libc)
+		assert.Equal(t, map[string]string{"doc": "./doc", "man": "./man"}, pmv.Directories)
+		assert.Equal(t, "https://example.com/fund", pmv.Funding)
+		assert.Equal(t, map[string]string{"left-pad": "1.x"}, pmv.AcceptDependencies)
 	})
 
 	t.Run("AddTag", func(t *testing.T) {

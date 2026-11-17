@@ -262,6 +262,25 @@ func TestParsePackage(t *testing.T) {
 						Bin: map[string]string{
 							"bin": packageBin,
 						},
+						PeerDependencies: map[string]string{
+							"peer": "1.x",
+						},
+						PeerDependenciesMeta: map[string]any{
+							"peer": map[string]any{"optional": true},
+						},
+						Engines: map[string]string{
+							"node": ">=22",
+						},
+						CPU:  []string{"x64", "arm64"},
+						OS:   []string{"linux", "darwin"},
+						Libc: []string{"glibc"},
+						Directories: map[string]string{
+							"man": "./man",
+						},
+						Funding: "https://example.com/fund",
+						AcceptDependencies: map[string]string{
+							"left-pad": "1.x",
+						},
 						Dist: PackageDistribution{
 							Integrity: integrity,
 						},
@@ -298,5 +317,14 @@ func TestParsePackage(t *testing.T) {
 		assert.Equal(t, "1.2.0", p.Metadata.Dependencies["package"])
 		assert.Equal(t, repository.Type, p.Metadata.Repository.Type)
 		assert.Equal(t, repository.URL, p.Metadata.Repository.URL)
+		assert.Equal(t, map[string]string{"peer": "1.x"}, p.Metadata.PeerDependencies)
+		assert.Equal(t, map[string]any{"peer": map[string]any{"optional": true}}, p.Metadata.PeerDependenciesMeta)
+		assert.Equal(t, map[string]string{"node": ">=22"}, p.Metadata.Engines)
+		assert.Equal(t, []string{"x64", "arm64"}, p.Metadata.CPU)
+		assert.Equal(t, []string{"linux", "darwin"}, p.Metadata.OS)
+		assert.Equal(t, []string{"glibc"}, p.Metadata.Libc)
+		assert.Equal(t, map[string]string{"man": "./man"}, p.Metadata.Directories)
+		assert.Equal(t, "https://example.com/fund", p.Metadata.Funding)
+		assert.Equal(t, map[string]string{"left-pad": "1.x"}, p.Metadata.AcceptDependencies)
 	})
 }

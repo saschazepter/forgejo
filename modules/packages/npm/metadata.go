@@ -19,8 +19,16 @@ type Metadata struct {
 	BundleDependencies      []string          `json:"bundleDependencies,omitempty"`
 	DevelopmentDependencies map[string]string `json:"development_dependencies,omitempty"`
 	PeerDependencies        map[string]string `json:"peer_dependencies,omitempty"`
+	PeerDependenciesMeta    map[string]any    `json:"peer_dependencies_meta,omitempty"`
 	OptionalDependencies    map[string]string `json:"optional_dependencies,omitempty"`
 	Bin                     map[string]string `json:"bin,omitempty"`
 	Readme                  string            `json:"readme,omitempty"`
 	Repository              Repository        `json:"repository"`
+	Engines                 map[string]string `json:"engines,omitempty"`
+	CPU                     []string          `json:"cpu,omitempty"`
+	OS                      []string          `json:"os,omitempty"`
+	Libc                    []string          `json:"libc,omitempty"`
+	Directories             map[string]string `json:"directories,omitempty"`
+	Funding                 any               `json:"funding,omitempty"`
+	AcceptDependencies      map[string]string `json:"accept_dependencies,omitempty"`
 }

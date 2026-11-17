@@ -81,11 +81,19 @@ type PackageMetadataVersion struct {
 	BundleDependencies   []string            `json:"bundleDependencies,omitempty"`
 	DevDependencies      map[string]string   `json:"devDependencies,omitempty"`
 	PeerDependencies     map[string]string   `json:"peerDependencies,omitempty"`
+	PeerDependenciesMeta map[string]any      `json:"peerDependenciesMeta,omitempty"`
 	Bin                  map[string]string   `json:"bin,omitempty"`
 	OptionalDependencies map[string]string   `json:"optionalDependencies,omitempty"`
 	Readme               string              `json:"readme,omitempty"`
 	Dist                 PackageDistribution `json:"dist"`
 	Maintainers          []User              `json:"maintainers,omitempty"`
+	Engines              map[string]string   `json:"engines,omitempty"`
+	CPU                  []string            `json:"cpu,omitempty"`
+	OS                   []string            `json:"os,omitempty"`
+	Libc                 []string            `json:"libc,omitempty"`
+	Directories          map[string]string   `json:"directories,omitempty"`
+	Funding              any                 `json:"funding,omitempty"`
+	AcceptDependencies   map[string]string   `json:"acceptDependencies,omitempty"`
 }
 
 // PackageDistribution https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md#version
@@ -222,10 +230,18 @@ func ParsePackage(r io.Reader) (*Package, error) {
 				BundleDependencies:      meta.BundleDependencies,
 				DevelopmentDependencies: meta.DevDependencies,
 				PeerDependencies:        meta.PeerDependencies,
+				PeerDependenciesMeta:    meta.PeerDependenciesMeta,
 				OptionalDependencies:    meta.OptionalDependencies,
 				Bin:                     meta.Bin,
 				Readme:                  meta.Readme,
 				Repository:              meta.Repository,
+				Engines:                 meta.Engines,
+				CPU:                     meta.CPU,
+				OS:                      meta.OS,
+				Libc:                    meta.Libc,
+				Directories:             meta.Directories,
+				Funding:                 meta.Funding,
+				AcceptDependencies:      meta.AcceptDependencies,
 			},
 		}
 
