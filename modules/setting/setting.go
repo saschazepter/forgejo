@@ -181,7 +181,9 @@ func loadCommonSettingsFrom(cfg ConfigProvider) error {
 		return err
 	}
 	loadTimeFrom(cfg)
-	loadRepositoryFrom(cfg)
+	if err := loadRepositoryFrom(cfg); err != nil {
+		return err
+	}
 	if err := loadAvatarsFrom(cfg); err != nil {
 		return err
 	}

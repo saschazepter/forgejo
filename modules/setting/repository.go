@@ -5,6 +5,8 @@
 package setting
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path"
@@ -67,7 +69,7 @@ var (
 		// Repository editor settings
 		Editor struct {
 			LineWrapExtensions []string
-		} `ini:"-"`
+		} `ini:"repository.editor"`
 
 		// Repository upload settings
 		Upload struct {
@@ -76,12 +78,12 @@ var (
 			AllowedTypes string
 			FileMaxSize  int64
 			MaxFiles     int
-		} `ini:"-"`
+		} `ini:"repository.upload"`
 
 		// Repository local settings
 		Local struct {
 			LocalCopyPath string
-		} `ini:"-"`
+		} `ini:"repository.local"`
 
 		// Pull request settings
 		PullRequest struct {
@@ -293,7 +295,7 @@ var (
 	ScriptType   = "bash"
 )
 
-func loadRepositoryFrom(rootCfg ConfigProvider) {
+func loadRepositoryFrom(rootCfg ConfigProvider) error {
 	var err error
 	// Determine and create root git repository path.
 	sec := rootCfg.Section("repository")
@@ -319,15 +321,7 @@ func loadRepositoryFrom(rootCfg ConfigProvider) {
 	}
 
 	if err = sec.MapTo(&Repository); err != nil {
-		log.Fatal("Failed to map Repository settings: %v", err)
-	} else if err = rootCfg.Section("repository.editor").MapTo(&Repository.Editor); err != nil {
-		log.Fatal("Failed to map Repository.Editor settings: %v", err)
-	} else if err = rootCfg.Section("repository.upload").MapTo(&Repository.Upload); err != nil {
-		log.Fatal("Failed to map Repository.Upload settings: %v", err)
-	} else if err = rootCfg.Section("repository.local").MapTo(&Repository.Local); err != nil {
-		log.Fatal("Failed to map Repository.Local settings: %v", err)
-	} else if err = rootCfg.Section("repository.pull-request").MapTo(&Repository.PullRequest); err != nil {
-		log.Fatal("Failed to map Repository.PullRequest settings: %v", err)
+		return fmt.Errorf("failed to map Repository settings: %w", err)
 	}
 
 	if !rootCfg.Section("packages").Key("ENABLED").MustBool(Packages.Enabled) {
@@ -382,18 +376,23 @@ func loadRepositoryFrom(rootCfg ConfigProvider) {
 	}
 
 	if err := loadRepoArchiveFrom(rootCfg); err != nil {
-		log.Fatal("loadRepoArchiveFrom: %v", err)
+		return fmt.Errorf("loadRepoArchiveFrom: %w", err)
 	}
 	Repository.EnableFlags = sec.Key("ENABLE_FLAGS").MustBool()
 
-	if Repository.Signing.Format == "ssh" && Repository.Signing.SigningKey != "none" && Repository.Signing.SigningKey != "" {
+	if Repository.Signing.Format == "ssh" {
+		if Repository.Signing.SigningKey == "none" || Repository.Signing.SigningKey == "" || Repository.Signing.SigningKey == "default" {
+			return errors.New("missing [repository.signing].SIGNING_KEY for signing format ssh")
+		}
 		sshPublicKey, err := os.ReadFile(Repository.Signing.SigningKey)
 		if err != nil {
-			log.Fatal("Could not read repository signing key in %q: %v", Repository.Signing.SigningKey, err)
+			return fmt.Errorf("reading SSH signing key from [repository.signing].SIGNING_KEY failed: %w", err)
 		}
 		SSHInstanceKey, _, _, _, err = ssh.ParseAuthorizedKey(sshPublicKey)
 		if err != nil {
-			log.Fatal("Could not parse the SSH signing key %q: %v", sshPublicKey, err)
+			return fmt.Errorf("parsing SSH signing key from [repository.signing].SIGNING_KEY failed: %w", err)
 		}
 	}
+
+	return nil
 }
