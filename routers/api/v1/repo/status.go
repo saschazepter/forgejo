@@ -277,6 +277,15 @@ func GetCombinedCommitStatusByRef(ctx *context.APIContext) {
 		return
 	}
 
+	if count == 0 {
+		ctx.SetTotalCountHeader(0)
+		ctx.JSON(http.StatusOK, &api.CombinedStatus{
+			State:    api.CommitStatusPending,
+			Statuses: []*api.CommitStatus{},
+		})
+		return
+	}
+
 	if len(statuses) == 0 {
 		ctx.JSON(http.StatusOK, &api.CombinedStatus{})
 		return

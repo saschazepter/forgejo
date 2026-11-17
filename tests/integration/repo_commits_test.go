@@ -12,6 +12,8 @@ import (
 	"testing"
 
 	auth_model "forgejo.org/models/auth"
+	"forgejo.org/models/db"
+	git_model "forgejo.org/models/git"
 	"forgejo.org/modules/json"
 	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
@@ -109,6 +111,67 @@ func testRepoCommitsWithStatus(t *testing.T, resp, respOne *httptest.ResponseRec
 		assert.Equal(t, statuses[0], status.Statuses[0])
 		assert.Equal(t, "65f1bf27bc3bf70f64657658635e66094edbcb4d", status.SHA)
 	}
+}
+
+func TestCombinedStatusReturnsPendingWhenCommitHasNoStatuses(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	session := loginUser(t, "user2")
+	session.MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/git/commits/65f1bf27bc3bf70f64657658635e66094edbcb4d"), http.StatusOK)
+	resp := session.MakeRequest(t, NewRequest(t, "GET", "/api/v1/repos/user2/repo1/commits/65f1bf27bc3bf70f64657658635e66094edbcb4d/status"), http.StatusOK)
+	assert.Equal(t, "0", resp.Header().Get("X-Total-Count"))
+
+	var status api.CombinedStatus
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &status))
+	assert.Equal(t, api.CommitStatusPending, status.State)
+	assert.Equal(t, []*api.CommitStatus{}, status.Statuses)
+}
+
+func TestCombinedStatusReturnsPendingEvenWhenCommitDoesNotExist(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	session := loginUser(t, "user2")
+	for _, ref := range []string{"deadbeefdeadbeefdeadbeefdeadbeefdeadbeef", "branch-not-exist"} {
+		t.Run(ref, func(t *testing.T) {
+			session.MakeRequest(t, NewRequestf(t, "GET", "/api/v1/repos/user2/repo1/git/commits/%s", ref), http.StatusNotFound)
+			resp := session.MakeRequest(t, NewRequestf(t, "GET", "/api/v1/repos/user2/repo1/commits/%s/status", ref), http.StatusOK)
+			assert.Equal(t, "0", resp.Header().Get("X-Total-Count"))
+			var status api.CombinedStatus
+			require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &status))
+			assert.Equal(t, api.CommitStatusPending, status.State)
+			assert.Equal(t, []*api.CommitStatus{}, status.Statuses)
+		})
+	}
+}
+
+func TestCombinedStatusReturnsEmptyObjectWhenPageIsBeyondLastStatus(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	const sha = "65f1bf27bc3bf70f64657658635e66094edbcb4d"
+	session := loginUser(t, "user2")
+	ctx := NewAPITestContext(t, "user2", "repo1", auth_model.AccessTokenScopeWriteRepository)
+	for _, name := range []string{"build", "lint"} {
+		require.True(t, t.Run(name, doAPICreateCommitStatus(ctx, sha, api.CreateStatusOption{
+			State:   api.CommitStatusSuccess,
+			Context: name,
+		})))
+	}
+	statuses, count, err := git_model.GetLatestCommitStatus(db.DefaultContext, 1, sha, db.ListOptions{Page: 3, PageSize: 1})
+	require.NoError(t, err)
+	assert.EqualValues(t, 2, count)
+	assert.Empty(t, statuses)
+	for page := 1; page <= 2; page++ {
+		resp := session.MakeRequest(t, NewRequestf(t, "GET", "/api/v1/repos/user2/repo1/commits/%s/status?limit=1&page=%d", sha, page), http.StatusOK)
+		assert.Equal(t, "2", resp.Header().Get("X-Total-Count"))
+		var status api.CombinedStatus
+		require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &status))
+		assert.Len(t, status.Statuses, 1)
+	}
+	resp := session.MakeRequest(t, NewRequestf(t, "GET", "/api/v1/repos/user2/repo1/commits/%s/status?limit=1&page=3", sha), http.StatusOK)
+	assert.Empty(t, resp.Header().Get("X-Total-Count"))
+	var status *api.CombinedStatus
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &status))
+	require.NotNil(t, status)
+	assert.Empty(t, status.State)
+	assert.Nil(t, status.Statuses)
 }
 
 func TestRepoCommitsWithStatusPending(t *testing.T) {
