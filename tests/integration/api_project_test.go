@@ -147,6 +147,292 @@ func TestProjectAPIListProjectsPagination(t *testing.T) {
 	assert.Equal(t, numProjects/limit, numCalls)
 }
 
+func TestProjectAPIDeleteProject(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	err := unittest.PrepareTestDatabase()
+	require.NoError(t, err)
+
+	// user
+	user := forgery.CreateUser(t, nil)
+	userSession := loginUser(t, user.Name)
+	userWriteToken := getTokenForLoggedInUser(t, userSession,
+		auth_model.AccessTokenScopeWriteProject,
+	)
+	userReadToken := getTokenForLoggedInUser(t, userSession,
+		auth_model.AccessTokenScopeReadProject,
+	)
+	userRepo := forgery.CreateRepository(t, user, nil)
+	userRepo2 := forgery.CreateRepository(t, user, nil)
+	userOrg := forgery.CreateOrganisation(t, user, nil)
+	userOrgRepo := forgery.CreateRepository(t, userOrg.AsUser(), nil)
+
+	// other user
+	other := forgery.CreateUser(t, nil)
+	otherSession := loginUser(t, other.Name)
+	otherWriteToken := getTokenForLoggedInUser(t, otherSession,
+		auth_model.AccessTokenScopeWriteProject,
+	)
+	otherRepo := forgery.CreateRepository(t, other, nil)
+	otherOrg := forgery.CreateOrganisation(t, other, nil)
+	otherOrgRepo := forgery.CreateRepository(t, otherOrg.AsUser(), nil)
+
+	// projects for user
+	userProject := createProject(t, &runOpts{
+		token:     userWriteToken,
+		owner:     user.Name,
+		ownerType: project_module.APIOwnerTypeIndividual,
+	}, "User Project")
+	orgProject := createProject(t, &runOpts{
+		token:     userWriteToken,
+		owner:     userOrg.Name,
+		ownerType: project_module.APIOwnerTypeOrganization,
+	}, "User Project")
+	repoProject := createProject(t, &runOpts{
+		token:     userWriteToken,
+		owner:     user.Name,
+		repo:      userRepo.Name,
+		ownerType: project_module.APIOwnerTypeRepository,
+	}, "Repo Project")
+
+	// test failing deletes
+	for _, tt := range []struct {
+		name    string
+		baseURL string
+		token   string
+		project api.Project
+		status  int
+	}{
+		// user project, right user
+		{
+			"user project, delete by user, read token",
+			fmt.Sprintf("/api/v1/users/%s", user.Name),
+			userReadToken,
+			userProject,
+			http.StatusForbidden,
+		},
+		{
+			"user project, delete by user, via org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			userWriteToken,
+			userProject,
+			http.StatusNotFound,
+		},
+		{
+			"user project, delete by user, via repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			userWriteToken,
+			userProject,
+			http.StatusNotFound,
+		},
+
+		// user project, wrong user
+		{
+			"user project, delete by other",
+			fmt.Sprintf("/api/v1/users/%s", user.Name),
+			otherWriteToken,
+			userProject,
+			http.StatusForbidden,
+		},
+		{
+			"user project, delete by other, via other's user endpoint",
+			fmt.Sprintf("/api/v1/users/%s", other.Name),
+			otherWriteToken,
+			userProject,
+			http.StatusNotFound,
+		},
+		{
+			"user project, delete by other, via other's org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", otherOrg.Name),
+			otherWriteToken,
+			userProject,
+			http.StatusNotFound,
+		},
+		{
+			"user project, delete by other, via other's org repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", otherOrg.Name, otherOrgRepo.Name),
+			otherWriteToken,
+			userProject,
+			http.StatusNotFound,
+		},
+
+		// org project, right user
+		{
+			"org project, delete by user, read token",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			userReadToken,
+			orgProject,
+			http.StatusForbidden,
+		},
+		{
+			"org project, delete by user, via user endpoint",
+			fmt.Sprintf("/api/v1/users/%s/%s", user.Name, userRepo.Name),
+			userWriteToken,
+			orgProject,
+			http.StatusNotFound,
+		},
+		{
+			"org project, delete by user, via repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			userWriteToken,
+			orgProject,
+			http.StatusNotFound,
+		},
+
+		// org project, wrong user
+		{
+			"org project, delete by other",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			otherWriteToken,
+			orgProject,
+			http.StatusForbidden,
+		},
+		{
+			"org project, delete by other, via other's user endpoint",
+			fmt.Sprintf("/api/v1/users/%s", other.Name),
+			otherWriteToken,
+			orgProject,
+			http.StatusNotFound,
+		},
+		{
+			"org project, delete by other, via other's org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", otherOrg.Name),
+			otherWriteToken,
+			orgProject,
+			http.StatusNotFound,
+		},
+		{
+			"org project, delete by other, via other's org repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", otherOrg.Name, otherOrgRepo.Name),
+			otherWriteToken,
+			orgProject,
+			http.StatusNotFound,
+		},
+
+		// repo project, right user
+		{
+			"repo project, delete by user, read token",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			userReadToken,
+			repoProject,
+			http.StatusForbidden,
+		},
+		{
+			"repo project, delete by user, via wrong repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo2.Name),
+			userWriteToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, delete by user, via user endpoint",
+			fmt.Sprintf("/api/v1/users/%s", user.Name),
+			userWriteToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, delete by user, via org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			userWriteToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, delete by user, via org repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", userOrg.Name, userOrgRepo.Name),
+			userWriteToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+
+		// repo project, wrong user
+		{
+			"repo project, delete by other",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			otherWriteToken,
+			repoProject,
+			http.StatusForbidden,
+		},
+		{
+			"repo project, delete by other, via other's repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", other.Name, otherRepo.Name),
+			otherWriteToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, delete by other, via other's user endpoint",
+			fmt.Sprintf("/api/v1/users/%s", other.Name),
+			otherWriteToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, delete by other, via other's org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", otherOrg.Name),
+			otherWriteToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, delete by other, via other's org repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", otherOrg.Name, otherOrgRepo.Name),
+			otherWriteToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// delete project
+			endpoint := fmt.Sprintf("%s/projects/%d", tt.baseURL, tt.project.ID)
+			requestWithAuth(t, tt.token, "DELETE", endpoint, tt.status)
+			unittest.AssertExistsIf(t, true, &project_model.Project{
+				ID: tt.project.ID,
+			})
+		})
+	}
+
+	// test successful deletes
+	for _, tt := range []struct {
+		name    string
+		baseURL string
+		token   string
+		project api.Project
+	}{
+		{
+			"user project",
+			fmt.Sprintf("/api/v1/users/%s", user.Name),
+			userWriteToken,
+			userProject,
+		},
+		{
+			"org project",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			userWriteToken,
+			orgProject,
+		},
+		{
+			"repo project",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			userWriteToken,
+			repoProject,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// delete project
+			endpoint := fmt.Sprintf("%s/projects/%d", tt.baseURL, tt.project.ID)
+			requestWithAuth(t, tt.token, "DELETE", endpoint, http.StatusNoContent)
+			unittest.AssertExistsIf(t, false, &project_model.Project{
+				ID: tt.project.ID,
+			})
+		})
+	}
+}
+
 // Test the use cases
 func TestProjectAPICRUD(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()

@@ -159,7 +159,23 @@ func UpdateProject(ctx *context.APIContext) {
 
 // DeleteProject deletes a project by ID
 func DeleteProject(ctx *context.APIContext) {
-	err := project_service.DeleteProjectByID(ctx, ctx.Project().ProjectID, optional.None[int64]())
+	ownerType, owner, repo := getOwnerTypeAndOwnerAndRepoFromData(ctx)
+	var err error
+	var project *project_model.Project
+	if ownerType == project_module.APIOwnerTypeRepository {
+		project, err = project_service.GetProjectByIDForOwner(ctx, ctx.Project().ProjectID, 0, repo)
+	} else {
+		project, err = project_service.GetProjectByIDForOwner(ctx, ctx.Project().ProjectID, owner.ID, repo)
+	}
+	if err != nil {
+		if project_model.IsErrProjectNotExist(err) || project_module.IsErrMismatchedOwner(err) {
+			ctx.NotFound("Delete Project", err)
+		} else {
+			ctx.ServerError("Delete Project", err)
+		}
+		return
+	}
+	err = project_service.DeleteProjectByID(ctx, project.ID, optional.None[int64]())
 	if err != nil {
 		ctx.ServerError("Delete Project", err)
 		return
