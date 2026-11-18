@@ -23,7 +23,7 @@ import (
 	"forgejo.org/modules/setting"
 	"forgejo.org/tests"
 
-	"code.forgejo.org/crystal/ar"
+	"github.com/blakesmith/ar"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

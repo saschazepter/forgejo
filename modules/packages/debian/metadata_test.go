@@ -12,7 +12,7 @@ import (
 
 	"forgejo.org/modules/zstd"
 
-	"code.forgejo.org/crystal/ar"
+	"github.com/blakesmith/ar"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/ulikunitz/xz"
@@ -28,7 +28,7 @@ const (
 )
 
 func TestParsePackage(t *testing.T) {
-	createArchive := func(files map[string][]byte) io.Reader {
+	createArchive := func(files map[string][]byte) io.ReaderAt {
 		var buf bytes.Buffer
 		aw := ar.NewWriter(&buf)
 		aw.WriteGlobalHeader()
@@ -41,7 +41,7 @@ func TestParsePackage(t *testing.T) {
 			aw.WriteHeader(hdr)
 			aw.Write(content)
 		}
-		return &buf
+		return bytes.NewReader(buf.Bytes())
 	}
 
 	t.Run("MissingControlFile", func(t *testing.T) {
