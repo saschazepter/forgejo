@@ -68,8 +68,7 @@ func TestGetFullCommitIDErrorSha256(t *testing.T) {
 func TestCommitFromReaderSha256(t *testing.T) {
 	skipIfSHA256NotSupported(t)
 
-	commitString := `9433b2a62b964c17a4485ae180f45f595d3e69d31b786087775e28c6b6399df0 commit 1114
-tree e7f9e96dd79c09b078cac8b303a7d3b9d65ff9b734e86060a4d20409fd379f9e
+	commitString := `tree e7f9e96dd79c09b078cac8b303a7d3b9d65ff9b734e86060a4d20409fd379f9e
 parent 26e9ccc29fad747e9c5d9f4c9ddeb7eff61cc45ef6a8dc258cbeb181afc055e8
 author Adam Majer <amajer@suse.de> 1698676906 +0100
 committer Adam Majer <amajer@suse.de> 1698676906 +0100

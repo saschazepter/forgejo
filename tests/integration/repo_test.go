@@ -19,6 +19,7 @@ import (
 
 	auth_model "forgejo.org/models/auth"
 	"forgejo.org/models/db"
+	"forgejo.org/models/organization"
 	repo_model "forgejo.org/models/repo"
 	unit_model "forgejo.org/models/unit"
 	"forgejo.org/models/unittest"
@@ -1435,4 +1436,20 @@ func TestViewRepoSize(t *testing.T) {
 			assert.Equal(t, "git: 10 B, lfs: 1 B", attr)
 		})
 	})
+}
+
+func TestRepoFindFilesRequiresCodeRead(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	// user15 is a member of the team test_team (id=7), which has only write-issue access in the org org3.  This team
+	// has limited access to repos, so we need to add a private repo to its access list:
+	unittest.AssertSuccessfulInsert(t, &organization.TeamRepo{OrgID: 3, TeamID: 7, RepoID: 3})
+	session := loginUser(t, "user15")
+
+	// Verify that we can access the private repo's issues page, as the team has issue access:
+	session.MakeRequest(t, NewRequest(t, "GET", "/org3/repo3/issues"), http.StatusOK)
+
+	// Verify that we can't access /find and the related /tree-list endpoints because the team doesn't have code access:
+	session.MakeRequest(t, NewRequest(t, "GET", "/org3/repo3/find/branch/master"), http.StatusNotFound)
+	session.MakeRequest(t, NewRequest(t, "GET", "/org3/repo3/tree-list/branch/master"), http.StatusNotFound)
 }

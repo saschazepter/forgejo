@@ -108,3 +108,23 @@ rules:
     paths:
       include:
         - "/routers/api/**/*.go"
+
+  - id: forgejo-api-use-resource-GetFeedsOptions
+    patterns:
+      - pattern: |
+          activities_model.GetFeedsOptions{...}
+      - pattern-not: |
+          activities_model.GetFeedsOptions{
+            ...,
+            AuthorizationReducer: ctx.Reducer(),
+            ...
+          }
+    languages:
+      - go
+    message: >
+      GetFeedsOptions does not take into account fine-grained access token limitations.  Include the
+      AuthorizationReducer field.
+    severity: ERROR
+    paths:
+      include:
+        - "/routers/api/**/*.go"

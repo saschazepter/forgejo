@@ -60,8 +60,7 @@ func TestGetFullCommitIDError(t *testing.T) {
 }
 
 func TestCommitFromReader(t *testing.T) {
-	commitString := `feaf4ba6bc635fec442f46ddd4512416ec43c2c2 commit 1074
-tree f1a6cb52b2d16773290cefe49ad0684b50a4f930
+	commitString := `tree f1a6cb52b2d16773290cefe49ad0684b50a4f930
 parent 37991dec2c8e592043f47155ce4808d4580f9123
 author silverwind <me@silverwind.io> 1563741793 +0200
 committer silverwind <me@silverwind.io> 1563741793 +0200
@@ -127,8 +126,7 @@ empty commit`, commitFromReader.Signature.Payload)
 }
 
 func TestCommitWithEncodingFromReader(t *testing.T) {
-	commitString := `feaf4ba6bc635fec442f46ddd4512416ec43c2c2 commit 1074
-tree ca3fad42080dd1a6d291b75acdfc46e5b9b307e5
+	commitString := `tree ca3fad42080dd1a6d291b75acdfc46e5b9b307e5
 parent 47b24e7ab977ed31c5a39989d570847d6d0052af
 author KN4CK3R <admin@oldschoolhack.me> 1711702962 +0100
 committer KN4CK3R <admin@oldschoolhack.me> 1711702962 +0100
@@ -192,8 +190,7 @@ ISO-8859-1`, commitFromReader.Signature.Payload)
 }
 
 func TestCommitWithChangeIDFromReader(t *testing.T) {
-	commitString := `e66911914414b0daa85d4a428c8d607b9b249a2c commit 611
-tree efd3cbedfc360ce9f60e5f92d51221be5afb4bf0
+	commitString := `tree efd3cbedfc360ce9f60e5f92d51221be5afb4bf0
 author Nicole Patricia Mazzuca <nicole@strega-nil.co> 1746965490 +0200
 committer Nicole Patricia Mazzuca <nicole@strega-nil.co> 1746965630 +0200
 change-id psyxzzozmuvvwrwnpqpvmtwntqsnwzpu
@@ -507,4 +504,36 @@ func TestGetAllBranches(t *testing.T) {
 	slices.Sort(branches)
 
 	assert.Equal(t, []string{"branch1", "branch2", "master"}, branches)
+}
+
+func TestCommitFromReaderMisplacedHeaders(t *testing.T) {
+	commitString := `tree f1a6cb52b2d16773290cefe49ad0684b50a4f930
+parent 37991dec2c8e592043f47155ce4808d4580f9123
+parent 37991dec2c8e592043f47155ce4808d4580f9124
+author silverwind <me@silverwind.io> 1563741793 +0200
+committer silverwind <me@silverwind.io> 1563741793 +0200
+change-id psyxzzozmuvvwrwnpqpvmtwntqsnwzpu
+tree 039f4a05b4860da94efec09237761d2b25bc6a1f
+parent 37991dec2c8e592043f47155ce4808d4580f9125
+author fake-author <me@silverwind.io> 1563741793 +0200
+committer fake-committer <me@silverwind.io> 1563741793 +0200
+
+empty commit`
+
+	sha := &Sha1Hash{0xfe, 0xaf, 0x4b, 0xa6, 0xbc, 0x63, 0x5f, 0xec, 0x44, 0x2f, 0x46, 0xdd, 0xd4, 0x51, 0x24, 0x16, 0xec, 0x43, 0xc2, 0xc2}
+	gitRepo, err := openRepositoryWithDefaultContext(filepath.Join(testReposDir, "repo1_bare"))
+	require.NoError(t, err)
+	assert.NotNil(t, gitRepo)
+	defer gitRepo.Close()
+
+	commitFromReader, err := CommitFromReader(gitRepo, sha, strings.NewReader(commitString))
+	require.NoError(t, err)
+	require.NotNil(t, commitFromReader)
+	assert.EqualValues(t, sha, commitFromReader.ID)
+	assert.Equal(t, "f1a6cb52b2d16773290cefe49ad0684b50a4f930", commitFromReader.Tree.ID.String())
+	assert.Len(t, commitFromReader.Parents, 2) // ...123, ...124, but ...125 should not be included
+	assert.Equal(t, "37991dec2c8e592043f47155ce4808d4580f9123", commitFromReader.Parents[0].String())
+	assert.Equal(t, "37991dec2c8e592043f47155ce4808d4580f9124", commitFromReader.Parents[1].String())
+	assert.Equal(t, "silverwind", commitFromReader.Author.Name)
+	assert.Equal(t, "silverwind", commitFromReader.Committer.Name)
 }

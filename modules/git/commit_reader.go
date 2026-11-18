@@ -6,6 +6,7 @@ package git
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"strings"
 )
@@ -24,7 +25,6 @@ func CommitFromReader(gitRepo *Repository, objectID ObjectID, reader io.Reader) 
 	payloadSB := new(strings.Builder)
 	signatureSB := new(strings.Builder)
 	messageSB := new(strings.Builder)
-	firstLine := true
 	message := false
 	pgpsig := false
 
@@ -32,6 +32,19 @@ func CommitFromReader(gitRepo *Repository, objectID ObjectID, reader io.Reader) 
 	if !ok {
 		bufReader = bufio.NewReader(reader)
 	}
+
+	// Git parses the `tree` (1), `parent` (0-N), `author` (1), and `committer` (1) lines positionally, in that order.
+	// If these headers aren't in this position, they should be ignored, otherwise spurious additional headers can be
+	// added to a malicious repository and confuse Forgejo's behaviour into deviating from git's.
+	// https://github.com/git/git/blob/fb255012acbcbe81189cb8014da0280b09c66ecc/fsck.c#L969-L999
+	type parseState int
+	const (
+		treeNext           parseState = iota // next is "tree ...""
+		parentOrAuthorNext                   // next is "parent ..."; as that's optional, could also be "author ..."
+		committerNext                        // next is "committer ..."
+		otherNext                            // remaining headers are not positional
+	)
+	state := treeNext
 
 readLoop:
 	for {
@@ -69,30 +82,46 @@ readLoop:
 				data = split[1]
 			}
 
-			switch string(split[0]) {
-			case "tree":
-				commit.Tree = *NewTree(gitRepo, MustIDFromString(string(data)))
+			noun := string(split[0])
+			switch state {
+			case treeNext:
+				if noun == "tree" {
+					commit.Tree = *NewTree(gitRepo, MustIDFromString(string(data)))
+					state = parentOrAuthorNext
+				} else {
+					return nil, fmt.Errorf("CommitFromReader: expected tree, but received %q", noun)
+				}
 				_, _ = payloadSB.Write(line)
-			case "parent":
-				commit.Parents = append(commit.Parents, MustIDFromString(string(data)))
+			case parentOrAuthorNext:
+				switch noun {
+				case "parent":
+					commit.Parents = append(commit.Parents, MustIDFromString(string(data)))
+				case "author":
+					commit.Author = &Signature{}
+					commit.Author.Decode(data)
+					state = committerNext
+				default:
+					return nil, fmt.Errorf("CommitFromReader: expected parent or author, but received %q", noun)
+				}
 				_, _ = payloadSB.Write(line)
-			case "author":
-				commit.Author = &Signature{}
-				commit.Author.Decode(data)
+			case committerNext:
+				if noun == "committer" {
+					commit.Committer = &Signature{}
+					commit.Committer.Decode(data)
+					state = otherNext
+				} else {
+					return nil, fmt.Errorf("CommitFromReader: expected committer, but received %q", noun)
+				}
 				_, _ = payloadSB.Write(line)
-			case "committer":
-				commit.Committer = &Signature{}
-				commit.Committer.Decode(data)
-				_, _ = payloadSB.Write(line)
-			case "gpgsig":
-				fallthrough
-			case "gpgsig-sha256": // FIXME: no intertop, so only 1 exists at present.
-				_, _ = signatureSB.Write(data)
-				_ = signatureSB.WriteByte('\n')
-				pgpsig = true
-			default:
-				// If the first line is not any of the known headers, then it is probably the prefix added when git cat-file is called with --batch, and that is not part of the payload
-				if !firstLine {
+			case otherNext:
+				switch noun {
+				case "gpgsig":
+					fallthrough
+				case "gpgsig-sha256": // FIXME: no intertop, so only 1 exists at present.
+					_, _ = signatureSB.Write(data)
+					_ = signatureSB.WriteByte('\n')
+					pgpsig = true
+				default:
 					// Every subsequent header field is added to the payload
 					_, _ = payloadSB.Write(line)
 				}
@@ -101,8 +130,6 @@ readLoop:
 			_, _ = messageSB.Write(line)
 			_, _ = payloadSB.Write(line)
 		}
-
-		firstLine = false
 	}
 	commit.CommitMessage = messageSB.String()
 	commit.Signature = &ObjectSignature{
