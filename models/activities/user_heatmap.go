@@ -11,6 +11,7 @@ import (
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/timeutil"
+	"forgejo.org/services/authz"
 )
 
 const (
@@ -26,16 +27,16 @@ type UserHeatmapData struct {
 }
 
 // GetUserHeatmapDataByUser returns an array of UserHeatmapData
-func GetUserHeatmapDataByUser(ctx context.Context, user, doer *user_model.User) ([]*UserHeatmapData, error) {
-	return getUserHeatmapData(ctx, user, nil, doer)
+func GetUserHeatmapDataByUser(ctx context.Context, user, doer *user_model.User, reducer authz.AuthorizationReducer) ([]*UserHeatmapData, error) {
+	return getUserHeatmapData(ctx, user, nil, doer, reducer)
 }
 
 // GetUserHeatmapDataByUserTeam returns an array of UserHeatmapData
 func GetUserHeatmapDataByUserTeam(ctx context.Context, user *user_model.User, team *organization.Team, doer *user_model.User) ([]*UserHeatmapData, error) {
-	return getUserHeatmapData(ctx, user, team, doer)
+	return getUserHeatmapData(ctx, user, team, doer, nil)
 }
 
-func getUserHeatmapData(ctx context.Context, user *user_model.User, team *organization.Team, doer *user_model.User) ([]*UserHeatmapData, error) {
+func getUserHeatmapData(ctx context.Context, user *user_model.User, team *organization.Team, doer *user_model.User, reducer authz.AuthorizationReducer) ([]*UserHeatmapData, error) {
 	hdata := make([]*UserHeatmapData, 0)
 
 	if !ActivityReadable(user, doer) {
@@ -57,7 +58,8 @@ func getUserHeatmapData(ctx context.Context, user *user_model.User, team *organi
 		// * Heatmaps for individual users only include actions that the user themself did.
 		// * For organizations actions by all users that were made in owned
 		//   repositories are counted.
-		OnlyPerformedBy: !user.IsOrganization(),
+		OnlyPerformedBy:      !user.IsOrganization(),
+		AuthorizationReducer: reducer,
 	})
 	if err != nil {
 		return nil, err

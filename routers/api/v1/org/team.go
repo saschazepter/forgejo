@@ -886,11 +886,12 @@ func ListTeamActivityFeeds(ctx *context.APIContext) {
 	listOptions := utils.GetListOptions(ctx)
 
 	opts := activities_model.GetFeedsOptions{
-		RequestedTeam:  ctx.Org().Team,
-		Actor:          ctx.Doer(),
-		IncludePrivate: true,
-		Date:           ctx.FormString("date"),
-		ListOptions:    listOptions,
+		RequestedTeam:        ctx.Org().Team,
+		Actor:                ctx.Doer(),
+		IncludePrivate:       true,
+		Date:                 ctx.FormString("date"),
+		ListOptions:          listOptions,
+		AuthorizationReducer: ctx.Reducer(),
 	}
 
 	feeds, count, err := activities_model.GetFeeds(ctx, opts)

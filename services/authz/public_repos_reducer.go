@@ -34,7 +34,7 @@ func (*PublicReposAuthorizationReducer) ReduceRepoAccess(ctx context.Context, re
 func (*PublicReposAuthorizationReducer) RepoReadAccessFilter() builder.Cond {
 	// Allow access only to non-private repositories, that aren't in a private or limited organization.
 	return builder.And(
-		builder.Eq{"is_private": false},
+		builder.Eq{"`repository`.is_private": false},
 		builder.NotIn("owner_id", builder.Select("id").From("`user`").Where(
 			builder.Or(builder.Eq{"visibility": structs.VisibleTypeLimited}, builder.Eq{"visibility": structs.VisibleTypePrivate}),
 		)))

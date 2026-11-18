@@ -57,7 +57,7 @@ func Routes() *web.Route {
 	// Since internal API will be sent only from Forgejo sub commands and it's under control (checked by InternalToken), we can trust the headers.
 	r.Use(chi_middleware.ClientIPFromHeader("X-Real-IP"))
 
-	r.Post("/ssh/authorized_keys", AuthorizedPublicKeyByContent)
+	r.Post("/ssh/authorized_keys", AuthorizedPublicKeyByFingerprint)
 	r.Post("/ssh/{id}/update/{repoid}", UpdatePublicKeyInRepo)
 	r.Post("/ssh/log", bind(private.SSHLogOption{}), SSHLog)
 	r.Post("/hook/pre-receive/{owner}/{repo}", RepoAssignment, bind(private.HookOptions{}), HookPreReceive)

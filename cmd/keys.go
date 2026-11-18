@@ -1,11 +1,12 @@
 // Copyright 2018 The Gitea Authors. All rights reserved.
+// Copyright 2026 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package cmd
 
 import (
 	"context"
-	"errors"
+	"encoding/base64"
 	"fmt"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 	"forgejo.org/modules/private"
 
 	"github.com/urfave/cli/v3"
+	"golang.org/x/crypto/ssh"
 )
 
 // CmdKeys represents the available keys sub-command
@@ -31,44 +33,48 @@ func cmdKeys() *cli.Command {
 				Usage:   "Expected user for whom provide key commands",
 			},
 			&cli.StringFlag{
-				Name:    "username",
-				Aliases: []string{"u"},
-				Value:   "",
-				Usage:   "Username trying to log in by SSH",
+				Name:     "username",
+				Aliases:  []string{"u"},
+				Value:    "",
+				Usage:    "Username trying to log in by SSH",
+				Required: true,
 			},
 			&cli.StringFlag{
-				Name:    "type",
-				Aliases: []string{"t"},
-				Value:   "",
-				Usage:   "Type of the SSH key provided to the SSH Server (requires content to be provided too)",
+				Name:     "type",
+				Aliases:  []string{"t"},
+				Value:    "",
+				Usage:    "Type of the SSH key provided to the SSH Server",
+				Required: true,
 			},
 			&cli.StringFlag{
-				Name:    "content",
-				Aliases: []string{"k"},
-				Value:   "",
-				Usage:   "Base64 encoded content of the SSH key provided to the SSH Server (requires type to be provided too)",
+				Name:     "content",
+				Aliases:  []string{"k"},
+				Value:    "",
+				Usage:    "Base64 encoded content of the SSH key provided to the SSH Server",
+				Required: true,
 			},
 		},
 	}
 }
 
 func runKeys(ctx context.Context, c *cli.Command) error {
-	if !c.IsSet("username") {
-		return errors.New("No username provided")
-	}
 	// Check username matches the expected username
 	if strings.TrimSpace(c.String("username")) != strings.TrimSpace(c.String("expected")) {
 		return nil
 	}
 
-	content := ""
-
-	if c.IsSet("type") && c.IsSet("content") {
-		content = fmt.Sprintf("%s %s", strings.TrimSpace(c.String("type")), strings.TrimSpace(c.String("content")))
+	// Decode content and parse it a SSH public key, verify the type is what was
+	// given to us.
+	key, err := base64.StdEncoding.DecodeString(c.String("content"))
+	if err != nil {
+		return fmt.Errorf("is not valid base64 encoded content: %w", err)
 	}
-
-	if content == "" {
-		return errors.New("No key type and content provided")
+	publicKey, err := ssh.ParsePublicKey(key)
+	if err != nil {
+		return fmt.Errorf("key content cannot be parsed as public SSH key: %w", err)
+	}
+	if publicKey.Type() != c.String("type") {
+		return fmt.Errorf("authorized keys key type mismatch: given type %q, encoded type %q", c.String("type"), publicKey.Type())
 	}
 
 	ctx, cancel := installSignals(ctx)
@@ -76,7 +82,7 @@ func runKeys(ctx context.Context, c *cli.Command) error {
 
 	setup(ctx, c.Bool("debug"), true)
 
-	authorizedString, extra := private.AuthorizedPublicKeyByContent(ctx, content)
+	authorizedString, extra := private.AuthorizedPublicKeyByFingerprint(ctx, ssh.FingerprintSHA256(publicKey))
 	// do not use handleCliResponseExtra or cli.NewExitError, if it exists immediately, it breaks some tests like Test_CmdKeys
 	if extra.Error != nil {
 		return extra.Error

@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	asymkey_model "forgejo.org/models/asymkey"
+	"forgejo.org/models/db"
 	"forgejo.org/modules/private"
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/services/context"
@@ -45,17 +46,22 @@ func UpdatePublicKeyInRepo(ctx *context.PrivateContext) {
 	ctx.PlainText(http.StatusOK, "success")
 }
 
-// AuthorizedPublicKeyByContent searches content as prefix (leak e-mail part)
-// and returns public key found.
-func AuthorizedPublicKeyByContent(ctx *context.PrivateContext) {
-	content := ctx.FormString("content")
-
-	publicKey, err := asymkey_model.SearchPublicKeyByContent(ctx, content)
+// AuthorizedPublicKeyByFingerprint finds a public key via its fingerprint.
+// The output is compatible with "AUTHORIZED_KEYS FILE FORMAT" in sshd(8).
+func AuthorizedPublicKeyByFingerprint(ctx *context.PrivateContext) {
+	publicKey, exists, err := db.Get[asymkey_model.PublicKey](ctx, asymkey_model.FindPublicKeyOptions{
+		Fingerprint: ctx.FormString("content"),
+	}.ToConds())
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, private.Response{
 			Err: err.Error(),
 		})
 		return
 	}
+	if !exists {
+		ctx.PlainText(http.StatusOK, "# No key found")
+		return
+	}
+
 	ctx.PlainText(http.StatusOK, publicKey.AuthorizedString())
 }
