@@ -5,7 +5,7 @@
 		"two": "Tá an brainse seo %[1]d tiomnuithe taobh thiar de %[2]s",
 		"few": "",
 		"many": "",
-		"other": ""
+		"other": "Tá an brainse seo %[1]d tiomantais taobh thiar de %[2]s"
 	},
 	"mirror_settings.direction.header": "Treo",
 	"mirror_settings.docs.summary": "Cuir do stóras ar bun chun tiomáintí, clibeanna agus brainsí a shioncronú go huathoibríoch le stóras eile.",
@@ -79,18 +79,18 @@
 	"quota.sizes.repos.all": "Stórtha",
 	"quota.sizes.all": "Gach",
 	"counters.n_following": {
-		"one": "%d ag leanúint",
+		"one": "%d á leanúint",
 		"two": "%d ag leanúint",
 		"few": "",
 		"many": "",
-		"other": ""
+		"other": "%d á leanúint"
 	},
 	"counters.n_followers": {
 		"one": "%d leantóir",
 		"two": "%d leantóirí",
 		"few": "",
 		"many": "",
-		"other": ""
+		"other": "%d leantóirí"
 	},
 	"user.public_activity.visibility_hint.self_private_profile": "Ní féidir ach leatsa agus le riarthóirí an cháis do ghníomhaíocht a fheiceáil mar go bhfuil do phróifíl príobháideach. <a href=\"%s\">Cumraigh</a>.",
 	"user.public_activity.visibility_hint.admin_private": "Tá an ghníomhaíocht seo le feiceáil agat mar is riarthóir thú, ach ba mhaith leis an úsáideoir go bhfanfadh sí príobháideach.",
@@ -1055,7 +1055,7 @@
 	"form.RunnerName": "Ainm",
 	"graphs.recent_commits.title": "Líon na ngealltanas le bliain anuas",
 	"graphs.code_frequency.title": "Minicíocht chód thar stair {0}",
-	"repo.files.caption": "Comhaid stórais (an tiomnú is déanaí ar dtús)",
+	"repo.files.caption": "Comhaid stórais (an tiomantas is déanaí ar dtús)",
 	"repo.files.filename": "Ainm comhaid",
 	"repo.files.last_commit_message": "Teachtaireacht tiomantais is déanaí",
 	"repo.files.last_commit_date": "Dáta tiomantais is déanaí",
@@ -1216,7 +1216,7 @@
 	"actions.status.info.assigned_runner_link": "Sannta don reathaí <a href=\"%[1]s\">%[2]s</a> (%[3]s)",
 	"actions.status.info.assigned_runner_no_link": "Sannta don reathaí %[1]s (%[2]s)",
 	"actions.workflow.pre_execution_warning": "Rabhaidh maidir leis an sreabhadh oibre:",
-	"actions.workflow.permissions_warning": "Tá réimse <code>permissions</code> ag an bpostáil <code>%[1]s</code> nó ag a sreabhadh oibre; ní thacaíonn Forgejo leis seo agus déanfar neamhaird de. Bain úsáid as <a href=\"%[2]s\">Comhtháthuithe Údaraithe</a> chun cumais a bhronnadh ar an bpostáil seo ina ionad sin.",
+	"actions.workflow.permissions_warning": "Tá réimse <code>permissions</code> ag an tasc <code>%[1]s</code> — nó ag an sreabhadh oibre a bhaineann leis — ach ní thacaíonn Forgejo leis an réimse seo, mar sin déanfar neamhaird de. Ina áit sin, bain úsáid as <a href=\"%[2]s\">Comhtháthuithe Údaraithe</a> chun cumais a thabhairt don tasc seo.",
 	"members.user_already_invited_to_org": "Tá an t-úsáideoir seo tugtha isteach sa eagraíocht cheana féin.",
 	"members.user_already_invited_to_team": "Tá an t-úsáideoir seo tugtha isteach sa bhfoireann cheana féin.",
 	"members.successfully_invited": "Tugadh cuireadh don úsáideoir chuig an eagraíocht go rathúil.",
@@ -1252,5 +1252,6 @@
 	"funding.config_has_errors": "Tá earráidí sa <a href=\"%[1]s\">chumraíocht mhaoinithe</a>.",
 	"funding.docs": "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">Féach an doiciméadú</a> chun tuilleadh eolais a fháil faoi na naisc síntiúis.",
 	"modal.close": "Dún",
-	"project.missing_issues_in_list": "Níorbh fhéidir gach ceist sa liosta a aimsiú. Seiceáil an scriosadh iad."
+	"project.missing_issues_in_list": "Níorbh fhéidir gach ceist sa liosta a aimsiú. Seiceáil an scriosadh iad.",
+	"repo.watch.issues": "Ceisteanna"
 }

@@ -130,7 +130,7 @@
 	"mde.buttons.link.tooltip": "Lägg till en länk (Ctrl+K / ⌘K)",
 	"mde.buttons.code.tooltip": "Lägg till kod",
 	"mde.buttons.quote.tooltip": "Citera text",
-	"mde.buttons.italic.tooltip": "Lägg till kursiv text (CTRL+I / ⌘I)",
+	"mde.buttons.italic.tooltip": "Lägg till kursiv text (Ctrl+I / ⌘I)",
 	"mde.buttons.bold.tooltip": "Lägg till fetstil (Ctrl+B / ⌘B)",
 	"mde.buttons.heading.tooltip": "Lägg till rubrik",
 	"admin.config.db.path": "Sökväg",
@@ -1097,7 +1097,7 @@
 		"one": "%d år",
 		"other": "%d flera år"
 	},
-	"settings.profile.dotprofile.hint": "Avancerad profilanpassning, inklusive verifieringslänkar, kan uppnås med <code>%s</code>kodförråd.<a href=\"%s\" target=\"_blank\">Läs mer</a>.",
+	"settings.profile.dotprofile.hint": "Avancerad profilanpassning, inklusive verifieringslänkar, kan göras med kodförrådet <code>%s</code>. <a href=\"%s\" target=\"_blank\">Läs mer</a>.",
 	"repo.watching": "Följa",
 	"repo.watch.issues": "Ärenden",
 	"repo.watch.pull_requests": "Ändringsförfrågningar",
@@ -1144,7 +1144,7 @@
 		"other": "Förväntas upp till %[1]d finansieringsleverantörer"
 	},
 	"funding.yaml_error.bad_input": "Värdet för nyckeln \"%[1]s\" matchar inte mönster /%[2]s/",
-	"funding.yaml_error.parse_url": "Ogiltigt URL värde för nyckel \"%[1]s\": %[2]v",
+	"funding.yaml_error.parse_url": "Ogiltigt URL-värde för nyckeln ”%[1]s”: %[2]v",
 	"funding.yaml_error.invalid_yaml_type": "Ogiltig typ för nyckel \"%[1]s\", förväntade sig en sträng eller strängmatris",
 	"funding.yaml_error.unknown": "Okänt fel: %[1]s",
 	"keys.ssh.disabled": "SSH nyckelhantering är inaktiverat på den här instansen av en administratör.",

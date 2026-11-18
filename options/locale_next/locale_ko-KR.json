@@ -249,7 +249,7 @@
 	"gpg.error.not_signed_commit": "서명되지 않은 커밋",
 	"notification.notifications": "알림",
 	"notification.unread": "읽지 않음",
-	"notification.read": "읽기",
+	"notification.read": "읽음",
 	"notification.no_unread": "읽지 않은 알림이 없습니다.",
 	"notification.no_read": "알림이 없습니다.",
 	"notification.pin": "알림 고정",
