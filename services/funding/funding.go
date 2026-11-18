@@ -13,6 +13,7 @@ import (
 
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/modules/git"
+	"forgejo.org/modules/gitrepo"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
@@ -182,11 +183,11 @@ func GetFundingFromDefaultBranch(ctx context.Context, r *repo_model.Repository) 
 		return nil, NotExistError{Repo: r}
 	}
 
-	gitRepo, err := git.OpenRepository(ctx, r.RepoPath())
+	gitRepo, closer, err := gitrepo.RepositoryFromContextOrOpen(ctx, r)
 	if err != nil {
 		return nil, err
 	}
-	defer gitRepo.Close()
+	defer closer.Close()
 
 	commit, err := gitRepo.GetBranchCommit(r.DefaultBranch)
 	if err != nil {
