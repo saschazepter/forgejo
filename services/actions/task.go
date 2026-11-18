@@ -183,7 +183,7 @@ func generateTaskContext(t *actions_model.ActionTask) (*structpb.Struct, error) 
 		// The "placeholder=true" at the end of the URL is meaningless, but we need a param
 		// here if we want to match the format used in GitHub actions examples (e.g., to ensure
 		// that "ACTIONS_ID_TOKEN_REQUEST_URL&audience=..." will work as expected).
-		gitCtx["forgejo_actions_id_token_request_url"] = setting.AppURL + setting.AppSubURL + fmt.Sprintf("api/actions/_apis/pipelines/workflows/%d/idtoken?placeholder=true", t.Job.RunID)
+		gitCtx["forgejo_actions_id_token_request_url"] = setting.AppURL + fmt.Sprintf("api/actions/_apis/pipelines/workflows/%d/idtoken?placeholder=true", t.Job.RunID)
 	}
 
 	return structpb.NewStruct(gitCtx)
