@@ -29,7 +29,8 @@ import (
 	digest "github.com/opencontainers/go-digest"
 )
 
-var imageNamePattern = regexp.MustCompile(`\A[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*\z`)
+// https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pulling-manifests
+var imageNamePattern = regexp.MustCompile(`^[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*(\/[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*)*$`)
 
 type containerHeaders struct {
 	Status        int

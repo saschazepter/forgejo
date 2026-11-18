@@ -122,3 +122,20 @@ func TestResponseHeadersForEmptyBlobs(t *testing.T) {
 		assert.Equal(t, http.StatusAccepted, recorder.Code)
 	})
 }
+
+func TestImageNamePattern(t *testing.T) {
+	t.Run("Valid", func(t *testing.T) {
+		for _, name := range []string{"forgejo", "1", "a", "a.b", "a_0", "a__b", "a-b", "a--b", "a---b"} {
+			assert.True(t, imageNamePattern.MatchString(name))
+			assert.True(t, imageNamePattern.MatchString(name+"/"+name))
+			assert.True(t, imageNamePattern.MatchString(name+"/"+name+"/"+name))
+		}
+	})
+
+	t.Run("Invalid", func(t *testing.T) {
+		for _, name := range []string{"", "A", "+", "--", "a___b", "a..b", "a_-b"} {
+			assert.False(t, imageNamePattern.MatchString(name))
+			assert.False(t, imageNamePattern.MatchString("a/"+name))
+		}
+	})
+}
