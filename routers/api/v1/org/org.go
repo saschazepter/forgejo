@@ -500,11 +500,12 @@ func ListOrgActivityFeeds(ctx *context.APIContext) {
 	listOptions := utils.GetListOptions(ctx)
 
 	opts := activities_model.GetFeedsOptions{
-		RequestedUser:  ctx.User(),
-		Actor:          ctx.Doer(),
-		IncludePrivate: includePrivate,
-		Date:           ctx.FormString("date"),
-		ListOptions:    listOptions,
+		RequestedUser:        ctx.User(),
+		Actor:                ctx.Doer(),
+		IncludePrivate:       includePrivate,
+		Date:                 ctx.FormString("date"),
+		ListOptions:          listOptions,
+		AuthorizationReducer: ctx.Reducer(),
 	}
 
 	feeds, count, err := activities_model.GetFeeds(ctx, opts)

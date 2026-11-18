@@ -542,6 +542,10 @@ type GetFeedsOptions struct {
 	OnlyPerformedBy      bool                   // only actions performed by requested user
 	OnlyPerformedByActor bool                   // only actions performed by the original actor
 	Date                 string                 // the day we want activity for: YYYY-MM-DD
+
+	// Filters repositories based upon optional authorization restrictions.
+	AuthorizationReducer     repo_model.RepositoryAuthorizationReducer
+	repositoryTableAvailable bool // when using the authorization reducer, is `repository` already present in query?
 }
 
 // GetFeeds returns actions according to the provided options
@@ -550,6 +554,7 @@ func GetFeeds(ctx context.Context, opts GetFeedsOptions) (ActionList, int64, err
 		return nil, 0, errors.New("need at least one of these filters: RequestedUser, RequestedTeam, RequestedRepo, RequestedIssue")
 	}
 
+	opts.repositoryTableAvailable = true // join for `repository` occurs here, so no need for a subquery
 	cond, err := activityQueryCondition(ctx, opts)
 	if err != nil {
 		return nil, 0, err
@@ -583,6 +588,19 @@ func ActivityReadable(user, doer *user_model.User) bool {
 
 func activityQueryCondition(ctx context.Context, opts GetFeedsOptions) (builder.Cond, error) {
 	cond := builder.NewCond()
+
+	if opts.AuthorizationReducer != nil {
+		if opts.repositoryTableAvailable {
+			cond = cond.And(opts.AuthorizationReducer.RepoReadAccessFilter())
+		} else {
+			cond = cond.And(
+				builder.In(
+					"`action`.repo_id",
+					builder.Select("id").From("repository").Where(opts.AuthorizationReducer.RepoReadAccessFilter()),
+				),
+			)
+		}
+	}
 
 	if opts.OnlyPerformedByActor {
 		cond = cond.And(builder.Expr("`action`.user_id = `action`.act_user_id"))

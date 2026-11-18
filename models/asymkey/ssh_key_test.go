@@ -19,6 +19,7 @@ import (
 	"github.com/42wim/sshsig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/ssh"
 )
 
 func Test_SSHParsePublicKey(t *testing.T) {
@@ -493,4 +494,30 @@ func Test_PublicKeysAreExternallyManaged(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, externals, 1)
 	assert.False(t, externals[0])
+}
+
+func TestSSHKeyPrecision(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	realPublicKeyText := "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDEvFwwPqml0ChEbIPwHnKdAjGyjsuI73IY8GgKtT1GHOysNB78kylVqX+TB678J3SQ6ejRIwcSFrttme4SLNsv6G2dhAk3T8PNl61lZTDKSMlGLO8cpBpLr8TRRLiCXAUR3F931BgT+IYpHLNLnN6wivnTvIzebfSswzHG+otmAfeHfNYTrkFLl/7xILoXMon/Kp5YRjITDXqYYtxPkRGlGmhyLWh8tlRtcqMCD49LwycE+2rLKI0Oc+J0hkW9h2THGnNqDqm/wbtVZGXOeF86mxj+h4sNSfsocPZQeSS5I5nTYmOjm9Wlb6DVEMTLS4ITJqOunUWOgzFFexEyPZ/Z1UA+5FjSQnRFzDiFjqJO5TP+ddOdoxP/cR6c2aNQsi5hh0KHmocJzRkIs2bIoW8oOm0xU0hAxqW3dgNCcUzUQhZq4auGF5e8vuSmQWrbZDP4oV644CBKsYbMoRL+DQI+ag6nGirB1xPAHwMtvLkuMHAB8Qw6G8DTOOqEdMAPkSM= user@desktop"
+
+	createdKey, err := AddPublicKey(t.Context(), 2, "test ssh key", realPublicKeyText, 0)
+	require.NoError(t, err)
+	assert.Equal(t, createdKey.Content, realPublicKeyText)
+
+	realPublicKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(realPublicKeyText))
+	require.NoError(t, err)
+
+	fetchedKey, err := SearchPublicKeyForSSH(t.Context(), realPublicKey)
+	require.NoError(t, err)
+	assert.Equal(t, createdKey.ID, fetchedKey.ID)
+
+	// Check using SearchPublicKeyForSSH w/ forgedPrivateKeyText, which is a key that iscase-collapsing equal to
+	// realPrivateKeyTExt, but is *not* the same key.  Lookup should fail.
+	forgedPublicKeyText := "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDEvFWWPqmL0ChEbipwHnKDaJGYjSuI73IY8ggKTT1GHoySNb78kyLVQx+TB678J3Sq6eJRiwCsFRtTMe4SlnSv6G2DHaK3t8PNl61lZtdKSmlgLo8CPbplR8tRrliCXAUR3F931bGT+IyPHlnlnn6WIVntvizEbfSSWZHg+oTmafehFNYTRkFlL/7xiloXmOn/kp5yRJItDXqyYTxpKrGlgMhyLWh8TLRTcqmCD49LWYce+2RLKI0Oc+j0hkW9H2ThGnnQdQM/wBtVZGxoEF86mXJ+H4SNsFSOcpzQess5i5NtYmojm9wlb6DVeMtLS4ItjqouNuWogzFfExEypZ/Z1UA+5fjsqNRfZdifJQJo5tP+DdoDOXp/Cr6c2AnqSI5Hh0kHMOCjZRKIs2BioW8OOM0xu0haXQw3DGNCcuzUqhzq4augf5E8VUsmQWRBzdP4Ov644cbKSyBMoRl+DQI+Ag6NGirB1xPaHwmTvlKumhab8qw6G8dtOOQeDMapksM= user@desktop"
+	forgedPublicKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(forgedPublicKeyText))
+	require.NoError(t, err)
+
+	_, err = SearchPublicKeyForSSH(t.Context(), forgedPublicKey)
+	require.ErrorIs(t, err, ErrKeyNotExist{})
 }

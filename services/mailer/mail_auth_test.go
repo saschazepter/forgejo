@@ -42,6 +42,7 @@ func TestPrimaryMailChange(t *testing.T) {
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 	firstEmail := unittest.AssertExistsAndLoadBean(t, &user_model.EmailAddress{ID: 3, UID: user.ID, IsPrimary: true})
 	secondEmail := unittest.AssertExistsAndLoadBean(t, &user_model.EmailAddress{ID: 35, UID: user.ID}, "is_primary = false")
+	require.NoError(t, user_model.ActivateEmail(db.DefaultContext, secondEmail))
 
 	called := false
 	defer mailer.MockMailSettings(func(msgs ...*mailer.Message) {
