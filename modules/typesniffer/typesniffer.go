@@ -34,6 +34,8 @@ const (
 	STLMimeType = "model/stl"
 	// 3MFMimeType MIME type of 3MF files.
 	ThreeMFMimeType = "model/3mf"
+	// jxlMimeType MIME type of JXL files.
+	jxlMimeType = "image/jxl"
 )
 
 var (
@@ -192,6 +194,13 @@ func DetectContentType(data []byte, filename string) SniffedType {
 	// hexdump -n 4 -C glTF.glb
 	if bytes.HasPrefix(data, []byte("glTF")) {
 		ct = GLBMimeType
+	}
+
+	// JXL is unsupported by http.DetectContentType
+	// hexdump -n 24 -C image.jxl
+	if ct == "application/octet-stream" &&
+		bytes.Index(data, []byte("ftypjxl")) == 16 {
+		ct = jxlMimeType
 	}
 
 	return SniffedType{ct}

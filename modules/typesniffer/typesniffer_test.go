@@ -167,6 +167,16 @@ func TestDetectContentTypeAvif(t *testing.T) {
 	assert.True(t, st.IsImage())
 }
 
+func TestDetectContentTypeJxl(t *testing.T) {
+	jxlImage, err := hex.DecodeString("0000000c4a584c200d0a870a00000014667479706a786c20")
+	require.NoError(t, err)
+
+	st, err := DetectContentTypeFromReader(bytes.NewReader(jxlImage), "")
+	require.NoError(t, err)
+
+	assert.True(t, st.IsImage())
+}
+
 func TestDetectContentTypeModelGLB(t *testing.T) {
 	glb, err := hex.DecodeString("676c5446")
 	require.NoError(t, err)
