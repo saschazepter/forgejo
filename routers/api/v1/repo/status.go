@@ -271,7 +271,7 @@ func GetCombinedCommitStatusByRef(ctx *context.APIContext) {
 
 	repo := ctx.Repo().Repository
 
-	statuses, count, err := git_model.GetLatestCommitStatus(ctx, repo.ID, sha, utils.GetListOptions(ctx))
+	statuses, count, err := git_model.GetLatestCommitStatus(ctx, repo.ID, sha, db.ListOptionsAll)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "GetLatestCommitStatus", fmt.Errorf("GetLatestCommitStatus[%s, %s]: %w", repo.FullName(), sha, err))
 		return
@@ -286,12 +286,15 @@ func GetCombinedCommitStatusByRef(ctx *context.APIContext) {
 		return
 	}
 
-	if len(statuses) == 0 {
-		ctx.JSON(http.StatusOK, &api.CombinedStatus{})
-		return
-	}
-
 	combiStatus := convert.ToCombinedStatus(ctx, statuses, convert.ToRepo(ctx, repo, ctx.Repo().Permission))
+
+	// reduce statuses for paging
+	length := len(combiStatus.Statuses)
+	listOpts := utils.GetListOptions(ctx)
+	skip, take := listOpts.GetSkipTake()
+	start := min(skip, length)
+	end := min(start+take, length)
+	combiStatus.Statuses = combiStatus.Statuses[start:end]
 
 	ctx.SetTotalCountHeader(count)
 	ctx.JSON(http.StatusOK, combiStatus)

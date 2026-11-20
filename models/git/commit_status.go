@@ -450,7 +450,7 @@ func ParseCommitsWithStatus(ctx context.Context, commits []*git.Commit, repo *re
 		commit := &SignCommitWithStatuses{
 			SignCommit: c,
 		}
-		statuses, _, err := GetLatestCommitStatus(ctx, repo.ID, commit.ID.String(), db.ListOptions{})
+		statuses, _, err := GetLatestCommitStatus(ctx, repo.ID, commit.ID.String(), db.ListOptionsAll)
 		if err != nil {
 			log.Error("GetLatestCommitStatus: %v", err)
 		} else {

@@ -166,12 +166,12 @@ func TestCombinedStatusReturnsEmptyObjectWhenPageIsBeyondLastStatus(t *testing.T
 		assert.Len(t, status.Statuses, 1)
 	}
 	resp := session.MakeRequest(t, NewRequestf(t, "GET", "/api/v1/repos/user2/repo1/commits/%s/status?limit=1&page=3", sha), http.StatusOK)
-	assert.Empty(t, resp.Header().Get("X-Total-Count"))
+	assert.Equal(t, "2", resp.Header().Get("X-Total-Count"))
 	var status *api.CombinedStatus
 	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &status))
 	require.NotNil(t, status)
-	assert.Empty(t, status.State)
-	assert.Nil(t, status.Statuses)
+	assert.Equal(t, api.CommitStatusSuccess, status.State)
+	assert.Empty(t, status.Statuses)
 }
 
 func TestRepoCommitsWithStatusPending(t *testing.T) {
@@ -363,4 +363,55 @@ func TestCreateCommitStatusNonExistingSHA(t *testing.T) {
 		Description: "",
 		Context:     "testci",
 	}))
+}
+
+func TestCombinedStatusStateCoversAllContexts(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	const sha = "65f1bf27bc3bf70f64657658635e66094edbcb4d"
+	session := loginUser(t, "user2")
+	ctx := NewAPITestContext(t, "user2", "repo1", auth_model.AccessTokenScopeWriteRepository)
+
+	require.True(t, t.Run("failing", doAPICreateCommitStatus(ctx, sha, api.CreateStatusOption{
+		State:   api.CommitStatusFailure,
+		Context: "failing",
+	})))
+	for i := 1; i <= setting.API.DefaultPagingNum; i++ {
+		name := fmt.Sprintf("success-%02d", i)
+		require.True(t, t.Run(name, doAPICreateCommitStatus(ctx, sha, api.CreateStatusOption{
+			State:   api.CommitStatusSuccess,
+			Context: name,
+		})))
+	}
+
+	req := NewRequest(t, "GET", "/user2/repo1/commits/branch/master")
+	resp := session.MakeRequest(t, req, http.StatusOK)
+
+	doc := NewHTMLParser(t, resp.Body)
+	// Check if commit status is displayed in message column (.tippy-target to ignore the tippy trigger)
+	sel := doc.doc.Find("#commits-table tbody tr td.message .tippy-target .commit-status")
+	assert.Equal(t, 31, sel.Length())
+	assert.True(t, sel.HasClass("octicon-x"))
+	assert.True(t, sel.HasClass("red"))
+
+	total := setting.API.DefaultPagingNum + 1
+
+	for _, tc := range []struct {
+		query  string
+		status api.CommitStatusState
+	}{
+		{"?limit=1&page=1", api.CommitStatusFailure},
+		{"?limit=1&page=2", api.CommitStatusSuccess},
+	} {
+		t.Run("query"+tc.query, func(t *testing.T) {
+			resp := session.MakeRequest(t, NewRequestf(t, "GET", "/api/v1/repos/user2/repo1/commits/%s/status%s", sha, tc.query), http.StatusOK)
+			assert.Equal(t, fmt.Sprint(total), resp.Header().Get("X-Total-Count"))
+
+			var status api.CombinedStatus
+			require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &status))
+			assert.Equal(t, api.CommitStatusFailure, status.State)
+			assert.Equal(t, total, status.TotalCount)
+			assert.Len(t, status.Statuses, 1)
+			assert.Equal(t, tc.status, status.Statuses[0].State)
+		})
+	}
 }
