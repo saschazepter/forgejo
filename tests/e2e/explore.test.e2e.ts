@@ -3,7 +3,7 @@
 
 // @watch start
 // templates/explore/**
-// web_src/modules/fomantic/**
+// web_src/js/modules/fomantic/**
 // @watch end
 
 import {expect} from '@playwright/test';

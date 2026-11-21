@@ -7,7 +7,7 @@
 // web_src/css/repo.css
 // web_src/css/repo/file-view.css
 // web_src/css/modules/tippy.css
-// web_src/js/features/repo-code.js
+// web_src/js/features/repo-code.ts
 // web_src/js/features/repo-unicode-escape.js
 // @watch end
 

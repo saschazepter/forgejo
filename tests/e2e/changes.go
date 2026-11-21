@@ -20,7 +20,7 @@ var (
 )
 
 func initChangedFiles() {
-	_, globalFullRun = os.LookupEnv("RUN_ALL")
+	globalFullRun = os.Getenv("RUN_ALL") != ""
 	if globalFullRun {
 		log.Info("Full run of all tests requested via RUN_ALL environment.")
 		return

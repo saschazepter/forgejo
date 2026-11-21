@@ -4,10 +4,10 @@
 // routers/web/web.go
 // services/forms/runner.go
 // templates/admin/runners/**
-// templates/org/settings/runner*
-// templates/repo/settings/runner*
-// templates/shared/actions/runner*
-// templates/user/settings/runner*
+// templates/org/settings/runner*.tmpl
+// templates/repo/settings/runner*.tmpl
+// templates/shared/actions/runner*.tmpl
+// templates/user/settings/runner*.tmpl
 // web_src/css/actions.css
 // @watch end
 

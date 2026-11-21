@@ -1,6 +1,6 @@
 // @watch start
 // templates/shared/user/**
-// web_src/css/modules/dimmer.ts
+// web_src/js/modules/dimmer.ts
 // web_src/css/modules/dimmer.css
 // @watch end
 

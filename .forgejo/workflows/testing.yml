@@ -158,7 +158,7 @@ jobs:
         env:
           USE_REPO_TEST_DIR: 1
           CHANGED_FILES: ${{steps.changed-files.outputs.all_changed_files}}
-          RUN_ALL: ${{steps.run-all.all}}
+          RUN_ALL: ${{steps.run-all.outputs.all}}
       - name: Upload test artifacts on failure
         if: failure()
         # upload-artifact must not be updated to a commit that doesn't have Forgejo's hack (for lack of GHES support in

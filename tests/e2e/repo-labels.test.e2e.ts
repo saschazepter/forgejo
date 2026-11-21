@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // @watch start
-// templates/repo/issues/labels/**
+// templates/repo/issue/labels/**
 // web_src/js/features/comp/LabelEdit.js
 // @watch end
 

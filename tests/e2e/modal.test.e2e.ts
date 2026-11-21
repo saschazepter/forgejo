@@ -6,7 +6,7 @@
 // templates/repo/editor/edit.tmpl
 // templates/repo/editor/patch.tmpl
 // web_src/js/features/repo-editor.js
-// web_src/css/modules/dialog.ts
+// web_src/js/modules/modal.ts
 // web_src/css/modules/dialog.css
 // @watch end
 

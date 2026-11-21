@@ -3,7 +3,6 @@
 
 // @watch start
 // templates/repo/watch_unwatch.tmpl
-// templates/user/settings/notifications.tmpl
 // web_src/css/repo/header.css
 // @watch end
 

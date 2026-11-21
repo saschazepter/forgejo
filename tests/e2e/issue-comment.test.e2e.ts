@@ -4,7 +4,7 @@
 // @watch start
 // web_src/js/features/comp/**
 // web_src/js/features/repo-**
-// templates/repo/issue/view_content/*
+// templates/repo/issue/view_content/**
 // routers/web/repo/issue_content_history.go
 // web_src/js/vendor/jquery.are-you-sure.js
 // @watch end

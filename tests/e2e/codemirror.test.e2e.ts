@@ -5,7 +5,7 @@
 // templates/repo/editor/edit.tmpl
 // web_src/css/features/codeeditor.css
 // web_src/js/features/codeeditor.ts
-// web_src/js/features/codemirror*
+// web_src/js/features/codemirror*.ts
 // web_src/js/features/repo-editor.js
 // web_src/js/features/repo-settings.js
 // web_src/js/vendor/jquery.are-you-sure.js

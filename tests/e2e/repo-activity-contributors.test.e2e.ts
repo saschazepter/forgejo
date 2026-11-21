@@ -4,7 +4,7 @@
 // @watch start
 // web_src/js/features/contributors.js
 // web_src/js/components/RepoContributors.vue
-// templates/repo/*
+// templates/repo/*.tmpl
 // @watch end
 
 import {expect} from '@playwright/test';

@@ -1,5 +1,5 @@
 // @watch start
-// template/base/paginate.tmpl
+// templates/base/paginate.tmpl
 // services/context/pagination.go
 // @watch end
 
