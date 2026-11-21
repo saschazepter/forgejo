@@ -48,6 +48,7 @@
   flex-grow: 0;
   flex-wrap: wrap;
   justify-content: end;
+  margin-inline-start: auto; /* keep it right-aligned when it wraps onto its own line */
 }
 
 .flex-item .flex-item-title {
