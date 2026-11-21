@@ -65,10 +65,6 @@ func ToPullReview(ctx context.Context, r *issues_model.Review, doer *user_model.
 func ToPullReviewList(ctx context.Context, rl []*issues_model.Review, doer *user_model.User) ([]*api.PullReview, error) {
 	result := make([]*api.PullReview, 0, len(rl))
 	for i := range rl {
-		// show pending reviews only for the user who created them
-		if rl[i].Type == issues_model.ReviewTypePending && (doer == nil || (!doer.IsAdmin && doer.ID != rl[i].ReviewerID)) {
-			continue
-		}
 		r, err := ToPullReview(ctx, rl[i], doer)
 		if err != nil {
 			return nil, err

@@ -85,6 +85,10 @@ func ListPullReviews(ctx *context.APIContext) {
 	opts := issues_model.FindReviewOptions{
 		ListOptions: utils.GetListOptions(ctx),
 		IssueID:     pr.IssueID,
+		PendingVisibleByUser: &issues_model.FindReviewPendingVisibleByUser{
+			Doer:    ctx.Doer(),
+			Reducer: ctx.Reducer(),
+		},
 	}
 
 	allReviews, err := issues_model.FindReviews(ctx, opts)

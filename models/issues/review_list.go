@@ -11,6 +11,7 @@ import (
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/container"
 	"forgejo.org/modules/optional"
+	"forgejo.org/services/authz"
 
 	"xorm.io/builder"
 )
@@ -92,11 +93,18 @@ func (reviews ReviewList) LoadIssues(ctx context.Context) error {
 // FindReviewOptions represent possible filters to find reviews
 type FindReviewOptions struct {
 	db.ListOptions
-	Types        []ReviewType
-	IssueID      int64
-	ReviewerID   int64
-	OfficialOnly bool
-	Dismissed    optional.Option[bool]
+	Types                []ReviewType
+	IssueID              int64
+	ReviewerID           int64
+	OfficialOnly         bool
+	Dismissed            optional.Option[bool]
+	PendingVisibleByUser *FindReviewPendingVisibleByUser
+}
+
+// When a review is pending, only show them to the user who created them or admins
+type FindReviewPendingVisibleByUser struct {
+	Doer    *user_model.User
+	Reducer authz.AuthorizationReducer
 }
 
 func (opts *FindReviewOptions) toCond() builder.Cond {
@@ -115,6 +123,18 @@ func (opts *FindReviewOptions) toCond() builder.Cond {
 	}
 	if has, value := opts.Dismissed.Get(); has {
 		cond = cond.And(builder.Eq{"dismissed": value})
+	}
+	if opts.PendingVisibleByUser != nil {
+		doer := opts.PendingVisibleByUser.Doer
+		reducer := opts.PendingVisibleByUser.Reducer
+		// Doer nil - anonymous access, no pending reviews.
+		// Doer admin - skip filter they're allowed to see pending reviews.
+		if doer == nil {
+			cond = cond.And(builder.Neq{"type": ReviewTypePending})
+		} else if !doer.IsAdmin || (reducer != nil && !reducer.AllowAdminOverride()) {
+			// Filter out pending reviews, unless they're created by the doer
+			cond = cond.And(builder.Neq{"type": ReviewTypePending}.Or(builder.Eq{"reviewer_id": doer.ID}))
+		}
 	}
 	return cond
 }

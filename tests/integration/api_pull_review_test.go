@@ -346,6 +346,62 @@ func TestAPIPullReviewMultiLineComment(t *testing.T) {
 	MakeRequest(t, req, http.StatusNoContent)
 }
 
+func TestAPIPullReviewList(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	pullIssue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 3})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: pullIssue.RepoID})
+	reviewsURL := fmt.Sprintf("/api/v1/repos/%s/pulls/%d/reviews", repo.FullName(), pullIssue.Index)
+
+	// Review 6 belongs to user2 and is pending. It sorts between reviews 5 and 7.
+	allReviews := []int64{5, 6, 7, 8, 9, 10, 21, 22}
+	visibleReviews := []int64{5, 7, 8, 9, 10, 21, 22}
+	checkReviews := func(t *testing.T, req *RequestWrapper, total int, wantIDs []int64) {
+		t.Helper()
+		resp := MakeRequest(t, req, http.StatusOK)
+		assert.Equal(t, fmt.Sprint(total), resp.Header().Get("X-Total-Count"))
+
+		var reviews []api.PullReview
+		DecodeJSON(t, resp, &reviews)
+		ids := make([]int64, 0, len(reviews))
+		for _, review := range reviews {
+			ids = append(ids, review.ID)
+			if review.ID == 6 {
+				assert.Equal(t, api.ReviewStatePending, review.State)
+			}
+		}
+		assert.Equal(t, wantIDs, ids)
+	}
+
+	for _, test := range []struct {
+		name     string
+		username string
+		wantIDs  []int64
+	}{
+		{"Reviewer", "user2", allReviews},
+		{"Administrator", "user1", allReviews},
+		{"Other user", "user4", visibleReviews},
+		{"Anonymous", "", visibleReviews},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			req := NewRequest(t, http.MethodGet, reviewsURL)
+			if test.username != "" {
+				token := getTokenForLoggedInUser(t, loginUser(t, test.username), auth_model.AccessTokenScopeReadRepository)
+				req.AddTokenAuth(token)
+			}
+			checkReviews(t, req, len(test.wantIDs), test.wantIDs)
+		})
+	}
+
+	t.Run("Pagination", func(t *testing.T) {
+		token := getTokenForLoggedInUser(t, loginUser(t, "user4"), auth_model.AccessTokenScopeReadRepository)
+		for page, wantIDs := range [][]int64{{5, 7, 8}, {9, 10, 21}, {22}, {}} {
+			req := NewRequestf(t, http.MethodGet, "%s?page=%d&limit=3", reviewsURL, page+1).AddTokenAuth(token)
+			checkReviews(t, req, len(visibleReviews), wantIDs)
+		}
+	})
+}
+
 func TestAPIPullReview(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	pullIssue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 3})
