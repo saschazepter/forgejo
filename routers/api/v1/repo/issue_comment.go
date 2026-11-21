@@ -5,7 +5,6 @@
 package repo
 
 import (
-	stdCtx "context"
 	"errors"
 	"net/http"
 
@@ -18,7 +17,6 @@ import (
 	api "forgejo.org/modules/structs"
 	"forgejo.org/modules/web"
 	"forgejo.org/routers/api/v1/utils"
-	"forgejo.org/services/authz"
 	"forgejo.org/services/context"
 	"forgejo.org/services/convert"
 	issue_service "forgejo.org/services/issue"
@@ -192,11 +190,28 @@ func ListIssueCommentsAndTimeline(ctx *context.APIContext) {
 		Since:       since,
 		Before:      before,
 		Type:        issues_model.CommentTypeUndefined,
+		TypeExclude: []issues_model.CommentType{issues_model.CommentTypeCode},
 	}
+
+	// Filter out comments with cross-references that aren't visible to the user & reducer:
+	xRefAllow, allRefRepos, err := issues_model.CalculateXRefAllowOption(ctx, opts,
+		func(r *repo_model.Repository) (access_model.Permission, error) {
+			return access_model.GetUserRepoPermissionWithReducer(ctx, r, ctx.Doer(), ctx.Reducer())
+		})
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "CalculateXRefAllowOption", err)
+		return
+	}
+	opts.XRefAllow = xRefAllow
 
 	comments, err := issues_model.FindComments(ctx, opts)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "FindComments", err)
+		return
+	}
+	count, err := issues_model.CountComments(ctx, opts)
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "CountComments", err)
 		return
 	}
 
@@ -212,34 +227,13 @@ func ListIssueCommentsAndTimeline(ctx *context.APIContext) {
 
 	var apiComments []*api.TimelineComment
 	for _, comment := range comments {
-		if comment.Type != issues_model.CommentTypeCode && isXRefCommentAccessible(ctx, ctx.Doer(), comment, issue.RepoID, ctx.Reducer()) {
-			comment.Issue = issue
-			apiComments = append(apiComments, convert.ToTimelineComment(ctx, issue.Repo, comment, ctx.Doer()))
-		}
+		comment.Issue = issue
+		comment.RefRepo = allRefRepos[comment.RefRepoID]
+		apiComments = append(apiComments, convert.ToTimelineComment(ctx, issue.Repo, comment, ctx.Doer()))
 	}
 
-	ctx.SetTotalCountHeader(int64(len(apiComments)))
+	ctx.SetTotalCountHeader(count)
 	ctx.JSON(http.StatusOK, &apiComments)
-}
-
-func isXRefCommentAccessible(ctx stdCtx.Context, user *user_model.User, c *issues_model.Comment, issueRepoID int64, reducer authz.AuthorizationReducer) bool {
-	// Remove comments that the user has no permissions to see
-	if issues_model.CommentTypeIsRef(c.Type) && c.RefRepoID != issueRepoID && c.RefRepoID != 0 {
-		var err error
-		// Set RefRepo for description in template
-		c.RefRepo, err = repo_model.GetRepositoryByID(ctx, c.RefRepoID)
-		if err != nil {
-			return false
-		}
-		perm, err := access_model.GetUserRepoPermissionWithReducer(ctx, c.RefRepo, user, reducer)
-		if err != nil {
-			return false
-		}
-		if !perm.CanReadIssuesOrPulls(c.RefIsPull) {
-			return false
-		}
-	}
-	return true
 }
 
 // ListRepoIssueComments returns all issue-comments for a repo

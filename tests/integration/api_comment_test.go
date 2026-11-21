@@ -540,9 +540,7 @@ func TestAPIListIssueTimelineAccessTokenResources(t *testing.T) {
 		foundRepo2 := false // private repo2
 		foundRepo3 := false // second public repo used in fine-grain testing, included as baseline
 		for _, comment := range comments {
-			// println(fmt.Sprintf("%#v", comment))
 			if comment.RefIssue != nil && comment.RefIssue.Repo != nil {
-				// println(fmt.Sprintf("RefIssue = %#v", comment.RefIssue))
 				switch comment.RefIssue.Repo.Name {
 				case "repo1":
 					foundRepo1 = true
@@ -603,4 +601,69 @@ func TestAPIListIssueTimelineAccessTokenResources(t *testing.T) {
 		assert.True(t, foundRepo2)  // private repo2, allowed inside fine-grain
 		assert.False(t, foundRepo3) // private org3/repo3, denied outside fine-grain
 	})
+}
+
+func TestAPIListIssueTimelinePagination(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	session := loginUser(t, "user2")
+	writeToken := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
+
+	// Create an issue on a repo, repo1 -- call it issue1.
+	req := NewRequestWithJSON(t, "POST", "/api/v1/repos/user2/repo1/issues", &api.CreateIssueOption{
+		Body:  "issue body",
+		Title: "issue title",
+	}).AddTokenAuth(writeToken)
+	resp := MakeRequest(t, req, http.StatusCreated)
+	var issue1 api.Issue
+	DecodeJSON(t, resp, &issue1)
+
+	// On three other issues, on a public repo (repo1), on two private repos (repo2, org3/repo3), create
+	// cross-references via comments to issue1.
+	req = NewRequestWithJSON(t, "POST", "/api/v1/repos/user2/repo1/issues", &api.CreateIssueOption{
+		Body:  "repo1 referencing issue",
+		Title: fmt.Sprintf("I really like the idea of %s ...", issue1.HTMLURL),
+	}).AddTokenAuth(writeToken)
+	MakeRequest(t, req, http.StatusCreated)
+	// repo3 reference will be filtered out of the pagination -- we'll put it in the middle where it could mess up the
+	// pagination if not filtered correctly:
+	req = NewRequestWithJSON(t, "POST", "/api/v1/repos/org3/repo3/issues", &api.CreateIssueOption{
+		Body:  "repo1 referencing issue",
+		Title: fmt.Sprintf("I really like the idea of %s ...", issue1.HTMLURL),
+	}).AddTokenAuth(writeToken)
+	MakeRequest(t, req, http.StatusCreated)
+	req = NewRequestWithJSON(t, "POST", "/api/v1/repos/user2/repo2/issues", &api.CreateIssueOption{
+		Body:  "repo1 referencing issue",
+		Title: fmt.Sprintf("I really like the idea of %s ...", issue1.HTMLURL),
+	}).AddTokenAuth(writeToken)
+	MakeRequest(t, req, http.StatusCreated)
+
+	// Will only be able to read repo2 (explicit access) and repo1 (public):
+	repo2OnlyToken := createFineGrainedRepoAccessToken(t, "user2",
+		[]auth_model.AccessTokenScope{auth_model.AccessTokenScopeReadIssue},
+		[]int64{2},
+	)
+
+	req = NewRequest(t, "GET", fmt.Sprintf("/api/v1/repos/user2/repo1/issues/%d/timeline?page=1&limit=1", issue1.Index)).AddTokenAuth(repo2OnlyToken)
+	resp = MakeRequest(t, req, http.StatusOK)
+	assert.Equal(t, "2", resp.Header().Get("X-Total-Count"))
+	comments := []*api.TimelineComment{}
+	DecodeJSON(t, resp, &comments)
+	require.Len(t, comments, 1)
+	assert.Equal(t, "repo1", comments[0].RefIssue.Repo.Name)
+
+	req = NewRequest(t, "GET", fmt.Sprintf("/api/v1/repos/user2/repo1/issues/%d/timeline?page=2&limit=1", issue1.Index)).AddTokenAuth(repo2OnlyToken)
+	resp = MakeRequest(t, req, http.StatusOK)
+	assert.Equal(t, "2", resp.Header().Get("X-Total-Count"))
+	comments = []*api.TimelineComment{}
+	DecodeJSON(t, resp, &comments)
+	require.Len(t, comments, 1)
+	assert.Equal(t, "repo2", comments[0].RefIssue.Repo.Name)
+
+	req = NewRequest(t, "GET", fmt.Sprintf("/api/v1/repos/user2/repo1/issues/%d/timeline?page=3&limit=1", issue1.Index)).AddTokenAuth(repo2OnlyToken)
+	resp = MakeRequest(t, req, http.StatusOK)
+	assert.Equal(t, "2", resp.Header().Get("X-Total-Count"))
+	comments = []*api.TimelineComment{}
+	DecodeJSON(t, resp, &comments)
+	assert.Empty(t, comments)
 }

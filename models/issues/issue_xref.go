@@ -280,10 +280,8 @@ func (c *Comment) LoadRefIssue(ctx context.Context) (err error) {
 	return err
 }
 
-// CommentTypeIsRef returns true if CommentType is a reference from another issue
-func CommentTypeIsRef(t CommentType) bool {
-	return t == CommentTypeCommentRef || t == CommentTypePullRef || t == CommentTypeIssueRef
-}
+// All comment types that are a reference from another issue
+var refCommentTypes = []any{CommentTypeCommentRef, CommentTypePullRef, CommentTypeIssueRef}
 
 // RefCommentLink returns the relative URL for the comment that created this reference
 func (c *Comment) RefCommentLink(ctx context.Context) string {

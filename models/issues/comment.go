@@ -19,8 +19,10 @@ import (
 	"forgejo.org/models/db"
 	git_model "forgejo.org/models/git"
 	"forgejo.org/models/organization"
+	access_model "forgejo.org/models/perm/access"
 	project_model "forgejo.org/models/project"
 	repo_model "forgejo.org/models/repo"
+	"forgejo.org/models/unit"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/cache"
 	"forgejo.org/modules/container"
@@ -1271,9 +1273,19 @@ type FindCommentsOptions struct {
 	Line        int64
 	TreePath    string
 	Type        CommentType
+	TypeExclude []CommentType
 	IssueIDs    []int64
 	Invalidated optional.Option[bool]
 	IsPull      optional.Option[bool]
+
+	// If a comment is a reference from another repository, then only return the comment if it is from one of the listed
+	// repositories.  If a comment is not a reference from another repository, it is not affected by this filter.
+	XRefAllow *FindCommentsXRefAllowOption
+}
+
+type FindCommentsXRefAllowOption struct {
+	IssueRepoIDs       []int64 // Only if comment is from an issue in these repositories
+	PullRequestRepoIDs []int64 // Only if comment is from a pull request in these repositories
 }
 
 // ToConds implements FindOptions interface
@@ -1299,6 +1311,9 @@ func (opts FindCommentsOptions) ToConds() builder.Cond {
 	if opts.Type != CommentTypeUndefined {
 		cond = cond.And(builder.Eq{"comment.type": opts.Type})
 	}
+	if len(opts.TypeExclude) > 0 {
+		cond = cond.And(builder.NotIn("comment.type", opts.TypeExclude))
+	}
 	if opts.Line != 0 {
 		cond = cond.And(builder.Eq{"comment.line": opts.Line})
 	}
@@ -1310,6 +1325,19 @@ func (opts FindCommentsOptions) ToConds() builder.Cond {
 	}
 	if has, value := opts.IsPull.Get(); has {
 		cond = cond.And(builder.Eq{"issue.is_pull": value})
+	}
+	if opts.XRefAllow != nil {
+		// Allow comments that aren't xrefs
+		notXRef := builder.NotIn("comment.type", refCommentTypes...)
+
+		// Match PR or Issue against their allowed reference repos.  RefIsPull IS NULL is treated the same as false for
+		// compatibility with older server-side interpretation of the field in this visibility filter.
+		matchIssue := builder.IsNull{"comment.ref_is_pull"}.Or(builder.Eq{"comment.ref_is_pull": false}).
+			And(builder.In("comment.ref_repo_id", opts.XRefAllow.IssueRepoIDs))
+		matchPR := builder.Eq{"comment.ref_is_pull": true}.
+			And(builder.In("comment.ref_repo_id", opts.XRefAllow.PullRequestRepoIDs))
+
+		cond = cond.And(notXRef.Or(matchIssue).Or(matchPR))
 	}
 	return cond
 }
@@ -1341,6 +1369,65 @@ func CountComments(ctx context.Context, opts *FindCommentsOptions) (int64, error
 		sess.Join("INNER", "issue", "issue.id = comment.issue_id")
 	}
 	return sess.Count(&Comment{})
+}
+
+// For all the comments matching `opts` which are references to other repos, get the distinct set of the repository IDs
+// referenced.  All repositories referenced are returned -- the pagination fields of `FindCommentsOptions` are ignored.
+func FindXRefRepositoryIDs(ctx context.Context, opts *FindCommentsOptions) ([]int64, error) {
+	repositoryIDs := make([]int64, 0, 10)
+	err := db.GetEngine(ctx).
+		Table(&Comment{}).
+		Where(opts.ToConds().And(builder.In("type", refCommentTypes...))).
+		Distinct("ref_repo_id").
+		Select("ref_repo_id").
+		Find(&repositoryIDs)
+	if err != nil {
+		return nil, fmt.Errorf("query error in FindXRefRepositoryIDs: %w", err)
+	}
+	return repositoryIDs, nil
+}
+
+// CalculateXRefAllowOption calculates a value for [FindCommentsOptions.XRefAllow].  [FindCommentsOptions.XRefAllow]
+// allows us to hide comments that are cross-references from other repositories if those other repositories aren't
+// visible to the user, during the database query for comments.
+//
+// The goal is for this to be implemented in the DB query to (a) allow pagination, and (b) minimize data transfer to the
+// server for irrelevant comments.  But the repository perm checks require quite a bit of client-side implementation. To
+// bridge this gap, we first fetch all the repositories that might be cross-references on this issue's comments,
+// calculate visibility, and then provide that as a simpler filter to the DB to only fetch comments with
+// cross-references from visible repositories.
+func CalculateXRefAllowOption(ctx context.Context, opts *FindCommentsOptions, permRetriever func(*repo_model.Repository) (access_model.Permission, error)) (*FindCommentsXRefAllowOption, map[int64]*repo_model.Repository, error) {
+	if opts.XRefAllow != nil {
+		// Unexpected to already have an XRefAllow when calculating one:
+		return nil, nil, fmt.Errorf("FindCommentsWithXRefPermission: XRefAllow must not be set")
+	}
+
+	allRefRepoIDs, err := FindXRefRepositoryIDs(ctx, opts)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to FindXRefRepositoryIDs: %w", err)
+	}
+	allRefRepos, err := repo_model.GetRepositoriesMapByIDs(ctx, allRefRepoIDs)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to GetRepositoriesMapByIDs: %w", err)
+	}
+	allowedRefIssueRepos := make([]int64, 0, len(allRefRepoIDs)) // visibility to xref'ing issue & PR calculated separately
+	allowedRefPullRequestRepos := make([]int64, 0, len(allRefRepoIDs))
+	for _, refRepo := range allRefRepos {
+		perm, err := permRetriever(refRepo)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to GetUserRepoPermission: %w", err)
+		}
+		if perm.CanRead(unit.TypeIssues) {
+			allowedRefIssueRepos = append(allowedRefIssueRepos, refRepo.ID)
+		}
+		if perm.CanRead(unit.TypePullRequests) {
+			allowedRefPullRequestRepos = append(allowedRefPullRequestRepos, refRepo.ID)
+		}
+	}
+	return &FindCommentsXRefAllowOption{
+		IssueRepoIDs:       allowedRefIssueRepos,
+		PullRequestRepoIDs: allowedRefPullRequestRepos,
+	}, allRefRepos, nil
 }
 
 // UpdateCommentInvalidate updates comment invalidated column

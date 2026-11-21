@@ -1486,13 +1486,14 @@ func ViewIssue(ctx *context.Context) {
 	ctx.Data["IsAttachmentEnabled"] = setting.Attachment.Enabled
 	upload.AddUploadContext(ctx, "comment")
 
-	if err = issue.LoadAttributes(ctx); err != nil {
-		ctx.ServerError("LoadAttributes", err)
+	// Comments are manually loaded into the issue to apply visibility filtering
+	if err := loadIssueCommentsWithXRefVisibility(ctx, issue); err != nil {
+		ctx.ServerError("loadIssueCommentsWithXRefVisibility", err)
 		return
 	}
 
-	if err = filterXRefComments(ctx, issue); err != nil {
-		ctx.ServerError("filterXRefComments", err)
+	if err = issue.LoadAttributes(ctx); err != nil {
+		ctx.ServerError("LoadAttributes", err)
 		return
 	}
 
@@ -3655,28 +3656,33 @@ func addParticipant(poster *user_model.User, participants []*user_model.User) []
 	return append(participants, poster)
 }
 
-func filterXRefComments(ctx *context.Context, issue *issues_model.Issue) error {
-	// Remove comments that the user has no permissions to see
-	for i := 0; i < len(issue.Comments); {
-		c := issue.Comments[i]
-		if issues_model.CommentTypeIsRef(c.Type) && c.RefRepoID != issue.RepoID && c.RefRepoID != 0 {
-			var err error
-			// Set RefRepo for description in template
-			c.RefRepo, err = repo_model.GetRepositoryByID(ctx, c.RefRepoID)
-			if err != nil {
-				return err
-			}
-			perm, err := access_model.GetUserRepoPermission(ctx, c.RefRepo, ctx.Doer)
-			if err != nil {
-				return err
-			}
-			if !perm.CanReadIssuesOrPulls(c.RefIsPull) {
-				issue.Comments = append(issue.Comments[:i], issue.Comments[i+1:]...)
-				continue
-			}
-		}
-		i++
+func loadIssueCommentsWithXRefVisibility(ctx *context.Context, issue *issues_model.Issue) error {
+	opts := &issues_model.FindCommentsOptions{
+		IssueID: issue.ID,
+		Type:    issues_model.CommentTypeUndefined,
 	}
+
+	xRefAllow, allRefRepos, err := issues_model.CalculateXRefAllowOption(ctx, opts,
+		func(r *repo_model.Repository) (access_model.Permission, error) {
+			return access_model.GetUserRepoPermission(ctx, r, ctx.Doer)
+		})
+	opts.XRefAllow = xRefAllow
+	if err != nil {
+		return fmt.Errorf("failed to CalculateXRefAllowOption: %w", err)
+	}
+
+	issue.Comments, err = issues_model.FindComments(ctx, opts)
+	if err != nil {
+		return fmt.Errorf("failed to FindComments: %w", err)
+	}
+
+	// Set RefRepo since we've already loaded the necessary repository objects:
+	for _, c := range issue.Comments {
+		if c.RefRepoID != 0 {
+			c.RefRepo = allRefRepos[c.RefRepoID]
+		}
+	}
+
 	return nil
 }
 
