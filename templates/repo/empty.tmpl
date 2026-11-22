@@ -24,9 +24,9 @@
 					</h4>
 					<div class="ui attached guide table segment empty-repo-guide">
 						<div class="item">
-							<h3>{{ctx.Locale.Tr "repo.clone_this_repo"}} <small>{{ctx.Locale.Tr "repo.clone_helper" "http://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository"}}</small></h3>
+							<h3 class="tw-mt-0">{{ctx.Locale.Tr "repo.clone_this_repo"}} <small>{{ctx.Locale.Tr "repo.clone_helper" "http://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository"}}</small></h3>
 
-							<div class="repo-button-row">
+							<div class="repo-button-row tw-mb-0">
 								{{if and .CanWriteCode (not .Repository.IsArchived)}}
 									<a class="ui small button" href="{{.RepoLink}}/_new/{{.BranchName | PathEscapeSegments}}/">
 										{{ctx.Locale.Tr "file_editor.new_file"}}
@@ -49,22 +49,22 @@
 							<div class="item">
 								<h3>{{ctx.Locale.Tr "repo.create_new_repo_command"}}</h3>
 								<div class="markup">
-									<pre class="code-block"><code>touch README.md
+									<div><pre class="code-block tw-mb-0"><code>touch README.md
 git init{{if eq .Repository.ObjectFormatName "sha256"}} --object-format=sha256{{end}}
 {{if ne .Repository.DefaultBranch "master"}}git switch -c {{.Repository.DefaultBranch}}{{end}}
 git add README.md
 git commit -m "first commit"
 git remote add origin <span class="js-clone-url">{{$.CloneButtonOriginLink.HTTPS}}</span>
-git push -u origin {{.Repository.DefaultBranch}}</code></pre>
+git push -u origin {{.Repository.DefaultBranch}}</code></pre></div>
 								</div>
 							</div>
-							<div class="divider"></div>
+							<div class="divider tw-my-0"></div>
 
 							<div class="item">
 								<h3>{{ctx.Locale.Tr "repo.push_exist_repo"}}</h3>
 								<div class="markup">
-									<pre class="code-block"><code>git remote add origin <span class="js-clone-url">{{$.CloneButtonOriginLink.HTTPS}}</span>
-git push -u origin {{.Repository.DefaultBranch}}</code></pre>
+									<div><pre class="code-block tw-mb-0"><code>git remote add origin <span class="js-clone-url">{{$.CloneButtonOriginLink.HTTPS}}</span>
+git push -u origin {{.Repository.DefaultBranch}}</code></pre></div>
 								</div>
 							</div>
 						{{end}}

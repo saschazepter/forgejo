@@ -13,6 +13,16 @@ export function renderCodeCopy() {
 
   for (const el of els) {
     if (!el.textContent) continue;
+    if (el.parentElement.classList?.contains('trim-empty-lines')) {
+      for (let i = el.childNodes.length; i > 0; --i) {
+        const n = el.childNodes[i - 1];
+        if (n.nodeType === Node.TEXT_NODE && !n.textContent.trim()) {
+          n.remove();
+        } else {
+          n.textContent += '\n';
+        }
+      }
+    }
     // Suggestion, Mermaid and math blocks are replaced by some rendered content
     // (see markup/suggestion.js, markup/mermaid.js and markup/math.js), therefore
     // we should not add a copy button and leave it to the respective markup files.

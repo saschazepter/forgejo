@@ -162,6 +162,7 @@ func TestPullManuallyMergeWarning(t *testing.T) {
 	session := loginUser(t, user2.Name)
 
 	warningMessage := `Warning: The "Autodetect manual merge" setting is not enabled for this repository, you will have to mark this pull request as manually merged afterwards.`
+	warningSelector := ".merge.box .markup"
 	t.Run("Autodetect disabled", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
@@ -169,7 +170,7 @@ func TestPullManuallyMergeWarning(t *testing.T) {
 		resp := session.MakeRequest(t, req, http.StatusOK)
 
 		htmlDoc := NewHTMLParser(t, resp.Body)
-		mergeInstructions := htmlDoc.Find("#merge-instructions").Text()
+		mergeInstructions := htmlDoc.Find(warningSelector).Text()
 		assert.Contains(t, mergeInstructions, warningMessage)
 	})
 
@@ -186,7 +187,7 @@ func TestPullManuallyMergeWarning(t *testing.T) {
 		resp := session.MakeRequest(t, req, http.StatusOK)
 
 		htmlDoc := NewHTMLParser(t, resp.Body)
-		mergeInstructions := htmlDoc.Find("#merge-instructions").Text()
+		mergeInstructions := htmlDoc.Find(warningSelector).Text()
 		assert.NotContains(t, mergeInstructions, warningMessage)
 	})
 }

@@ -1021,6 +1021,7 @@ citation-information .tab:not(.active) {
   background: var(--color-light);
 }
 
+.repository.quickstart .markup,
 .repository.view.issue .comment-list .comment .markup {
   font-size: 14px;
 }
