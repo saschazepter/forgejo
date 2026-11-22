@@ -598,7 +598,10 @@
 							</span>
 							{{if and $.Issue.PullRequest.BaseRepo.Name $isOldCommitValid $isNewCommitValid}}
 								<span class="compare">
-									<a href="{{$.Issue.PullRequest.BaseRepo.Link}}/compare/{{PathEscape .OldCommit}}..{{PathEscape .NewCommit}}" rel="nofollow" class="ui compare label">{{ctx.Locale.Tr "repo.issues.force_push_compare"}}</a>
+									{{if and (ne .OldCommitMergeBase "") (ne .NewCommitMergeBase "")}}
+										<a href="{{$.Issue.PullRequest.BaseRepo.Link}}/range-diff/{{PathEscape .OldCommitMergeBase}}..{{PathEscape .OldCommit}}/{{PathEscape .NewCommitMergeBase}}..{{PathEscape .NewCommit}}" rel="nofollow" class="ui compare label">{{ctx.Locale.Tr "repo.issues.force_push_range_diff"}}</a>
+									{{end}}
+									<a href="{{$.Issue.PullRequest.BaseRepo.Link}}/compare/{{PathEscape .OldCommit}}..{{PathEscape .NewCommit}}" rel="nofollow" class="ui compare label">{{ctx.Locale.Tr "repo.issues.force_push_compare_tree"}}</a>
 								</span>
 							{{end}}
 						</span>

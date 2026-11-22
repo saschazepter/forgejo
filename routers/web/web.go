@@ -1400,6 +1400,7 @@ func registerRoutes(m *web.Route) {
 		m.Combo("/compare/*", repo.MustBeNotEmpty, reqRepoCodeReader, repo.SetEditorconfigIfExists).
 			Get(repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.CompareDiff).
 			Post(reqSignIn, context.RepoMustNotBeArchived(), reqRepoPullsReader, repo.MustAllowPulls, web.Bind(forms.CreateIssueForm{}), repo.SetWhitespaceBehavior, repo.CompareAndPullRequestPost)
+		m.Get("/range-diff/{old}/{new}", repo.MustBeNotEmpty, reqRepoCodeReader, repo.RangeDiff)
 		m.Group("/{type:^(issues|pulls)$}", func() {
 			m.Group("/{index}", func() {
 				m.Get("/info", repo.GetIssueInfo)

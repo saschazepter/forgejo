@@ -323,11 +323,13 @@ type Comment struct {
 	RefIssue   *Issue                 `xorm:"-"`
 	RefComment *Comment               `xorm:"-"`
 
-	Commits     []*git_model.SignCommitWithStatuses `xorm:"-"`
-	OldCommit   string                              `xorm:"-"`
-	NewCommit   string                              `xorm:"-"`
-	CommitsNum  int64                               `xorm:"-"`
-	IsForcePush bool                                `xorm:"-"`
+	Commits            []*git_model.SignCommitWithStatuses `xorm:"-"`
+	OldCommit          string                              `xorm:"-"`
+	OldCommitMergeBase string                              `xorm:"-"`
+	NewCommit          string                              `xorm:"-"`
+	NewCommitMergeBase string                              `xorm:"-"`
+	CommitsNum         int64                               `xorm:"-"`
+	IsForcePush        bool                                `xorm:"-"`
 
 	reverseLineBlame *git.ReverseLineBlame `xorm:"-"`
 
@@ -341,8 +343,14 @@ func init() {
 
 // PushActionContent is content of push pull comment
 type PushActionContent struct {
-	IsForcePush bool     `json:"is_force_push"`
-	CommitIDs   []string `json:"commit_ids"`
+	IsForcePush bool           `json:"is_force_push"`
+	CommitIDs   []string       `json:"commit_ids"`
+	ForcePush   *ForcePushInfo `json:"force_push,omitempty"`
+}
+
+type ForcePushInfo struct {
+	OldMergeBase string `json:"old_mb,omitempty"` // may be empty; old force push comments, or, if there was no merge base
+	NewMergeBase string `json:"new_mb,omitempty"` // may be empty; old force push comments, or, if there was no merge base
 }
 
 // LoadIssue loads the issue reference for the comment
@@ -1015,6 +1023,10 @@ func (c *Comment) LoadPushCommits(ctx context.Context) (err error) {
 		}
 		c.OldCommit = data.CommitIDs[0]
 		c.NewCommit = data.CommitIDs[1]
+		if data.ForcePush != nil {
+			c.OldCommitMergeBase = data.ForcePush.OldMergeBase
+			c.NewCommitMergeBase = data.ForcePush.NewMergeBase
+		}
 	}
 
 	gitRepo, closer, err := gitrepo.RepositoryFromContextOrOpen(ctx, c.Issue.Repo)

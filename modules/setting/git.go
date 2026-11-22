@@ -19,6 +19,7 @@ var Git = struct {
 
 	MaxGitDiffLines          int
 	MaxGitDiffLineCharacters int
+	MaxGitRangeDiffCommits   int
 	CommitsRangeSize         int // CommitsRangeSize the default commits range size
 	BranchesRangeSize        int // BranchesRangeSize the default branches range size
 	VerbosePush              bool
@@ -39,6 +40,7 @@ var Git = struct {
 	DisableDiffHighlight:     false,
 	MaxGitDiffLines:          1000,
 	MaxGitDiffLineCharacters: 5000,
+	MaxGitRangeDiffCommits:   100,
 	CommitsRangeSize:         50,
 	BranchesRangeSize:        20,
 	VerbosePush:              true,

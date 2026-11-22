@@ -13,6 +13,7 @@ import (
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/gitrepo"
 	"forgejo.org/modules/json"
+	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 )
 
@@ -80,6 +81,35 @@ func CreatePushPullComment(ctx context.Context, pusher *user_model.User, pr *iss
 	data.CommitIDs, data.IsForcePush, err = getCommitIDsFromRepo(ctx, pr.BaseRepo, oldCommitID, newCommitID, pr.BaseBranch)
 	if err != nil {
 		return nil, err
+	}
+
+	// Record the current merge-base of the commits during a force push.  This allows us to accurately `git range-diff`
+	// in the future to see the changes made during this force push.  Without the merge-base recorded now, if the base
+	// branch of the PR changed, or the base branch was force pushed, or the new commit was merged into the base branch,
+	// we wouldn't be able to compute the same merge-base and therefore provide the same `range-diff` command:
+	if data.IsForcePush {
+		gitRepo, closer, err := gitrepo.RepositoryFromContextOrOpen(ctx, pr.BaseRepo)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open repository: %w", err)
+		}
+
+		// `git merge-base` cmds can fail if there is no merge base; this would probably be a mistake by the user force
+		// pushing where they've messed up their PR.  We omit recording the merge base and emit a warning.
+		oldMergeBase, err := gitRepo.GetMergeBase(pr.BaseBranch, data.CommitIDs[0])
+		if err != nil {
+			log.Warn("Force push to repo %s PR %d; failed to get old commit's merge-base: %s", pr.BaseRepo.FullName(), pr.Index, err)
+		}
+		newMergeBase, err := gitRepo.GetMergeBase(pr.BaseBranch, data.CommitIDs[1])
+		if err != nil {
+			log.Warn("Force push to repo %s PR %d; failed to get new commit's merge-base: %s", pr.BaseRepo.FullName(), pr.Index, err)
+		}
+		if oldMergeBase != "" || newMergeBase != "" {
+			data.ForcePush = &issues_model.ForcePushInfo{
+				OldMergeBase: oldMergeBase,
+				NewMergeBase: newMergeBase,
+			}
+		}
+		closer.Close()
 	}
 
 	if err := pr.LoadIssue(ctx); err != nil {

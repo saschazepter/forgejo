@@ -6,6 +6,7 @@ package repo
 
 import (
 	"bufio"
+	"bytes"
 	gocontext "context"
 	"encoding/csv"
 	"errors"
@@ -49,6 +50,7 @@ const (
 	tplCompare     base.TplName = "repo/diff/compare"
 	tplBlobExcerpt base.TplName = "repo/diff/blob_excerpt"
 	tplDiffBox     base.TplName = "repo/diff/box"
+	tplRangeDiff   base.TplName = "repo/diff/range_diff"
 )
 
 // setCompareContext sets context data.
@@ -1020,4 +1022,119 @@ func getExcerptLines(commit *git.Commit, filePath string, idxLeft, idxRight, chu
 		return nil, fmt.Errorf("getExcerptLines scan: %w", err)
 	}
 	return diffLines, nil
+}
+
+func RangeDiff(ctx *context.Context) {
+	old := ctx.Params("old")
+	oldCommits := strings.SplitN(old, "..", 2)
+	if len(oldCommits) != 2 {
+		ctx.Error(http.StatusBadRequest, "Must have two commits specified in old position")
+		return
+	}
+	oldBaseInput := oldCommits[0]
+	oldHeadInput := oldCommits[1]
+	ctx.Data["OldBaseInput"] = oldBaseInput
+	ctx.Data["OldHeadInput"] = oldHeadInput
+
+	new := ctx.Params("new")
+	newCommits := strings.SplitN(new, "..", 2)
+	if len(newCommits) != 2 {
+		ctx.Error(http.StatusBadRequest, "Must have two commits specified in new position")
+		return
+	}
+	newBaseInput := newCommits[0]
+	newHeadInput := newCommits[1]
+	ctx.Data["NewBaseInput"] = newBaseInput
+	ctx.Data["NewHeadInput"] = newHeadInput
+
+	commits := ctx.Repo.GitRepo.GetCommitsFromIDs([]string{oldBaseInput, oldHeadInput, newBaseInput, newHeadInput}, false)
+	if len(commits) != 4 {
+		ctx.NotFound("commits not found", nil)
+		return
+	}
+
+	oldBase := commits[0]
+	oldHead := commits[1]
+	newBase := commits[2]
+	newHead := commits[3]
+	ctx.Data["OldBase"] = oldBase.ID.String()
+	ctx.Data["OldHead"] = oldHead.ID.String()
+	ctx.Data["NewBase"] = newBase.ID.String()
+	ctx.Data["NewHead"] = newHead.ID.String()
+
+	// Minimize risk of resource utilization parsing and comparing commitsets by checking size of the commitset:
+	maxCommits := int64(setting.Git.MaxGitRangeDiffCommits)
+	if baseCommitSetCount, err := ctx.Repo.GitRepo.CommitsCountBetween(oldBase.ID.String(), oldHead.ID.String()); err != nil {
+		ctx.ServerError("range-diff CommitsCountBetween on base had error", err)
+		return
+	} else if baseCommitSetCount > maxCommits {
+		ctx.Error(http.StatusBadRequest, fmt.Sprintf("Maximum %d commits in range-diff, found %d commits in base range", maxCommits, baseCommitSetCount))
+		return
+	}
+	if headCommitSetCount, err := ctx.Repo.GitRepo.CommitsCountBetween(newBase.ID.String(), newHead.ID.String()); err != nil {
+		ctx.ServerError("range-diff CommitsCountBetween on head had error", err)
+		return
+	} else if headCommitSetCount > maxCommits {
+		ctx.Error(http.StatusBadRequest, fmt.Sprintf("Maximum %d commits in range-diff, found %d commits in head range", maxCommits, headCommitSetCount))
+		return
+	}
+
+	cmd := git.NewCommand(ctx,
+		"range-diff",
+		"--no-patch",  // patch content is not displayed, and PargeRangeDiff does not support it
+		"--no-color",  // ParseRangeDiff requires no color output
+		"--abbrev=64", // full length commit IDs, even for sha256 repos
+	).AddDynamicArguments(
+		fmt.Sprintf("%s..%s", oldBase.ID.String(), oldHead.ID.String()),
+		fmt.Sprintf("%s..%s", newBase.ID.String(), newHead.ID.String()),
+	)
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+	err := cmd.Run(&git.RunOpts{
+		Dir:    ctx.Repo.GitRepo.Path,
+		Stdout: &stdout,
+		Stderr: &stderr,
+	})
+	if err != nil {
+		// Failure can be easily triggered by providing an invalid set of commits, such as base..head where base isn't
+		// an ancestor of head.  Treat these as 400 Bad Requests, but provide more information in the server logs (not
+		// at error level).
+		log.Warn("git range-diff failed: %s", stderr.String())
+		ctx.Error(http.StatusBadRequest, "git range-diff failed; if this is unexpected, more information is in the server logs")
+		return
+	}
+
+	parsedOutput, err := git.ParseRangeDiff(&stdout)
+	if err != nil {
+		ctx.ServerError("failed to parse range-diff", err)
+		return
+	}
+
+	ctx.Data["RangeDiff"] = parsedOutput
+
+	ctx.Data["CommitEqual"] = git.CommitEqual
+	ctx.Data["CommitChanged"] = git.CommitChanged
+	ctx.Data["CommitAdded"] = git.CommitAdded
+	ctx.Data["CommitRemoved"] = git.CommitRemoved
+
+	// A "clean rebase" here is defined that the author moved a commit-set from one merge-base to another merge-base
+	// without any modifications to the commits.  Typically when reviewing a PR, a clean rebase can be ignored, which is
+	// why it is worth highlighting.
+	cleanRebase := true
+	for _, c := range parsedOutput {
+		switch c.Status {
+		case git.CommitAdded, git.CommitRemoved, git.CommitChanged:
+			cleanRebase = false
+		case git.CommitEqual:
+			// Even with equal commits, if they were reordered then it isn't a clean rebase
+			cleanRebase = c.Old.ValueOrZeroValue().Index == c.New.ValueOrZeroValue().Index
+		}
+		if !cleanRebase {
+			break
+		}
+	}
+	ctx.Data["CleanRebase"] = cleanRebase
+
+	ctx.Data["Repo"] = ctx.Repo.Repository
+	ctx.HTML(http.StatusOK, tplRangeDiff)
 }
