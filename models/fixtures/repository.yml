@@ -28,7 +28,7 @@
   close_issues_via_commit_in_any_branch: false
   created_unix: 1731254961
   updated_unix: 1731254961
-  topics: '[]'
+  topics: '["SQL","database","golang"]'
 
 -
   id: 2
@@ -56,7 +56,7 @@
   size: 0
   is_fsck_enabled: true
   close_issues_via_commit_in_any_branch: true
-  topics: '[]'
+  topics: '["topicname1","topicname2"]'
 -
   id: 3
   owner_id: 3
@@ -914,7 +914,7 @@
   size: 0
   is_fsck_enabled: true
   close_issues_via_commit_in_any_branch: false
-  topics: '[]'
+  topics: '["golang","graphql"]'
 
 -
   id: 34

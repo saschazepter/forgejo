@@ -946,22 +946,6 @@ func renderLanguageStats(ctx *context.Context) {
 	ctx.Data["LanguageStats"] = langs
 }
 
-func renderRepoTopics(ctx *context.Context) {
-	topics, _, err := repo_model.FindTopics(ctx, &repo_model.FindTopicOptions{
-		RepoID: ctx.Repo.Repository.ID,
-	})
-	if err != nil {
-		ctx.ServerError("models.FindTopics", err)
-		return
-	}
-
-	topicNames := make([]string, 0, len(topics))
-	for _, t := range topics {
-		topicNames = append(topicNames, t.Name)
-	}
-	ctx.Data["Topics"] = topicNames
-}
-
 func prepareOpenWithEditorApps(ctx *context.Context) {
 	var tmplApps []map[string]any
 	apps := setting.Config().Repository.OpenWithEditorApps.Value(ctx)
@@ -1053,11 +1037,7 @@ func renderHomeCode(ctx *context.Context) {
 	}
 	ctx.Data["Title"] = title
 
-	// Get Topics of this repo
-	renderRepoTopics(ctx)
-	if ctx.Written() {
-		return
-	}
+	ctx.Data["Topics"] = ctx.Repo.Repository.Topics
 
 	// Get current entry user currently looking at.
 	entry, err := ctx.Repo.Commit.GetTreeEntryByPath(ctx.Repo.TreePath)
