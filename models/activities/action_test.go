@@ -422,3 +422,28 @@ func TestIsPrivate(t *testing.T) {
 		assert.Equal(t, test.private, private, "action ID: %d", test.activityID)
 	}
 }
+
+func TestLoadActUserSystemUsers(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	t.Run("Single", func(t *testing.T) {
+		action := &activities_model.Action{ActUserID: user_model.ActionsUserID}
+		action.LoadActUser(t.Context())
+		assert.True(t, action.ActUser.IsActions())
+
+		deleted := &activities_model.Action{ActUserID: 9999}
+		deleted.LoadActUser(t.Context())
+		assert.True(t, deleted.ActUser.IsGhost())
+	})
+
+	t.Run("List", func(t *testing.T) {
+		actions := activities_model.ActionList{
+			{ActUserID: user_model.ActionsUserID},
+			{ActUserID: 2},
+		}
+		_, err := actions.LoadActUsers(t.Context())
+		require.NoError(t, err)
+		assert.True(t, actions[0].ActUser.IsActions())
+		assert.Equal(t, "user2", actions[1].ActUser.Name)
+	})
+}

@@ -260,13 +260,13 @@ func (a *Action) LoadActUser(ctx context.Context) {
 		return
 	}
 	var err error
-	a.ActUser, err = user_model.GetUserByID(ctx, a.ActUserID)
+	a.ActUser, err = user_model.GetPossibleUserByID(ctx, a.ActUserID)
 	if err == nil {
 		return
 	} else if user_model.IsErrUserNotExist(err) {
 		a.ActUser = user_model.NewGhostUser()
 	} else {
-		log.Error("GetUserByID(%d): %v", a.ActUserID, err)
+		log.Error("GetPossibleUserByID(%d): %v", a.ActUserID, err)
 	}
 }
 

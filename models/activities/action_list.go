@@ -33,12 +33,13 @@ func (actions ActionList) LoadActUsers(ctx context.Context) (map[int64]*user_mod
 	}
 
 	userIDs := actions.getUserIDs()
-	userMaps := make(map[int64]*user_model.User, len(userIDs))
-	err := db.GetEngine(ctx).
-		In("id", userIDs).
-		Find(&userMaps)
+	users, err := user_model.GetPossibleUserByIDs(ctx, userIDs)
 	if err != nil {
 		return nil, fmt.Errorf("find user: %w", err)
+	}
+	userMaps := make(map[int64]*user_model.User, len(users))
+	for _, user := range users {
+		userMaps[user.ID] = user
 	}
 
 	for _, action := range actions {
