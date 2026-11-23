@@ -253,10 +253,15 @@ func GetLatestCommitStatus(ctx context.Context, repoID int64, sha string, listOp
 	indices := make([]int64, 0, 10)
 	sess := getBase().Select("max( `index` ) as `index`").
 		GroupBy("context_hash").OrderBy("max( `index` ) desc")
-	if !listOptions.IsListAll() {
+	var count int64
+	var err error
+	if listOptions.IsListAll() {
+		err = sess.Find(&indices)
+		count = int64(len(indices))
+	} else {
 		sess = db.SetSessionPagination(sess, &listOptions)
+		count, err = sess.FindAndCount(&indices)
 	}
-	count, err := sess.FindAndCount(&indices)
 	if err != nil {
 		return nil, count, err
 	}
