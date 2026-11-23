@@ -205,6 +205,10 @@ type FindPublicKeyOptions struct {
 	LoginSourceID int64
 }
 
+func (opts FindPublicKeyOptions) ToOrders() string {
+	return "id" // consistent key ordering in /{users}.keys, along with other usages
+}
+
 func (opts FindPublicKeyOptions) ToConds() builder.Cond {
 	cond := builder.NewCond()
 	if opts.OwnerID != 0 {
