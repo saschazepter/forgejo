@@ -171,6 +171,13 @@ func UpdateIssuesCommit(ctx context.Context, doer *user_model.User, repo *repo_m
 				continue
 			}
 
+			// Don't manipulate the state of issues in other repos from a fork.  This prevents syncing the fork,
+			// receiving a commit like "closes parent/repo#123" and causing the parent issue to be closed (that issue
+			// may have closed when the commit was pushed, but may be reopened since then)
+			if repo.IsFork && repo.ID != refRepo.ID {
+				continue
+			}
+
 			if !repo.CloseIssuesViaCommitInAnyBranch {
 				// If the issue was specified to be in a particular branch, don't allow commits in other branches to close it
 				if refIssue.Ref != "" {
