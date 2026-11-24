@@ -404,3 +404,34 @@ func TestActionsSecretsRemoveSecret(t *testing.T) {
 		})
 	}
 }
+
+func TestActionsSecretsRepoListsInehritedSecrets(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	repo1 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1, OwnerID: user2.ID})
+
+	_, err := secret_model.InsertEncryptedSecret(t.Context(), user2.ID, 0, "OWNER_ONLY", "x")
+	require.NoError(t, err)
+	_, err = secret_model.InsertEncryptedSecret(t.Context(), user2.ID, 0, "SHARED", "x")
+	require.NoError(t, err)
+	_, err = secret_model.InsertEncryptedSecret(t.Context(), 0, repo1.ID, "SHARED", "y")
+	require.NoError(t, err)
+
+	sess := loginUser(t, user2.Name)
+	resp := sess.MakeRequest(t, NewRequest(t, "GET", "/"+repo1.FullName()+"/settings/actions/secrets"), http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+
+	lists := htmlDoc.Find(".flex-list")
+	require.Equal(t, 2, lists.Length())
+	inehrited := lists.Eq(1).Find(".flex-item-title")
+	require.Equal(t, 2, inehrited.Length())
+	assert.Contains(t, inehrited.Eq(0).Text(), "OWNER_ONLY")
+	assert.Contains(t, inehrited.Eq(1).Text(), "SHARED")
+	htmlDoc.AssertElement(t, `h4 a[href="/user/settings/actions/secrets"]`, true)
+
+	resp = loginUser(t, "user1").MakeRequest(t, NewRequest(t, "GET", "/"+repo1.FullName()+"/settings/actions/secrets"), http.StatusOK)
+	htmlDoc = NewHTMLParser(t, resp.Body)
+	assert.Equal(t, 2, htmlDoc.Find(".flex-list").Length())
+	htmlDoc.AssertElement(t, `h4 a[href="/user/settings/actions/secrets"]`, false)
+}

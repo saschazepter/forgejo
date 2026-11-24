@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 
+	org_model "forgejo.org/models/organization"
 	"forgejo.org/modules/base"
 	"forgejo.org/modules/setting"
 	shared "forgejo.org/routers/web/shared/secrets"
@@ -85,9 +86,30 @@ func Secrets(ctx *context.Context) {
 		ctx.Data["DisableSSH"] = setting.SSH.Disabled
 	}
 
-	shared.SetSecretsContext(ctx, sCtx.OwnerID, sCtx.RepoID)
+	secrets := shared.SetSecretsContext(ctx, sCtx.OwnerID, sCtx.RepoID)
 	if ctx.Written() {
 		return
+	}
+	if sCtx.IsRepo {
+		shared.SetInheritedSecretsContext(ctx, ctx.Repo.Repository.OwnerID, secrets)
+		if ctx.Written() {
+			return
+		}
+
+		// Link only if we could open the org's secret page
+		owner := ctx.Repo.Owner
+		if owner.IsOrganization() {
+			isOwner, err := org_model.IsOrganizationOwner(ctx, owner.ID, ctx.Doer.ID)
+			if err != nil {
+				ctx.ServerError("IsOrganizationOwner", err)
+				return
+			}
+			if isOwner || ctx.Doer.IsAdmin {
+				ctx.Data["InheritedSecretsLink"] = owner.OrganisationLink() + "/settings/actions/secrets"
+			}
+		} else if owner.ID == ctx.Doer.ID {
+			ctx.Data["InheritedSecretsLink"] = setting.AppSubURL + "/user/settings/actions/secrets"
+		}
 	}
 	ctx.HTML(http.StatusOK, sCtx.SecretsTemplate)
 }

@@ -1124,6 +1124,8 @@
 	"actions.secrets.mutation.success_message": "The secret \"%s\" has been updated.",
 	"actions.secrets.mutation.failure_message": "The secret \"%s\" could not be updated.",
 	"actions.secrets.mutation.name_description": "The name of a secret can only contain letters, numbers, and underscores. It cannot start with FORGEJO_, GITEA_, GITHUB_, or a number. Forgejo will automatically convert it to uppercase.",
+	"actions.secrets.inherited.header": "Inherited secrets",
+	"actions.secrets.inherited.overridden": "Overridden by repository secret",
 	"actions.secrets.mutation.value_description": "The existing value will not be shown. Leave the field empty if you do not want to modify it. Special characters are retained. CRLF (Windows-style line breaks) is automatically converted to LF. Encode the value with Base64 if linebreaks should be retained.",
 	"pulse.heading": "Activity between %[1]s and %[2]s",
 	"pulse.n_active_issues": {
