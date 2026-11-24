@@ -299,3 +299,40 @@ func TestUpdateIssuesCommit_AnotherRepoNoPermission(t *testing.T) {
 	unittest.AssertNotExistsBean(t, issueBean, unittest.Cond("is_closed = ?", true))
 	unittest.CheckConsistencyFor(t, &activities_model.Action{})
 }
+
+func TestUpdateIssuesCommit_Fork(t *testing.T) {
+	for _, testCase := range []struct {
+		name      string
+		message   string
+		issueID   int64
+		wasClosed bool
+		closed    bool
+	}{
+		{name: "parent issue stays open", message: "closes user2/repo1#1", issueID: 1},
+		{name: "parent issue stays closed", message: "reopens user2/repo1#4", issueID: 5, wasClosed: true, closed: true},
+		{name: "fork issue closes", message: "closes #2", issueID: 7, closed: true},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			require.NoError(t, unittest.PrepareTestDatabase())
+			user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+			repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2})
+			repo.IsFork = true
+			repo.ForkID = 1
+
+			commit := &repository.PushCommit{Sha1: "abcdef1", Message: testCase.message}
+			issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: testCase.issueID})
+			require.Equal(t, testCase.wasClosed, issue.IsClosed)
+
+			require.NoError(t, UpdateIssuesCommit(db.DefaultContext, user, repo, []*repository.PushCommit{commit}, repo.DefaultBranch))
+
+			issue = unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: testCase.issueID})
+			require.Equal(t, testCase.closed, issue.IsClosed)
+			unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{
+				Type:      issues_model.CommentTypeCommitRef,
+				CommitSHA: commit.Sha1,
+				PosterID:  user.ID,
+				IssueID:   issue.ID,
+			})
+		})
+	}
+}
