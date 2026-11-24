@@ -5,6 +5,7 @@
 		{{end}}
 		{{template "user/settings/security/twofa" .}}
 		{{template "user/settings/security/webauthn" .}}
+		{{template "user/settings/security/sessions" .}}
 		{{if not .MustEnableTwoFactor}}
 			{{template "user/settings/security/accountlinks" .}}
 			{{if .EnableOpenIDSignIn}}

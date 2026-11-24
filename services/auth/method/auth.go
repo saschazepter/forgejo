@@ -47,6 +47,10 @@ func handleSignIn(resp http.ResponseWriter, req *http.Request, sess auth.Session
 	if err != nil {
 		log.Error(fmt.Sprintf("Error setting session: %v", err))
 	}
+	err = sess.Set("sessionGeneration", user.SessionGeneration)
+	if err != nil {
+		log.Error(fmt.Sprintf("Error setting session generation: %v", err))
+	}
 
 	// Language setting of the user overwrites the one previously set
 	// If the user does not have a locale set, we save the current one.

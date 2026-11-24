@@ -99,17 +99,18 @@ type User struct {
 	// is to change their password after registration.
 	MustChangePassword bool `xorm:"NOT NULL DEFAULT false"`
 
-	LoginType   auth.Type
-	LoginSource int64 `xorm:"NOT NULL DEFAULT 0"`
-	LoginName   string
-	Type        UserType
-	Location    string
-	Website     string
-	Pronouns    string
-	Rands       string `xorm:"VARCHAR(32)"`
-	Salt        string `xorm:"VARCHAR(32)"`
-	Language    string `xorm:"VARCHAR(5)"`
-	Description string
+	LoginType         auth.Type
+	LoginSource       int64 `xorm:"NOT NULL DEFAULT 0"`
+	LoginName         string
+	Type              UserType
+	Location          string
+	Website           string
+	Pronouns          string
+	Rands             string `xorm:"VARCHAR(32)"`
+	Salt              string `xorm:"VARCHAR(32)"`
+	SessionGeneration int64  `xorm:"NOT NULL DEFAULT 0"`
+	Language          string `xorm:"VARCHAR(5)"`
+	Description       string
 
 	CreatedUnix   timeutil.TimeStamp `xorm:"INDEX created"`
 	UpdatedUnix   timeutil.TimeStamp `xorm:"INDEX updated"`
@@ -463,6 +464,18 @@ func (u *User) SetPassword(passwd string) (err error) {
 	u.PasswdHashAlgo = setting.PasswordHashAlgo
 
 	return nil
+}
+
+// RevokeUserSessions increments the user's session generation so existing sessions are
+// rejected, and deletes all authorization tokens of the user.
+func RevokeUserSessions(ctx context.Context, u *User) error {
+	return db.WithTx(ctx, func(ctx context.Context) error {
+		if _, err := db.GetEngine(ctx).ID(u.ID).Incr("session_generation").Update(new(User)); err != nil {
+			return err
+		}
+		u.SessionGeneration++
+		return auth.DeleteAuthTokenByUser(ctx, u.ID)
+	})
 }
 
 // ValidatePassword checks if the given password matches the one belonging to the user.

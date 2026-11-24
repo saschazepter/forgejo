@@ -1310,5 +1310,9 @@
 	"form.Server": "Deploy server",
 	"webhooks.git_pages.server.required_for_this_site": "Must be provided for an initial deploy to an %[1]s site URL.",
 	"webhooks.git_pages.site_url_and_server_dns_mismatch": "The hostname of site %[1]s resolves to A/AAAA DNS records that are not present for the specified deploy server %[2]s. Verify that the correct deploy server has been configured.",
+	"settings.sessions": "Sessions",
+	"settings.sessions_desc": "Sign out of all browsers and devices, and revoke all persistent remember-me sessions.",
+	"settings.sessions_sign_out": "Sign out all browsers",
+	"settings.sessions_sign_out_desc": "All browsers and devices (including this one) will be signed out. Continue?",
 	"meta.last_line": "Thank you for translating Forgejo! This line isn't seen by the users but it serves other purposes in the translation management. You can place a fun fact in the translation instead of translating it."
 }

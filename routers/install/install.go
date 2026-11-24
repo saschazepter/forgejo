@@ -568,6 +568,10 @@ func SubmitInstall(ctx *context.Context) {
 			ctx.RenderWithErr(ctx.Tr("install.save_config_failed", err), tplInstall, &form)
 			return
 		}
+		if err = ctx.Session.Set("sessionGeneration", u.SessionGeneration); err != nil {
+			ctx.RenderWithErr(ctx.Tr("install.save_config_failed", err), tplInstall, &form)
+			return
+		}
 
 		if err = ctx.Session.Release(); err != nil {
 			ctx.RenderWithErr(ctx.Tr("install.save_config_failed", err), tplInstall, &form)

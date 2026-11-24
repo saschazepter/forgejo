@@ -51,6 +51,12 @@ func (s *Session) Verify(req *http.Request, w http.ResponseWriter, sess auth.Ses
 		return &auth.AuthenticationAttemptedIncorrectCredential{Error: err}
 	}
 
+	gen, _ := sess.Get("sessionGeneration").(int64)
+	if gen != user.SessionGeneration {
+		log.Trace("Session Authorization: Expired session generation for user %-v (got %d, want %d)", user, gen, user.SessionGeneration)
+		return &auth.AuthenticationNotAttempted{InteractiveReauthenticationPossible: true}
+	}
+
 	log.Trace("Session Authorization: Logged in user %-v", user)
 	return &auth.AuthenticationSuccess{Result: &sessionAuthenticationResult{user: user}}
 }

@@ -1402,7 +1402,8 @@ func handleOAuth2SignIn(ctx *context.Context, source *auth.Source, u *user_model
 		if err := updateSession(ctx,
 			[]string{"oauth_signin_silent"},
 			map[string]any{
-				"uid": u.ID,
+				"uid":               u.ID,
+				"sessionGeneration": u.SessionGeneration,
 			}); err != nil {
 			ctx.ServerError("updateSession", err)
 			return

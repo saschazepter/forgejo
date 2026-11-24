@@ -242,6 +242,7 @@ func webAuth(authMethod auth_service.Method) func(*context.Context) {
 			// auth (example: Floccus) will clear the session every time it receives a 401 response (example: starting
 			// an auth workflow).
 			_ = ctx.Session.Delete("uid")
+			_ = ctx.Session.Delete("sessionGeneration")
 		}
 	}
 }
@@ -792,6 +793,7 @@ func registerRoutes(m *web.Route) {
 				m.Post("/toggle_visibility", security.ToggleOpenIDVisibility)
 			}, openIDSignInEnabled)
 			m.Post("/account_link", linkAccountEnabled, security.DeleteAccountLink)
+			m.Post("/sessions/sign_out", security.SignOutSessions)
 		}, requiredTwoFactor)
 
 		m.Group("/applications", func() {
