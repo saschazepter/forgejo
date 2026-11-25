@@ -110,10 +110,14 @@ func GetProject(ctx *context.APIContext) {
 	var project *project_model.Project
 	if ownerType == project_module.APIOwnerTypeRepository {
 		project, err = project_service.GetProjectByIDForOwner(ctx, ctx.Project().ProjectID, 0, repo)
-		project.Repo = repo
+		if project != nil {
+			project.Repo = repo
+		}
 	} else {
 		project, err = project_service.GetProjectByIDForOwner(ctx, ctx.Project().ProjectID, owner.ID, nil)
-		project.Owner = owner
+		if project != nil {
+			project.Owner = owner
+		}
 	}
 	if err != nil {
 		if project_model.IsErrProjectNotExist(err) || project_module.IsErrMismatchedOwner(err) {

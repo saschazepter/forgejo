@@ -147,6 +147,264 @@ func TestProjectAPIListProjectsPagination(t *testing.T) {
 	assert.Equal(t, numProjects/limit, numCalls)
 }
 
+func TestProjectAPIGetProject(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	err := unittest.PrepareTestDatabase()
+	require.NoError(t, err)
+
+	// user
+	user := forgery.CreateUser(t, nil)
+	userSession := loginUser(t, user.Name)
+	userWriteToken := getTokenForLoggedInUser(t, userSession,
+		auth_model.AccessTokenScopeWriteProject,
+	)
+	userReadToken := getTokenForLoggedInUser(t, userSession,
+		auth_model.AccessTokenScopeReadProject,
+	)
+	userRepo := forgery.CreateRepository(t, user, nil)
+	userRepo2 := forgery.CreateRepository(t, user, nil)
+	userOrg := forgery.CreateOrganisation(t, user, nil)
+	userOrgRepo := forgery.CreateRepository(t, userOrg.AsUser(), nil)
+
+	// other user
+	other := forgery.CreateUser(t, nil)
+	otherSession := loginUser(t, other.Name)
+	otherReadToken := getTokenForLoggedInUser(t, otherSession,
+		auth_model.AccessTokenScopeWriteProject,
+	)
+	otherRepo := forgery.CreateRepository(t, other, nil)
+	otherOrg := forgery.CreateOrganisation(t, other, nil)
+	otherOrgRepo := forgery.CreateRepository(t, otherOrg.AsUser(), nil)
+
+	// projects for user
+	userProject := createProject(t, &runOpts{
+		token:     userWriteToken,
+		owner:     user.Name,
+		ownerType: project_module.APIOwnerTypeIndividual,
+	}, "User Project")
+	orgProject := createProject(t, &runOpts{
+		token:     userWriteToken,
+		owner:     userOrg.Name,
+		ownerType: project_module.APIOwnerTypeOrganization,
+	}, "Org Project")
+	repoProject := createProject(t, &runOpts{
+		token:     userWriteToken,
+		owner:     user.Name,
+		repo:      userRepo.Name,
+		ownerType: project_module.APIOwnerTypeRepository,
+	}, "Repo Project")
+
+	// test gets
+	for _, tt := range []struct {
+		name    string
+		baseURL string
+		token   string
+		project api.Project
+		status  int
+	}{
+		// user project, user
+		{
+			"user project, get by user",
+			fmt.Sprintf("/api/v1/users/%s", user.Name),
+			userReadToken,
+			userProject,
+			http.StatusOK,
+		},
+		{
+			"user project, get by user, write token",
+			fmt.Sprintf("/api/v1/users/%s", user.Name),
+			userWriteToken,
+			userProject,
+			http.StatusOK,
+		},
+		{
+			"user project, get by user, via org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			userReadToken,
+			userProject,
+			http.StatusNotFound,
+		},
+		{
+			"user project, get by user, via repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			userReadToken,
+			userProject,
+			http.StatusNotFound,
+		},
+
+		// user project, other
+		{
+			"user project, get by other",
+			fmt.Sprintf("/api/v1/users/%s", user.Name),
+			otherReadToken,
+			userProject,
+			http.StatusNotFound,
+		},
+		{
+			"user project, get by other, via other's user endpoint",
+			fmt.Sprintf("/api/v1/users/%s", other.Name),
+			otherReadToken,
+			userProject,
+			http.StatusNotFound,
+		},
+		{
+			"user project, get by other, via other's org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", otherOrg.Name),
+			otherReadToken,
+			userProject,
+			http.StatusNotFound,
+		},
+		{
+			"user project, get by other, via other's org repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", otherOrg.Name, otherOrgRepo.Name),
+			otherReadToken,
+			userProject,
+			http.StatusNotFound,
+		},
+
+		// org project, user
+		{
+			"org project, get by user",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			userReadToken,
+			orgProject,
+			http.StatusOK,
+		},
+		{
+			"org project, get by user, via user endpoint",
+			fmt.Sprintf("/api/v1/users/%s/%s", user.Name, userRepo.Name),
+			userReadToken,
+			orgProject,
+			http.StatusNotFound,
+		},
+		{
+			"org project, get by user, via repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			userReadToken,
+			orgProject,
+			http.StatusNotFound,
+		},
+
+		// org project, other
+		{
+			"org project, get by other",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			otherReadToken,
+			orgProject,
+			http.StatusOK,
+		},
+		{
+			"org project, get by other, via other's user endpoint",
+			fmt.Sprintf("/api/v1/users/%s", other.Name),
+			otherReadToken,
+			orgProject,
+			http.StatusNotFound,
+		},
+		{
+			"org project, get by other, via other's org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", otherOrg.Name),
+			otherReadToken,
+			orgProject,
+			http.StatusNotFound,
+		},
+		{
+			"org project, get by other, via other's org repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", otherOrg.Name, otherOrgRepo.Name),
+			otherReadToken,
+			orgProject,
+			http.StatusNotFound,
+		},
+
+		// repo project, user
+		{
+			"repo project, get by user",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			userReadToken,
+			repoProject,
+			http.StatusOK,
+		},
+		{
+			"repo project, get by user, via wrong repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo2.Name),
+			userReadToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, get by user, via user endpoint",
+			fmt.Sprintf("/api/v1/users/%s", user.Name),
+			userReadToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, get by user, via org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			userReadToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, get by user, via org repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", userOrg.Name, userOrgRepo.Name),
+			userReadToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+
+		// repo project, other
+		{
+			"repo project, get by other",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			otherReadToken,
+			repoProject,
+			http.StatusOK,
+		},
+		{
+			"repo project, get by other, via other's repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", other.Name, otherRepo.Name),
+			otherReadToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, get by other, via other's user endpoint",
+			fmt.Sprintf("/api/v1/users/%s", other.Name),
+			otherReadToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, get by other, via other's org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", otherOrg.Name),
+			otherReadToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, get by other, via other's org repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", otherOrg.Name, otherOrgRepo.Name),
+			otherReadToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// get project
+			endpoint := fmt.Sprintf("%s/projects/%d",
+				tt.baseURL, tt.project.ID)
+			resp := requestWithAuth(t, tt.token, "GET", endpoint, tt.status)
+			if tt.status == http.StatusOK {
+				var proj api.Project
+				DecodeJSON(t, resp, &proj)
+				assert.Equal(t, tt.project, proj)
+			}
+		})
+	}
+}
+
 func TestProjectAPIDeleteProject(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	err := unittest.PrepareTestDatabase()
