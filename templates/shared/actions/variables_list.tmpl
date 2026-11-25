@@ -68,7 +68,7 @@
 					{{ctx.Locale.Tr "actions.variables.description"}}
 				</div>
 				<div class="field">
-					<label for="dialog-variable-name">{{ctx.Locale.Tr "name"}}</label>
+					<label class="required" for="dialog-variable-name">{{ctx.Locale.Tr "name"}}</label>
 					<input autofocus required
 						name="name"
 						id="dialog-variable-name"
@@ -78,7 +78,7 @@
 					<p id="name-description" class="help">{{ctx.Locale.Tr "actions.variables.mutation.name_description"}}</p>
 				</div>
 				<div class="field">
-					<label for="dialog-variable-data">{{ctx.Locale.Tr "value"}}</label>
+					<label class="required" for="dialog-variable-data">{{ctx.Locale.Tr "value"}}</label>
 					<textarea required
 						name="data"
 						id="dialog-variable-data"
