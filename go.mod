@@ -109,7 +109,7 @@ require (
 	golang.org/x/tools v0.51.0
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
-	gopkg.in/ini.v1 v1.67.3
+	gopkg.in/ini.v1 v1.68.0
 	mvdan.cc/xurls/v2 v2.6.0
 	pault.ag/go/debian v0.21.4
 	xorm.io/builder v0.3.13
