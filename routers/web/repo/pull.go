@@ -666,13 +666,7 @@ func PrepareViewPullInfo(ctx *context.Context, issue *issues_model.Issue) *git.C
 			ctx.ServerError("GetUserRepoPermission head", err)
 			return nil
 		}
-		baseRepoPerm, err := access_model.GetUserRepoPermission(ctx, pull.BaseRepo, ctx.Doer)
-		if err != nil {
-			ctx.ServerError("GetUserRepoPermission base", err)
-			return nil
-		}
-
-		ctx.Data["UpdateAllowed"], ctx.Data["UpdateByRebaseAllowed"], err = pull_service.IsUserAllowedToUpdate(ctx, pull, ctx.Doer, headRepoPerm, baseRepoPerm)
+		ctx.Data["UpdateAllowed"], ctx.Data["UpdateByRebaseAllowed"], err = pull_service.IsUserAllowedToUpdate(ctx, pull, ctx.Doer, headRepoPerm, ctx.Repo.Permission)
 		if err != nil {
 			ctx.ServerError("IsUserAllowedToUpdate", err)
 			return nil

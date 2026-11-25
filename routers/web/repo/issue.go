@@ -1892,12 +1892,7 @@ func ViewIssue(ctx *context.Context) {
 			if err := pull.LoadBaseRepo(ctx); err != nil {
 				log.Error("LoadBaseRepo: %v", err)
 			}
-			perm, err := access_model.GetUserRepoPermission(ctx, pull.BaseRepo, ctx.Doer)
-			if err != nil {
-				ctx.ServerError("GetUserRepoPermission", err)
-				return
-			}
-			allowMerge, err = pull_service.IsUserAllowedToMerge(ctx, pull, perm, ctx.Doer)
+			allowMerge, err = pull_service.IsUserAllowedToMerge(ctx, pull, ctx.Repo.Permission, ctx.Doer)
 			if err != nil {
 				ctx.ServerError("IsUserAllowedToMerge", err)
 				return
