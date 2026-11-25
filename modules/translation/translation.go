@@ -7,6 +7,7 @@ package translation
 import (
 	"context"
 	"html/template"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -71,6 +72,73 @@ func AllLangs() []*LangType {
 	return allLangs
 }
 
+func refreshNewStyleLocales(lang string) error {
+	key := "locale_next/locale_" + lang + ".json"
+	files, err := options.AssetFS().ReadAllLayerFiles(key)
+	if err != nil {
+		return err
+	}
+	// We want the custom layer to be last so it takes precedence over builtin layers
+	slices.Reverse(files)
+	for _, bytes := range files {
+		// AddToLocaleFromJSON simply iterates over the json values and adds them to the locale map
+		if err = i18n.DefaultLocales.AddToLocaleFromJSON(lang, bytes); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func refreshLocales() {
+	i18n.ResetDefaultLocales()
+	localeNames, err := options.AssetFS().ListFiles("locale", true)
+	if err != nil {
+		log.Fatal("Failed to list locale files: %v", err)
+	}
+
+	localeData := make(map[string][]byte, len(localeNames))
+	for _, name := range localeNames {
+		localeData[name], err = options.Locale(name)
+		if err != nil {
+			log.Fatal("Failed to load %s locale file. %v", name, err)
+		}
+	}
+
+	supportedTags = make([]language.Tag, len(setting.Langs))
+	for i, lang := range setting.Langs {
+		supportedTags[i] = language.Raw.Make(lang)
+	}
+
+	matcher = language.NewMatcher(supportedTags)
+	for i := range setting.Names {
+		var localeDataBase []byte
+		if i == 0 && setting.Langs[0] != "en-US" {
+			// Only en-US has complete translations. When use other language as default, the en-US should still be used as fallback.
+			localeDataBase = localeData["locale_en-US.ini"]
+			if localeDataBase == nil {
+				log.Fatal("Failed to load locale_en-US.ini file.")
+			}
+		}
+
+		pluralRuleIndex := GetPluralRuleImpl(setting.Langs[i])
+		key := "locale_" + setting.Langs[i] + ".ini"
+		if err = i18n.DefaultLocales.AddLocaleByIni(setting.Langs[i], setting.Names[i], PluralRules[pluralRuleIndex], UsedPluralForms[pluralRuleIndex], localeDataBase, localeData[key]); err != nil {
+			log.Error("Failed to set old-style messages to %s: %v", setting.Langs[i], err)
+		}
+
+		if err := refreshNewStyleLocales(setting.Langs[i]); err != nil {
+			log.Error("Failed to add new-style messages to %s: %v", setting.Langs[i], err)
+		}
+	}
+	if len(setting.Langs) != 0 {
+		defaultLangName := setting.Langs[0]
+		if defaultLangName != "en-US" {
+			log.Info("Use the first locale (%s) in LANGS setting option as default", defaultLangName)
+		}
+		i18n.DefaultLocales.SetDefaultLang(defaultLangName)
+	}
+}
+
 // InitLocales loads the locales
 func InitLocales(ctx context.Context) {
 	if lock != nil {
@@ -78,61 +146,6 @@ func InitLocales(ctx context.Context) {
 		defer lock.Unlock()
 	} else if !setting.IsProd && lock == nil {
 		lock = &sync.RWMutex{}
-	}
-
-	refreshLocales := func() {
-		i18n.ResetDefaultLocales()
-		localeNames, err := options.AssetFS().ListFiles("locale", true)
-		if err != nil {
-			log.Fatal("Failed to list locale files: %v", err)
-		}
-
-		localeData := make(map[string][]byte, len(localeNames))
-		for _, name := range localeNames {
-			localeData[name], err = options.Locale(name)
-			if err != nil {
-				log.Fatal("Failed to load %s locale file. %v", name, err)
-			}
-		}
-
-		supportedTags = make([]language.Tag, len(setting.Langs))
-		for i, lang := range setting.Langs {
-			supportedTags[i] = language.Raw.Make(lang)
-		}
-
-		matcher = language.NewMatcher(supportedTags)
-		for i := range setting.Names {
-			var localeDataBase []byte
-			if i == 0 && setting.Langs[0] != "en-US" {
-				// Only en-US has complete translations. When use other language as default, the en-US should still be used as fallback.
-				localeDataBase = localeData["locale_en-US.ini"]
-				if localeDataBase == nil {
-					log.Fatal("Failed to load locale_en-US.ini file.")
-				}
-			}
-
-			pluralRuleIndex := GetPluralRuleImpl(setting.Langs[i])
-			key := "locale_" + setting.Langs[i] + ".ini"
-			if err = i18n.DefaultLocales.AddLocaleByIni(setting.Langs[i], setting.Names[i], PluralRules[pluralRuleIndex], UsedPluralForms[pluralRuleIndex], localeDataBase, localeData[key]); err != nil {
-				log.Error("Failed to set old-style messages to %s: %v", setting.Langs[i], err)
-			}
-
-			key = "locale_next/locale_" + setting.Langs[i] + ".json"
-			if bytes, err := options.AssetFS().ReadFile(key); err == nil {
-				if err = i18n.DefaultLocales.AddToLocaleFromJSON(setting.Langs[i], bytes); err != nil {
-					log.Error("Failed to add new-style messages to %s: %v", setting.Langs[i], err)
-				}
-			} else {
-				log.Error("Failed to open new-style messages for %s: %v", setting.Langs[i], err)
-			}
-		}
-		if len(setting.Langs) != 0 {
-			defaultLangName := setting.Langs[0]
-			if defaultLangName != "en-US" {
-				log.Info("Use the first locale (%s) in LANGS setting option as default", defaultLangName)
-			}
-			i18n.DefaultLocales.SetDefaultLang(defaultLangName)
-		}
 	}
 
 	refreshLocales()

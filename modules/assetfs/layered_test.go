@@ -15,38 +15,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func mkdir(t *testing.T, elems ...string) {
+	require.NoError(t, os.MkdirAll(filepath.Join(elems...), 0o755))
+}
+
+func write(t *testing.T, content string, elems ...string) {
+	require.NoError(t, os.WriteFile(filepath.Join(elems...), []byte(content), 0o644))
+}
+
 func TestLayered(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "assetfs-layers")
 	dir1 := filepath.Join(dir, "l1")
 	dir2 := filepath.Join(dir, "l2")
 
-	mkdir := func(elems ...string) {
-		require.NoError(t, os.MkdirAll(filepath.Join(elems...), 0o755))
-	}
-	write := func(content string, elems ...string) {
-		require.NoError(t, os.WriteFile(filepath.Join(elems...), []byte(content), 0o644))
-	}
-
 	// d1 & f1: only in "l1"; d2 & f2: only in "l2"
 	// da & fa: in both "l1" and "l2"
-	mkdir(dir1, "d1")
-	mkdir(dir1, "da")
-	mkdir(dir1, "da/sub1")
+	mkdir(t, dir1, "d1")
+	mkdir(t, dir1, "da")
+	mkdir(t, dir1, "da/sub1")
 
-	mkdir(dir2, "d2")
-	mkdir(dir2, "da")
-	mkdir(dir2, "da/sub2")
+	mkdir(t, dir2, "d2")
+	mkdir(t, dir2, "da")
+	mkdir(t, dir2, "da/sub2")
 
-	write("dummy", dir1, ".DS_Store")
-	write("f1", dir1, "f1")
-	write("fa-1", dir1, "fa")
-	write("d1-f", dir1, "d1/f")
-	write("da-f-1", dir1, "da/f")
+	write(t, "dummy", dir1, ".DS_Store")
+	write(t, "f1", dir1, "f1")
+	write(t, "fa-1", dir1, "fa")
+	write(t, "d1-f", dir1, "d1/f")
+	write(t, "da-f-1", dir1, "da/f")
 
-	write("f2", dir2, "f2")
-	write("fa-2", dir2, "fa")
-	write("d2-f", dir2, "d2/f")
-	write("da-f-2", dir2, "da/f")
+	write(t, "f2", dir2, "f2")
+	write(t, "fa-2", dir2, "fa")
+	write(t, "d2-f", dir2, "d2/f")
+	write(t, "da-f-2", dir2, "da/f")
 
 	assets := Layered(Local("l1", dir1), Local("l2", dir2))
 
@@ -135,4 +136,49 @@ func TestLayeredSymlink(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, fileContents, contents)
+}
+
+func TestReadAllLayerFiles(t *testing.T) {
+	// Folders with the same parent
+	dir := filepath.Join(t.TempDir(), "assetfs-layers")
+	dir1 := filepath.Join(dir, "l1")
+	dir2 := filepath.Join(dir, "l2")
+	dir3 := filepath.Join(dir, "l3")
+	// dir4 and dir5 are empty
+	dir4 := filepath.Join(dir, "l4")
+	dir5 := filepath.Join(dir, "l5")
+
+	mkdir(t, dir1)
+	mkdir(t, dir2)
+	mkdir(t, dir3)
+	mkdir(t, dir4)
+	mkdir(t, dir5)
+
+	// Folders hold files of same name
+	write(t, "A", dir1, "locale_test.json")
+	write(t, "B", dir2, "locale_test.json")
+	write(t, "C", dir3, "locale_test.json")
+
+	layers := Layered(
+		Local("l1", dir1),
+		Local("l2", dir2),
+		Local("l3", dir3),
+		Local("l4", dir4),
+		Local("l5", dir5),
+	)
+
+	files, err := layers.ReadAllLayerFiles("locale_test.json")
+	require.NoError(t, err)
+
+	assert.Len(t, files, 3)
+	assert.Equal(t, "A", string(files[0]))
+	assert.Equal(t, "B", string(files[1]))
+	assert.Equal(t, "C", string(files[2]))
+
+	empty := Layered(
+		Local("l4", dir4),
+		Local("l5", dir5),
+	)
+	_, err = empty.ReadAllLayerFiles("locale_test.json")
+	assert.ErrorIs(t, err, fs.ErrNotExist)
 }
