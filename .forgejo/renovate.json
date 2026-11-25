@@ -13,8 +13,10 @@
   ],
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths", "npmDedupe"],
   "prConcurrentLimit": 10,
-  "dependencyDashboardReportAbandonment": false,
-  "dependencyDashboardHeader": "This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.\n- [ ] <!-- manual job -->Check this box to trigger a request for Renovate to run again on this repository\n",
+  "dependencyDashboard": {
+    "reportAbandonment": false,
+    "header": "This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.\n- [ ] <!-- manual job -->Check this box to trigger a request for Renovate to run again on this repository\n"
+  },
   "automergeStrategy": "squash",
   "labels": ["dependency-upgrade", "test/not-needed"],
   "packageRules": [
