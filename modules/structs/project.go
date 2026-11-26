@@ -6,7 +6,7 @@ package structs
 type CreateOrUpdateProjectOptions struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	// TemplateType can be: "text_only" and "images_and_text"
+	// TemplateType can be: "none", "basic_kanban" and "bug_triage"
 	TemplateType string `json:"template_type"`
 	// CardType can be: "text_only" and "images_and_text"
 	CardType string `json:"card_type"`
