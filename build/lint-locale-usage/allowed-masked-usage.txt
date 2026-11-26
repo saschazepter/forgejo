@@ -2,14 +2,16 @@
 meta.last_line
 translation_meta.test
 
-# models/admin/task.go: instances of $TranslatableMessage.Format
+# routers/web/user/task.go: instances of $TranslatableMessage.Format
 # this also gets instantiated as a Messenger once
 repo.migrate.migrating_failed.error
 
-# modules/setting/ui.go
+# routers/web/user/setting/profile.go
 themes.names.
 
 # services/context/context.go
+# services/contexttest/pagedata_test.go
+# web_src/js/webcomponents/relative-time.ts
 relativetime.
 
 # templates/repo/settings/webhook/link_menu.tmpl, templates/webhook/new.tmpl: repo.settings.web_hook_name_
