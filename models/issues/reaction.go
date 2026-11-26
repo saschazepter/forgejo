@@ -173,8 +173,8 @@ func FindReactions(ctx context.Context, opts FindReactionsOptions) (ReactionList
 	}
 
 	reactions := make([]*Reaction, 0, 10)
-	count, err := sess.FindAndCount(&reactions)
-	return reactions, count, err
+	err := sess.Find(&reactions)
+	return reactions, int64(len(reactions)), err
 }
 
 func getReactionsForComments(ctx context.Context, issueID int64, commentIDs []int64) (map[int64]ReactionList, error) {
