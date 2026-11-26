@@ -1293,9 +1293,13 @@ func Forks(ctx *context.Context) {
 	pager := context.NewPagination(int(total), setting.MaxForksPerPage, page, 5)
 	ctx.Data["Page"] = pager
 
+	if err := repo_model.RepositoryList(forks).LoadAttributes(ctx); err != nil {
+		ctx.ServerError("LoadAttributes", err)
+		return
+	}
 	for _, fork := range forks {
-		if err = fork.LoadOwner(ctx); err != nil {
-			ctx.ServerError("LoadOwner", err)
+		if fork.Owner == nil {
+			ctx.ServerError("LoadAttributes", user_model.ErrUserNotExist{UID: fork.OwnerID})
 			return
 		}
 	}
