@@ -12,6 +12,7 @@ import (
 	"forgejo.org/models/perm"
 	repo_model "forgejo.org/models/repo"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/log"
 	"forgejo.org/modules/optional"
 
 	"xorm.io/builder"
@@ -244,4 +245,44 @@ func RecalculateUserAccessForRepos(ctx context.Context, userID int64, repoIDs []
 		repos: optional.Some(repoIDs),
 		users: optional.Some([]int64{userID}),
 	})
+}
+
+// Recalculate the entire access table.
+func RecalculateAllAccesses(ctx context.Context) error {
+	log.Info("RecalculateAllAccesses: Starting")
+
+	completeRepos := 0
+	totalRepos, err := repo_model.CountRepositories(ctx, repo_model.CountRepositoryOptions{})
+	if err != nil {
+		totalRepos = -1
+		log.Error("RecalculateAllAccesses: Failed to fetch total repository count: %s", err)
+	}
+
+	// Each RecalculateAccesses runs within its own transaction.  RecalculateAllAccesses iterates repo-by-repo and
+	// executes the relatively small transaction for a single repository, in order to minimize database locking during
+	// the operation.  `recalculateAccess(ctx, recalcAccess{})` would do the same thing in a single TX, but it would be
+	// a single long TX (bad in SQLite), prevent updates to the table from other user interactions, we wouldn't have any
+	// progress tracking, and it would consume a lot of memory to query relevant data and build in-memory structures.
+	//
+	// Because access has a FK to repository, there's no need for any other cleanup, such as deleting for repos that
+	// don't come back from Iterate.
+	if err := db.Iterate(ctx, nil, func(ctx context.Context, repo *repo_model.Repository) error {
+		err := RecalculateAccesses(ctx, repo)
+		if err != nil {
+			// There are plausible reasons an error could occur here that we shouldn't stop for, such as a repository
+			// being deleted after iterate found it.  Continue for any error, but log.
+			log.Error("RecalculateAllAccesses: Failed to recalculate access for repository ID=%d name=%s: %s", repo.ID, repo.FullName(), err)
+		}
+
+		completeRepos++
+		if completeRepos != 0 && (completeRepos%100) == 0 {
+			log.Info("RecalculateAllAccesses: Finished %d / %d repositories", completeRepos, totalRepos)
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	log.Info("RecalculateAllAccesses: Complete")
+	return nil
 }

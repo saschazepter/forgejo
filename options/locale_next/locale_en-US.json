@@ -185,6 +185,7 @@
 	"admin.dashboard.new_major_version_hint": "Forgejo version %[2]s is no longer a supported major release. It will receive no bug fixes or security patches. Forgejo %[1]s is now available. Check <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">the current releases</a> for more details.",
 	"admin.dashboard.new_minor_version_hint": "Forgejo %[1]s is now available, you are running %[2]s. This is a minor version upgrade which may contain bug and security fixes. Upgrading is strongly recommended. Check <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">the current releases</a> for more details.",
 	"admin.dashboard.update_checker_error": "Forgejo failed while checking for available upgrades. Check <a target=\"_blank\" rel=\"noreferrer\" href=\"%[2]s\">the current releases</a> manually. Error was: %[1]s",
+	"admin.dashboard.rebuild_access_table": "Rebuild user/repository access cache (database table `access`)",
 	"admin.config.security": "Security configuration",
 	"admin.config.global_2fa_requirement.title": "Global two-factor requirement",
 	"admin.config.global_2fa_requirement.none": "No",
