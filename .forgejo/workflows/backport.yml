@@ -50,6 +50,7 @@ jobs:
       - uses: https://data.forgejo.org/actions/git-backporting@b69251c55a7fba1a44ccbc9494c4c38ba95567e8 # v5.0.0
         with:
           target-branch-pattern: "^backport/(?<target>(v.*))$"
+          inherit-labels: true
           strategy: ort
           strategy-option: find-renames
           cherry-pick-options: -x
