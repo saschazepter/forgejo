@@ -152,7 +152,7 @@ func CreateColumn(ctx context.Context, column *Column) error {
 		return err
 	}
 	if res.ColumnCount >= maxProjectColumns {
-		return errors.New("NewBoard: maximum number of columns reached")
+		return errors.New("maximum number of columns reached")
 	}
 	// This is the first column in this project to be created, so we make it default
 	if res.ColumnCount == 0 {

@@ -2140,8 +2140,12 @@ func TestProjectWebMoveIssues(t *testing.T) {
 					RepoID: tt.issueRepo.ID,
 				}
 				require.NoError(t, issues_model.NewIssue(t.Context(), tt.issueRepo, issue, nil, nil))
+				projectIssue := &project_model.ProjectIssue{
+					ProjectID:       tt.projectID,
+					ProjectColumnID: column.ID,
+				}
 				require.NoError(t, issues_model.IssueAssignOrRemoveProject(
-					t.Context(), issue, user, tt.projectID, column.ID,
+					t.Context(), issue, user, projectIssue,
 				))
 			}
 

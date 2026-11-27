@@ -300,6 +300,9 @@ forgejo.org/services/context
 forgejo.org/services/notify
 	UnregisterNotifier
 
+forgejo.org/services/project
+	RemoveIssueFromProject
+
 forgejo.org/services/repository
 	IsErrForkAlreadyExist
 

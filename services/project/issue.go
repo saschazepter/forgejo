@@ -10,10 +10,11 @@ import (
 
 	issues_model "forgejo.org/models/issues"
 	project_model "forgejo.org/models/project"
+	user_model "forgejo.org/models/user"
 	project_types "forgejo.org/modules/structs"
 )
 
-// ValidIssueIDs checks if the IDs of the given issue list are valid
+// ValidIssueIDs checks if the IDs of the given issue list are valid.
 func ValidIssueIDs(ctx context.Context, ownerID int64, issues issues_model.IssueList) error {
 	if _, err := issues.LoadRepositories(ctx); err != nil {
 		return fmt.Errorf("Could not load issue repos: %w", err)
@@ -26,7 +27,20 @@ func ValidIssueIDs(ctx context.Context, ownerID int64, issues issues_model.Issue
 	return nil
 }
 
-// GetIssues Gets an issue list by IssueIDs and checks for completeness, returns false if not complete
+// CreateIssueInProject creates a ProjectIssue in a Project in the column with the given ID.
+// If columnID is 0, adds to the DefaultColumn.
+func CreateIssueInProject(ctx context.Context, issue *issues_model.Issue, doer *user_model.User, projectID, columnID int64) (*project_model.ProjectIssue, error) {
+	projectIssue := &project_model.ProjectIssue{
+		ProjectID:       projectID,
+		ProjectColumnID: columnID,
+	}
+	if err := issues_model.IssueAssignOrRemoveProject(ctx, issue, doer, projectIssue); err != nil {
+		return nil, fmt.Errorf("could not create issue in project %d: %w", projectID, err)
+	}
+	return projectIssue, nil
+}
+
+// GetIssues gets an issue list by IssueIDs and checks for completeness, returns false if not complete.
 func GetIssues(ctx context.Context, issueIDs []int64) (issues_model.IssueList, bool, error) {
 	issues, err := issues_model.GetIssuesByIDs(ctx, issueIDs, true)
 	if err != nil {
@@ -36,7 +50,7 @@ func GetIssues(ctx context.Context, issueIDs []int64) (issues_model.IssueList, b
 	return issues, complete, nil
 }
 
-// MoveIssuesOnProjectColumn Allows moving Issues between Columns or to change the sorting within Columns
+// MoveIssuesOnProjectColumn allows moving Issues between Columns or to change the sorting within Columns.
 func MoveIssuesOnProjectColumn(ctx context.Context, column *project_model.Column, projectIssues *project_types.MoveIssuesOption) error {
 	sortedIssueIDs := projectIssues.GetSortingsMap()
 	err := project_model.MoveIssuesOnProjectColumn(ctx, column, sortedIssueIDs)
@@ -44,4 +58,13 @@ func MoveIssuesOnProjectColumn(ctx context.Context, column *project_model.Column
 		return fmt.Errorf("could not sort or move issue on column %d: %w", column.ID, err)
 	}
 	return nil
+}
+
+// RemoveIssueFromProject removes a ProjectIssue from a Project.
+func RemoveIssueFromProject(ctx context.Context, issue *issues_model.Issue, doer *user_model.User, columnID int64) error {
+	projectIssue := &project_model.ProjectIssue{
+		ProjectID:       0,
+		ProjectColumnID: columnID,
+	}
+	return issues_model.IssueAssignOrRemoveProject(ctx, issue, doer, projectIssue)
 }

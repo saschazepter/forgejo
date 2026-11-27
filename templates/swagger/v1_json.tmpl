@@ -4345,6 +4345,93 @@
         }
       }
     },
+    "/orgs/{org}/projects/{project_id}/issues": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "organization"
+        ],
+        "summary": "List issues of the project",
+        "operationId": "orgListProjectIssues",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the organization",
+            "name": "org",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "the project id",
+            "name": "project_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ProjectIssueList"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "organization"
+        ],
+        "summary": "Add an issue to the project default column",
+        "operationId": "orgCreateProjectIssue",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the organization",
+            "name": "org",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "the project id",
+            "name": "project_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "projectIssue",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateProjectIssueOptions"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/ProjectIssue"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
     "/orgs/{org}/public_members": {
       "get": {
         "produces": [
@@ -19912,6 +19999,107 @@
         }
       }
     },
+    "/repos/{username}/{reponame}/projects/{project_id}/issues": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "List issues of the project",
+        "operationId": "repoListProjectIssues",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repository",
+            "name": "reponame",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "the project id",
+            "name": "project_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ProjectIssueList"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Add an issue to the project default column",
+        "operationId": "repoCreateProjectIssue",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repository",
+            "name": "reponame",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "the project id",
+            "name": "project_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "projectIssue",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateProjectIssueOptions"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/ProjectIssue"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
     "/repositories/{id}": {
       "get": {
         "produces": [
@@ -23956,6 +24144,93 @@
         }
       }
     },
+    "/users/{username}/projects/{project_id}/issues": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "user"
+        ],
+        "summary": "List issues of the project",
+        "operationId": "userListProjectIssues",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "the project id",
+            "name": "project_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ProjectIssueList"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "user"
+        ],
+        "summary": "Add an issue to the project default column",
+        "operationId": "userCreateProjectIssue",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "the project id",
+            "name": "project_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "projectIssue",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateProjectIssueOptions"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/ProjectIssue"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
     "/users/{username}/repos": {
       "get": {
         "produces": [
@@ -26521,6 +26796,17 @@
         "website": {
           "type": "string",
           "x-go-name": "Website"
+        }
+      },
+      "x-go-package": "forgejo.org/modules/structs"
+    },
+    "CreateProjectIssueOptions": {
+      "type": "object",
+      "properties": {
+        "issue_id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "IssueID"
         }
       },
       "x-go-package": "forgejo.org/modules/structs"
@@ -29104,6 +29390,17 @@
       "type": "string",
       "x-go-package": "forgejo.org/modules/structs"
     },
+    "IssueHeader": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ID"
+        }
+      },
+      "x-go-package": "forgejo.org/modules/structs"
+    },
     "IssueLabelsOption": {
       "description": "IssueLabelsOption a collection of labels",
       "type": "object",
@@ -30237,6 +30534,35 @@
         "title": {
           "type": "string",
           "x-go-name": "Title"
+        }
+      },
+      "x-go-package": "forgejo.org/modules/structs"
+    },
+    "ProjectIssue": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ID"
+        },
+        "issue": {
+          "$ref": "#/definitions/IssueHeader"
+        },
+        "project_column_id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ProjectColumnID"
+        },
+        "project_id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ProjectID"
+        },
+        "sorting": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Sorting"
         }
       },
       "x-go-package": "forgejo.org/modules/structs"
@@ -33658,6 +33984,21 @@
         "$ref": "#/definitions/Project"
       }
     },
+    "ProjectIssue": {
+      "description": "ProjectIssue - Get specific project issue",
+      "schema": {
+        "$ref": "#/definitions/ProjectIssue"
+      }
+    },
+    "ProjectIssueList": {
+      "description": "ProjectIssueList - List of issues in the project",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ProjectIssue"
+        }
+      }
+    },
     "ProjectList": {
       "description": "ProjectList - List of projects",
       "schema": {
@@ -34321,7 +34662,7 @@
     "parameterBodies": {
       "description": "parameterBodies",
       "schema": {
-        "$ref": "#/definitions/CreateOrUpdateProjectOptions"
+        "$ref": "#/definitions/CreateProjectIssueOptions"
       }
     },
     "quotaExceeded": {

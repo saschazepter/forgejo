@@ -174,6 +174,81 @@ func (Project) DeleteProject(ctx *context.APIContext) {
 	projects.DeleteProject(ctx)
 }
 
+// ListProjectIssues lists project issues
+func (Project) ListProjectIssues(ctx *context.APIContext) {
+	// swagger:operation GET /repos/{username}/{reponame}/projects/{project_id}/issues repository repoListProjectIssues
+	// ---
+	// summary: List issues of the project
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: username
+	//   in: path
+	//   description: name of the user
+	//   type: string
+	//   required: true
+	// - name: reponame
+	//   in: path
+	//   description: name of the repository
+	//   type: string
+	//   required: true
+	// - name: project_id
+	//   in: path
+	//   description: the project id
+	//   type: string
+	//   required: true
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/ProjectIssueList"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	projects.ListProjectIssues(ctx)
+}
+
+// CreateProjectIssue creates an issue in the default column of the project
+func (Project) CreateProjectIssue(ctx *context.APIContext) {
+	// swagger:operation POST /repos/{username}/{reponame}/projects/{project_id}/issues repository repoCreateProjectIssue
+	// ---
+	// summary: Add an issue to the project default column
+	// consumes:
+	// - application/json
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: username
+	//   in: path
+	//   description: name of the user
+	//   type: string
+	//   required: true
+	// - name: reponame
+	//   in: path
+	//   description: name of the repository
+	//   type: string
+	//   required: true
+	// - name: project_id
+	//   in: path
+	//   description: the project id
+	//   type: string
+	//   required: true
+	// - name: projectIssue
+	//   in: body
+	//   required: true
+	//   schema:
+	// 		"$ref": "#/definitions/CreateProjectIssueOptions"
+	// responses:
+	//   "201":
+	//     "$ref": "#/responses/ProjectIssue"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	projects.CreateProjectIssue(ctx)
+}
+
 var _ context.ProjectAPI = new(Project)
 
 // Project implements context.ProjectAPI

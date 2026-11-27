@@ -1210,7 +1210,11 @@ func updateIssueProject(ctx *context.Context, issue *issues_model.Issue, project
 	if ctx.Written() {
 		return
 	}
-	if err := issues_model.IssueAssignOrRemoveProject(ctx, issue, ctx.Doer, projectID, 0); err != nil {
+	projectIssue := &project_model.ProjectIssue{
+		ProjectID:       projectID,
+		ProjectColumnID: 0,
+	}
+	if err := issues_model.IssueAssignOrRemoveProject(ctx, issue, ctx.Doer, projectIssue); err != nil {
 		ctx.ServerError("IssueAssignOrRemoveProject", err)
 		return
 	}

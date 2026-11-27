@@ -30,6 +30,10 @@ type ProjectAPI interface {
 	UpdateProject(ctx *APIContext)
 	// DeleteProject deletes a project by ID
 	DeleteProject(ctx *APIContext)
+	// ListProjectIssues lists project issues
+	ListProjectIssues(ctx *APIContext)
+	// CreateProjectIssue creates an issue in the default column of the project
+	CreateProjectIssue(ctx *APIContext)
 }
 
 type Project struct {

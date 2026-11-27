@@ -14,9 +14,23 @@ type swaggerProject struct {
 	Body api.Project `json:"body"`
 }
 
+// ProjectIssue - Get specific project issue
+// swagger:response ProjectIssue
+type swaggerProjectIssue struct {
+	// in:body
+	Body api.ProjectIssue `json:"body"`
+}
+
 // ProjectList - List of projects
 // swagger:response ProjectList
 type swaggerProjectList struct {
 	// in:body
 	Body []api.Project `json:"body"`
+}
+
+// ProjectIssueList - List of issues in the project
+// swagger:response ProjectIssueList
+type swaggerProjectIssueList struct {
+	// in:body
+	Body []api.ProjectIssue `json:"body"`
 }

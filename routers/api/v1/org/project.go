@@ -149,6 +149,71 @@ func (Project) DeleteProject(ctx *context.APIContext) {
 	projects.DeleteProject(ctx)
 }
 
+// ListProjectIssues lists project issues
+func (Project) ListProjectIssues(ctx *context.APIContext) {
+	// swagger:operation GET /orgs/{org}/projects/{project_id}/issues organization orgListProjectIssues
+	// ---
+	// summary: List issues of the project
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: org
+	//   in: path
+	//   description: name of the organization
+	//   type: string
+	//   required: true
+	// - name: project_id
+	//   in: path
+	//   description: the project id
+	//   type: string
+	//   required: true
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/ProjectIssueList"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	projects.ListProjectIssues(ctx)
+}
+
+// CreateProjectIssue adds an issue in the default column of the project
+func (Project) CreateProjectIssue(ctx *context.APIContext) {
+	// swagger:operation POST /orgs/{org}/projects/{project_id}/issues organization orgCreateProjectIssue
+	// ---
+	// summary: Add an issue to the project default column
+	// consumes:
+	// - application/json
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: org
+	//   in: path
+	//   description: name of the organization
+	//   type: string
+	//   required: true
+	// - name: project_id
+	//   in: path
+	//   description: the project id
+	//   type: string
+	//   required: true
+	// - name: projectIssue
+	//   in: body
+	//   required: true
+	//   schema:
+	// 		"$ref": "#/definitions/CreateProjectIssueOptions"
+	// responses:
+	//   "201":
+	//     "$ref": "#/responses/ProjectIssue"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	projects.CreateProjectIssue(ctx)
+}
+
 var _ context.ProjectAPI = new(Project)
 
 // Project implements context.ProjectAPI

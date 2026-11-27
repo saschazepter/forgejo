@@ -13,8 +13,14 @@ import (
 	"testing"
 
 	auth_model "forgejo.org/models/auth"
+	issues_model "forgejo.org/models/issues"
+	"forgejo.org/models/organization"
+	"forgejo.org/models/perm"
 	project_model "forgejo.org/models/project"
+	repo_model "forgejo.org/models/repo"
+	"forgejo.org/models/unit"
 	"forgejo.org/models/unittest"
+	user_model "forgejo.org/models/user"
 	project_module "forgejo.org/modules/project"
 	api "forgejo.org/modules/structs"
 	"forgejo.org/services/convert"
@@ -26,21 +32,23 @@ import (
 )
 
 type runOpts struct {
-	token     string
-	owner     string
-	repo      string
-	ownerType project_module.APIOwnerType
+	token         string
+	owner         *user_model.User
+	repo          *repo_model.Repository
+	projectID     int64
+	shouldSucceed bool
+	ownerType     project_module.APIOwnerType
 }
 
 func getProjectAPIBaseString(opts *runOpts) string {
 	var projectAPIBaseString string
 	switch opts.ownerType {
 	case project_module.APIOwnerTypeIndividual:
-		projectAPIBaseString = "/api/v1/users/" + opts.owner
+		projectAPIBaseString = "/api/v1/users/" + opts.owner.LowerName
 	case project_module.APIOwnerTypeOrganization:
-		projectAPIBaseString = "/api/v1/orgs/" + opts.owner
+		projectAPIBaseString = "/api/v1/orgs/" + opts.owner.LowerName
 	case project_module.APIOwnerTypeRepository:
-		projectAPIBaseString = "/api/v1/repos/" + opts.owner + "/" + opts.repo
+		projectAPIBaseString = "/api/v1/repos/" + opts.owner.LowerName + "/" + opts.repo.LowerName
 	}
 	return projectAPIBaseString
 }
@@ -65,9 +73,34 @@ func getProject(t *testing.T, token, projectAPIBaseString string, pID int64, sta
 	return projectsIDEndpoint(t, token, "GET", projectAPIBaseString, pID, status)
 }
 
+func deleteProject(t *testing.T, token, projectAPIBaseString string, pID int64, status int) *httptest.ResponseRecorder {
+	return projectsIDEndpoint(t, token, "DELETE", projectAPIBaseString, pID, status)
+}
+
 func projectsIDEndpoint(t *testing.T, token, method, projectAPIBaseString string, pID int64, status int) *httptest.ResponseRecorder {
 	projectAPIString := fmt.Sprintf("%v/projects/%v", projectAPIBaseString, pID)
 	return requestWithAuth(t, token, method, projectAPIString, status)
+}
+
+// createProjectIssue creates an issue.
+func createProjectIssue(t *testing.T, runOpts *runOpts, columnID int64, issueName string) api.ProjectIssue {
+	// create issue
+	issue := forgery.CreateIssue(t, runOpts.owner, runOpts.repo, issueName, issueName)
+
+	// create project issue
+	var projectIssue api.ProjectIssue
+	endpoint := getProjectAPIBaseString(runOpts) + fmt.Sprintf("/projects/%d/columns/%d/issues", runOpts.projectID, columnID)
+	if columnID == 0 {
+		endpoint = getProjectAPIBaseString(runOpts) + fmt.Sprintf("/projects/%d/issues", runOpts.projectID)
+	}
+	resp := jsonRequestWithAuth(t, runOpts.token, "POST", endpoint,
+		http.StatusCreated,
+		&api.CreateProjectIssueOptions{
+			IssueID: issue.ID,
+		},
+	)
+	DecodeJSON(t, resp, &projectIssue)
+	return projectIssue
 }
 
 func requestWithAuth(
@@ -179,18 +212,18 @@ func TestProjectAPIGetProject(t *testing.T) {
 	// projects for user
 	userProject := createProject(t, &runOpts{
 		token:     userWriteToken,
-		owner:     user.Name,
+		owner:     user,
 		ownerType: project_module.APIOwnerTypeIndividual,
 	}, "User Project")
 	orgProject := createProject(t, &runOpts{
 		token:     userWriteToken,
-		owner:     userOrg.Name,
+		owner:     userOrg.AsUser(),
 		ownerType: project_module.APIOwnerTypeOrganization,
 	}, "Org Project")
 	repoProject := createProject(t, &runOpts{
 		token:     userWriteToken,
-		owner:     user.Name,
-		repo:      userRepo.Name,
+		owner:     user,
+		repo:      userRepo,
 		ownerType: project_module.APIOwnerTypeRepository,
 	}, "Repo Project")
 
@@ -437,18 +470,18 @@ func TestProjectAPIDeleteProject(t *testing.T) {
 	// projects for user
 	userProject := createProject(t, &runOpts{
 		token:     userWriteToken,
-		owner:     user.Name,
+		owner:     user,
 		ownerType: project_module.APIOwnerTypeIndividual,
 	}, "User Project")
 	orgProject := createProject(t, &runOpts{
 		token:     userWriteToken,
-		owner:     userOrg.Name,
+		owner:     userOrg.AsUser(),
 		ownerType: project_module.APIOwnerTypeOrganization,
 	}, "User Project")
 	repoProject := createProject(t, &runOpts{
 		token:     userWriteToken,
-		owner:     user.Name,
-		repo:      userRepo.Name,
+		owner:     user,
+		repo:      userRepo,
 		ownerType: project_module.APIOwnerTypeRepository,
 	}, "Repo Project")
 
@@ -691,6 +724,576 @@ func TestProjectAPIDeleteProject(t *testing.T) {
 	}
 }
 
+func TestProjectAPIListProjectIssues(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	err := unittest.PrepareTestDatabase()
+	require.NoError(t, err)
+
+	// user
+	user := forgery.CreateUser(t, nil)
+	userSession := loginUser(t, user.Name)
+	userWriteToken := getTokenForLoggedInUser(t, userSession,
+		auth_model.AccessTokenScopeWriteProject,
+	)
+	userReadToken := getTokenForLoggedInUser(t, userSession,
+		auth_model.AccessTokenScopeReadProject,
+	)
+	userRepo := forgery.CreateRepository(t, user, nil)
+	userRepo2 := forgery.CreateRepository(t, user, nil)
+	userOrg := forgery.CreateOrganisation(t, user, nil)
+	userOrgRepo := forgery.CreateRepository(t, userOrg.AsUser(), nil)
+
+	// other user
+	other := forgery.CreateUser(t, nil)
+	otherSession := loginUser(t, other.Name)
+	otherReadToken := getTokenForLoggedInUser(t, otherSession,
+		auth_model.AccessTokenScopeReadProject,
+	)
+	otherRepo := forgery.CreateRepository(t, other, nil)
+	otherOrg := forgery.CreateOrganisation(t, other, nil)
+	otherOrgRepo := forgery.CreateRepository(t, otherOrg.AsUser(), nil)
+
+	// projects for user
+	userProject := createProject(t, &runOpts{
+		token:     userWriteToken,
+		owner:     user,
+		ownerType: project_module.APIOwnerTypeIndividual,
+	}, "User Project")
+	orgProject := createProject(t, &runOpts{
+		token:     userWriteToken,
+		owner:     userOrg.AsUser(),
+		ownerType: project_module.APIOwnerTypeOrganization,
+	}, "User Project")
+	repoProject := createProject(t, &runOpts{
+		token:     userWriteToken,
+		owner:     user,
+		repo:      userRepo,
+		ownerType: project_module.APIOwnerTypeRepository,
+	}, "Repo Project")
+
+	// test lists
+	for _, tt := range []struct {
+		name    string
+		baseURL string
+		token   string
+		project api.Project
+		status  int
+	}{
+		// user project, user
+		{
+			"user project, list by user, read token",
+			fmt.Sprintf("/api/v1/users/%s", user.Name),
+			userReadToken,
+			userProject,
+			http.StatusOK,
+		},
+		{
+			"user project, list by user, write token",
+			fmt.Sprintf("/api/v1/users/%s", user.Name),
+			userWriteToken,
+			userProject,
+			http.StatusOK,
+		},
+		{
+			"user project, list by user, via org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			userReadToken,
+			userProject,
+			http.StatusNotFound,
+		},
+		{
+			"user project, list by user, via repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			userReadToken,
+			userProject,
+			http.StatusNotFound,
+		},
+
+		// user project, other
+		{
+			"user project, list by other",
+			fmt.Sprintf("/api/v1/users/%s", user.Name),
+			otherReadToken,
+			userProject,
+			http.StatusNotFound,
+		},
+		{
+			"user project, list by other, via other's user endpoint",
+			fmt.Sprintf("/api/v1/users/%s", other.Name),
+			otherReadToken,
+			userProject,
+			http.StatusNotFound,
+		},
+		{
+			"user project, list by other, via other's org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", otherOrg.Name),
+			otherReadToken,
+			userProject,
+			http.StatusNotFound,
+		},
+		{
+			"user project, list by other, via other's org repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", otherOrg.Name, otherOrgRepo.Name),
+			otherReadToken,
+			userProject,
+			http.StatusNotFound,
+		},
+
+		// org project, user
+		{
+			"org project, list by user, read token",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			userReadToken,
+			orgProject,
+			http.StatusOK,
+		},
+		{
+			"org project, list by user, write token",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			userWriteToken,
+			orgProject,
+			http.StatusOK,
+		},
+		{
+			"org project, list by user, via user endpoint",
+			fmt.Sprintf("/api/v1/users/%s/%s", user.Name, userRepo.Name),
+			userReadToken,
+			orgProject,
+			http.StatusNotFound,
+		},
+		{
+			"org project, list by user, via repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			userReadToken,
+			orgProject,
+			http.StatusNotFound,
+		},
+
+		// org project, other
+		{
+			"org project, list by other",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			otherReadToken,
+			orgProject,
+			http.StatusOK,
+		},
+		{
+			"org project, list by other, via other's user endpoint",
+			fmt.Sprintf("/api/v1/users/%s", other.Name),
+			otherReadToken,
+			orgProject,
+			http.StatusNotFound,
+		},
+		{
+			"org project, list by other, via other's org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", otherOrg.Name),
+			otherReadToken,
+			orgProject,
+			http.StatusNotFound,
+		},
+		{
+			"org project, list by other, via other's org repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", otherOrg.Name, otherOrgRepo.Name),
+			otherReadToken,
+			orgProject,
+			http.StatusNotFound,
+		},
+
+		// repo project, user
+		{
+			"repo project, list by user, read token",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			userReadToken,
+			repoProject,
+			http.StatusOK,
+		},
+		{
+			"repo project, list by user, write token",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			userWriteToken,
+			repoProject,
+			http.StatusOK,
+		},
+		{
+			"repo project, list by user, via wrong repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo2.Name),
+			userReadToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, list by user, via user endpoint",
+			fmt.Sprintf("/api/v1/users/%s", user.Name),
+			userReadToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, list by user, via org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			userReadToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, list by user, via org repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", userOrg.Name, userOrgRepo.Name),
+			userReadToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+
+		// repo project, other
+		{
+			"repo project, list by other",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			otherReadToken,
+			repoProject,
+			http.StatusOK,
+		},
+		{
+			"repo project, list by other, via other's repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", other.Name, otherRepo.Name),
+			otherReadToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, list by other, via other's user endpoint",
+			fmt.Sprintf("/api/v1/users/%s", other.Name),
+			otherReadToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, list by other, via other's org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", otherOrg.Name),
+			otherReadToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, list by other, via other's org repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", otherOrg.Name, otherOrgRepo.Name),
+			otherReadToken,
+			repoProject,
+			http.StatusNotFound,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// list project issues
+			endpoint := fmt.Sprintf("%s/projects/%d/issues", tt.baseURL, tt.project.ID)
+			requestWithAuth(t, tt.token, "GET", endpoint, tt.status)
+		})
+	}
+}
+
+func TestProjectAPICreateProjectIssue(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	err := unittest.PrepareTestDatabase()
+	require.NoError(t, err)
+
+	// user
+	user := forgery.CreateUser(t, nil)
+	userSession := loginUser(t, user.Name)
+	userWriteToken := getTokenForLoggedInUser(t, userSession,
+		auth_model.AccessTokenScopeWriteProject,
+	)
+	userReadToken := getTokenForLoggedInUser(t, userSession,
+		auth_model.AccessTokenScopeReadProject,
+	)
+	userRepo := forgery.CreateRepository(t, user, nil)
+	userRepo2 := forgery.CreateRepository(t, user, nil)
+	userOrg := forgery.CreateOrganisation(t, user, nil)
+	userOrgRepo := forgery.CreateRepository(t, userOrg.AsUser(), nil)
+
+	// other user
+	other := forgery.CreateUser(t, nil)
+	otherSession := loginUser(t, other.Name)
+	otherWriteToken := getTokenForLoggedInUser(t, otherSession,
+		auth_model.AccessTokenScopeWriteProject,
+	)
+	otherRepo := forgery.CreateRepository(t, other, nil)
+	otherOrg := forgery.CreateOrganisation(t, other, nil)
+	otherOrgRepo := forgery.CreateRepository(t, otherOrg.AsUser(), nil)
+
+	// projects for user
+	userProject := createProject(t, &runOpts{
+		token:     userWriteToken,
+		owner:     user,
+		ownerType: project_module.APIOwnerTypeIndividual,
+	}, "User Project")
+	orgProject := createProject(t, &runOpts{
+		token:     userWriteToken,
+		owner:     userOrg.AsUser(),
+		ownerType: project_module.APIOwnerTypeOrganization,
+	}, "User Project")
+	repoProject := createProject(t, &runOpts{
+		token:     userWriteToken,
+		owner:     user,
+		repo:      userRepo,
+		ownerType: project_module.APIOwnerTypeRepository,
+	}, "Repo Project")
+
+	// issues for user
+	repoIssue := forgery.CreateIssue(t, user, userRepo, "repo issue", "repo issue")
+	orgRepoIssue := forgery.CreateIssue(t, userOrg.AsUser(), userOrgRepo, "org repo issue", "org repo issue")
+
+	// test creates
+	for _, tt := range []struct {
+		name    string
+		baseURL string
+		token   string
+		project api.Project
+		issue   *issues_model.Issue
+		status  int
+	}{
+		// user project, user
+		{
+			"user project, create by user, read token",
+			fmt.Sprintf("/api/v1/users/%s", user.Name),
+			userReadToken,
+			userProject,
+			repoIssue,
+			http.StatusForbidden,
+		},
+		{
+			"user project, create by user, via org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			userWriteToken,
+			userProject,
+			repoIssue,
+			http.StatusNotFound,
+		},
+		{
+			"user project, create by user, via repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			userWriteToken,
+			userProject,
+			repoIssue,
+			http.StatusNotFound,
+		},
+
+		// user project, other
+		{
+			"user project, create by other",
+			fmt.Sprintf("/api/v1/users/%s", user.Name),
+			otherWriteToken,
+			userProject,
+			repoIssue,
+			http.StatusForbidden,
+		},
+		{
+			"user project, create by other, via other's user endpoint",
+			fmt.Sprintf("/api/v1/users/%s", other.Name),
+			otherWriteToken,
+			userProject,
+			repoIssue,
+			http.StatusNotFound,
+		},
+		{
+			"user project, create by other, via other's org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", otherOrg.Name),
+			otherWriteToken,
+			userProject,
+			repoIssue,
+			http.StatusNotFound,
+		},
+		{
+			"user project, create by other, via other's org repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", otherOrg.Name, otherOrgRepo.Name),
+			otherWriteToken,
+			userProject,
+			repoIssue,
+			http.StatusNotFound,
+		},
+
+		// org project, user
+		{
+			"org project, create by user, read token",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			userReadToken,
+			orgProject,
+			orgRepoIssue,
+			http.StatusForbidden,
+		},
+		{
+			"org project, creste by user, via user endpoint",
+			fmt.Sprintf("/api/v1/users/%s/%s", user.Name, userRepo.Name),
+			userWriteToken,
+			orgProject,
+			orgRepoIssue,
+			http.StatusNotFound,
+		},
+		{
+			"org project, create by user, via repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			userWriteToken,
+			orgProject,
+			orgRepoIssue,
+			http.StatusNotFound,
+		},
+
+		// org project, other
+		{
+			"org project, create by other",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			otherWriteToken,
+			orgProject,
+			orgRepoIssue,
+			http.StatusForbidden,
+		},
+		{
+			"org project, create by other, via other's user endpoint",
+			fmt.Sprintf("/api/v1/users/%s", other.Name),
+			otherWriteToken,
+			orgProject,
+			orgRepoIssue,
+			http.StatusNotFound,
+		},
+		{
+			"org project, create by other, via other's org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", otherOrg.Name),
+			otherWriteToken,
+			orgProject,
+			orgRepoIssue,
+			http.StatusNotFound,
+		},
+		{
+			"org project, create by other, via other's org repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", otherOrg.Name, otherOrgRepo.Name),
+			otherWriteToken,
+			orgProject,
+			orgRepoIssue,
+			http.StatusNotFound,
+		},
+
+		// repo project, user
+		{
+			"repo project, create by user, read token",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			userReadToken,
+			repoProject,
+			repoIssue,
+			http.StatusForbidden,
+		},
+		{
+			"repo project, create by user, via wrong repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo2.Name),
+			userWriteToken,
+			repoProject,
+			repoIssue,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, create by user, via user endpoint",
+			fmt.Sprintf("/api/v1/users/%s", user.Name),
+			userWriteToken,
+			repoProject,
+			repoIssue,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, create by user, via org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			userWriteToken,
+			repoProject,
+			repoIssue,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, create by user, via org repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", userOrg.Name, userOrgRepo.Name),
+			userWriteToken,
+			repoProject,
+			repoIssue,
+			http.StatusNotFound,
+		},
+
+		// repo project, other
+		{
+			"repo project, create by other",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			otherWriteToken,
+			repoProject,
+			repoIssue,
+			http.StatusForbidden,
+		},
+		{
+			"repo project, create by other, via other's repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", other.Name, otherRepo.Name),
+			otherWriteToken,
+			repoProject,
+			repoIssue,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, create by other, via other's user endpoint",
+			fmt.Sprintf("/api/v1/users/%s", other.Name),
+			otherWriteToken,
+			repoProject,
+			repoIssue,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, create by other, via other's org endpoint",
+			fmt.Sprintf("/api/v1/orgs/%s", otherOrg.Name),
+			otherWriteToken,
+			repoProject,
+			repoIssue,
+			http.StatusNotFound,
+		},
+		{
+			"repo project, create by other, via other's org repo endpoint",
+			fmt.Sprintf("/api/v1/repos/%s/%s", otherOrg.Name, otherOrgRepo.Name),
+			otherWriteToken,
+			repoProject,
+			repoIssue,
+			http.StatusNotFound,
+		},
+
+		// successful creates
+		{
+			"user project, create by user, write token",
+			fmt.Sprintf("/api/v1/users/%s", user.Name),
+			userWriteToken,
+			userProject,
+			repoIssue,
+			http.StatusCreated,
+		},
+		{
+			"org project, create by user, write token",
+			fmt.Sprintf("/api/v1/orgs/%s", userOrg.Name),
+			userWriteToken,
+			orgProject,
+			orgRepoIssue,
+			http.StatusCreated,
+		},
+		{
+			"repo project, create by user, write token",
+			fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
+			userWriteToken,
+			repoProject,
+			repoIssue,
+			http.StatusCreated,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// create project issue
+			endpoint := fmt.Sprintf("%s/projects/%d/issues", tt.baseURL, tt.project.ID)
+			jsonRequestWithAuth(t, tt.token, "POST", endpoint, tt.status,
+				&api.CreateProjectIssueOptions{
+					IssueID: tt.issue.ID,
+				},
+			)
+		})
+	}
+}
+
 // Test the use cases
 func TestProjectAPICRUD(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
@@ -720,37 +1323,37 @@ func TestProjectAPICRUD(t *testing.T) {
 
 	for _, tt := range []struct {
 		name      string
-		owner     string
+		owner     *user_model.User
 		ownerType project_module.APIOwnerType
-		repo      string
+		repo      *repo_model.Repository
 		baseURL   string
 	}{
 		{
 			name:      "User",
-			owner:     user.Name,
+			owner:     user,
 			ownerType: project_module.APIOwnerTypeIndividual,
-			repo:      userRepo.Name,
+			repo:      userRepo,
 			baseURL:   fmt.Sprintf("/api/v1/users/%s", user.Name),
 		},
 		{
 			name:      "Org",
-			owner:     org.Name,
+			owner:     org.AsUser(),
 			ownerType: project_module.APIOwnerTypeOrganization,
-			repo:      orgRepo.Name,
+			repo:      orgRepo,
 			baseURL:   fmt.Sprintf("/api/v1/orgs/%s", org.Name),
 		},
 		{
 			name:      "User Repo",
-			owner:     user.Name,
+			owner:     user,
 			ownerType: project_module.APIOwnerTypeRepository,
-			repo:      userRepo.Name,
+			repo:      userRepo,
 			baseURL:   fmt.Sprintf("/api/v1/repos/%s/%s", user.Name, userRepo.Name),
 		},
 		{
 			name:      "Org Repo",
-			owner:     org.Name,
+			owner:     org.AsUser(),
 			ownerType: project_module.APIOwnerTypeRepository,
-			repo:      orgRepo.Name,
+			repo:      orgRepo,
 			baseURL:   fmt.Sprintf("/api/v1/repos/%s/%s", org.Name, orgRepo.Name),
 		},
 	} {
@@ -770,9 +1373,9 @@ func TestProjectAPICRUD(t *testing.T) {
 			assert.Equal(t, "Project 1", project.Description)
 			if tt.ownerType == project_module.APIOwnerTypeRepository {
 				assert.Empty(t, project.OwnerName)
-				assert.Equal(t, tt.repo, project.RepoName)
+				assert.Equal(t, tt.repo.Name, project.RepoName)
 			} else {
-				assert.Equal(t, tt.owner, project.OwnerName)
+				assert.Equal(t, tt.owner.Name, project.OwnerName)
 				assert.Empty(t, project.RepoName)
 			}
 			assert.Equal(t, "open", project.Status)
@@ -792,6 +1395,20 @@ func TestProjectAPICRUD(t *testing.T) {
 			assert.Equal(t, project.OwnerType, projResp.OwnerType)
 			assert.Equal(t, project.TemplateType, projResp.TemplateType)
 			assert.Equal(t, project.CardType, projResp.CardType)
+
+			// Add issue to a project, to the default column
+			projectIssue1 := createProjectIssue(t,
+				&runOpts{
+					token:     writeToken,
+					owner:     tt.owner,
+					repo:      tt.repo,
+					projectID: project.ID,
+					ownerType: tt.ownerType,
+				}, 0, "TestIssue")
+
+			assert.NotZero(t, projectIssue1.ID)
+			assert.Equal(t, project.ID, projectIssue1.ProjectID)
+			assert.NotNil(t, projectIssue1.Sorting) // Sorting is zero by default, but "NOT NULL" according to DB model
 
 			// Update properties of a project
 			t.Run("Update properties of project", func(t *testing.T) {
@@ -860,6 +1477,23 @@ func TestProjectAPICRUD(t *testing.T) {
 				}
 			})
 
+			// List issues in a project
+			t.Run("List issues in a a project", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				var issueResp []*api.ProjectIssue
+				endpoint := fmt.Sprintf("%s/projects/%d/issues",
+					tt.baseURL, project.ID)
+				resp := requestWithAuth(t, readToken, "GET", endpoint, http.StatusOK)
+				DecodeJSON(t, resp, &issueResp)
+
+				if !slices.ContainsFunc(issueResp, func(p *api.ProjectIssue) bool {
+					return p.ID == projectIssue1.ID
+				}) {
+					t.Error("project issue not in project issue list")
+				}
+			})
+
 			// Remove project
 			t.Run("Remove project", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
@@ -874,4 +1508,246 @@ func TestProjectAPICRUD(t *testing.T) {
 			})
 		})
 	}
+}
+
+func runProjectWriteActions(t *testing.T, runOpts *runOpts, projectOpts *api.CreateOrUpdateProjectOptions) {
+	projectAPIBaseString := getProjectAPIBaseString(runOpts)
+	endpoint := projectAPIBaseString + "/projects"
+	resp := jsonRequestWithAuth(t, runOpts.token, "POST", endpoint, NoExpectedStatus, projectOpts)
+	var proj *api.Project
+	if runOpts.shouldSucceed {
+		require.Equal(t, http.StatusCreated, resp.Code)
+		DecodeJSON(t, resp, &proj)
+		assert.Equal(t, projectOpts.Title, proj.Title)
+		deleteProject(t, runOpts.token, projectAPIBaseString, proj.ID, http.StatusNoContent)
+	} else {
+		assert.NotEqual(t, http.StatusCreated, resp.Code)
+	}
+}
+
+func runProjectReadActions(t *testing.T, opts *runOpts) {
+	projectAPIBaseString := getProjectAPIBaseString(opts)
+	resp := getProject(t, opts.token, projectAPIBaseString, opts.projectID, NoExpectedStatus)
+	if opts.shouldSucceed {
+		var proj *api.Project
+		assert.Equal(t, http.StatusOK, resp.Code)
+		DecodeJSON(t, resp, &proj)
+		assert.Equal(t, opts.projectID, proj.ID)
+	} else {
+		assert.NotEqual(t, http.StatusOK, resp.Code)
+	}
+}
+
+func TestProjectAPIPermissionHandling(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	err := unittest.PrepareTestDatabase()
+	require.NoError(t, err)
+
+	// users and tokens
+	user1 := forgery.CreateUser(t, nil)
+	user2 := forgery.CreateUser(t, nil)
+
+	user2Session := loginUser(t, user2.Name)
+	user2WriteToken := getTokenForLoggedInUser(t,
+		user2Session,
+		auth_model.AccessTokenScopeWriteProject,
+		auth_model.AccessTokenScopeWriteOrganization,
+		auth_model.AccessTokenScopeWriteRepository,
+		auth_model.AccessTokenScopeWriteUser,
+		auth_model.AccessTokenScopeWriteIssue,
+	)
+	user2ReadToken := getTokenForLoggedInUser(t,
+		user2Session,
+		auth_model.AccessTokenScopeReadProject,
+		auth_model.AccessTokenScopeReadOrganization,
+		auth_model.AccessTokenScopeReadRepository,
+		auth_model.AccessTokenScopeReadUser,
+		auth_model.AccessTokenScopeReadIssue,
+	)
+
+	projectOpts := &api.CreateOrUpdateProjectOptions{
+		Title:        "Test Project",
+		Description:  "Test Project",
+		TemplateType: "none",
+		CardType:     "text_only",
+		Status:       "open",
+	}
+
+	t.Run("Private Org where User2 is owner", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		privUser2Org := forgery.CreateOrganisation(t, user2,
+			&forgery.CreateOrganisationOptions{
+				Visibility: api.VisibleTypePrivate,
+			})
+
+		// Run actions
+		runOpts := &runOpts{
+			token:         user2WriteToken,
+			owner:         privUser2Org.AsUser(),
+			shouldSucceed: true,
+			ownerType:     project_module.APIOwnerTypeOrganization,
+		}
+		runProjectWriteActions(t, runOpts, projectOpts)
+	})
+
+	t.Run("Repo where User2 is owner", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		user2Repo := forgery.CreateRepository(t, user2, nil)
+
+		// Run actions
+		runOpts := &runOpts{
+			token:         user2WriteToken,
+			owner:         user2,
+			repo:          user2Repo,
+			shouldSucceed: true,
+			ownerType:     project_module.APIOwnerTypeRepository,
+		}
+		runProjectWriteActions(t, runOpts, projectOpts)
+	})
+
+	t.Run("Project where User2 is owner", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Run actions
+		runOpts := &runOpts{
+			token:         user2WriteToken,
+			owner:         user2,
+			shouldSucceed: true,
+			ownerType:     project_module.APIOwnerTypeIndividual,
+		}
+		runProjectWriteActions(t, runOpts, projectOpts)
+	})
+
+	t.Run("Private Org where User2 team member with write access", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// private user1 org with user2 write access
+		privUser1Org := forgery.CreateOrganisation(t, user1,
+			&forgery.CreateOrganisationOptions{
+				Visibility: api.VisibleTypePrivate,
+			})
+
+		privOrgTeamOpts := &forgery.CreateTeamOptions{
+			Name: "CanWriteProjects",
+			Mode: perm.AccessModeWrite,
+			Units: []*organization.TeamUnit{
+				{
+					OrgID:      privUser1Org.ID,
+					Type:       unit.TypeProjects,
+					AccessMode: perm.AccessModeWrite,
+				},
+			},
+			Members: []*user_model.User{user2},
+		}
+		forgery.CreateTeam(t, privUser1Org, privOrgTeamOpts)
+
+		// Run actions
+		runOpts := &runOpts{
+			token:         user2WriteToken,
+			owner:         privUser1Org.AsUser(),
+			shouldSucceed: true,
+			ownerType:     project_module.APIOwnerTypeOrganization,
+		}
+		runProjectWriteActions(t, runOpts, projectOpts)
+	})
+
+	t.Run("Repo where User2 is collaborator with read/write access", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		user1Repo := forgery.CreateRepository(t, user1, &forgery.CreateRepositoryOptions{
+			Collaborators: map[*user_model.User]perm.AccessMode{
+				user2: perm.AccessModeWrite,
+			},
+		})
+
+		// Run actions
+		runOpts := &runOpts{
+			token:         user2WriteToken,
+			owner:         user1,
+			repo:          user1Repo,
+			shouldSucceed: true,
+			ownerType:     project_module.APIOwnerTypeRepository,
+		}
+		runProjectWriteActions(t, runOpts, projectOpts)
+	})
+
+	t.Run("Repo where User2 is not owner", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		user1Repo := forgery.CreateRepository(t, user1, nil)
+		runOpts := &runOpts{
+			token:         user2WriteToken,
+			owner:         user1,
+			repo:          user1Repo,
+			shouldSucceed: false,
+			ownerType:     project_module.APIOwnerTypeRepository,
+		}
+		runProjectWriteActions(t, runOpts, projectOpts)
+	})
+
+	t.Run("Repo where User2 is collaborator with read access", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		user1Repo := forgery.CreateRepository(t, user1, &forgery.CreateRepositoryOptions{
+			Collaborators: map[*user_model.User]perm.AccessMode{
+				user2: perm.AccessModeRead,
+			},
+		})
+
+		// Run actions
+		runOpts := &runOpts{
+			token:         user2WriteToken,
+			owner:         user1,
+			repo:          user1Repo,
+			shouldSucceed: false,
+			ownerType:     project_module.APIOwnerTypeRepository,
+		}
+		runProjectWriteActions(t, runOpts, projectOpts)
+
+		user1Project := forgery.CreateProject(t, user1Repo, nil)
+		runOpts.projectID = user1Project.ID
+		runOpts.token = user2ReadToken
+		runOpts.shouldSucceed = true
+		runProjectReadActions(t, runOpts)
+	})
+
+	t.Run("Private Org where User2 is not member", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		privUser1Org := forgery.CreateOrganisation(t, user1,
+			&forgery.CreateOrganisationOptions{
+				Visibility: api.VisibleTypePrivate,
+			})
+		runOpts := &runOpts{
+			token:         user2WriteToken,
+			owner:         privUser1Org.AsUser(),
+			shouldSucceed: false,
+			ownerType:     project_module.APIOwnerTypeOrganization,
+		}
+		runProjectWriteActions(t, runOpts, projectOpts)
+		user1Project := forgery.CreateProject(t, privUser1Org, nil)
+		runOpts.token = user2ReadToken
+		runOpts.projectID = user1Project.ID
+		runProjectReadActions(t, runOpts)
+	})
+
+	t.Run("Project where User2 is not owner", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		privUser1Org := forgery.CreateOrganisation(t, user1,
+			&forgery.CreateOrganisationOptions{
+				Visibility: api.VisibleTypePrivate,
+			})
+		delProj := forgery.CreateProject(t, privUser1Org, nil)
+		runOpts := &runOpts{
+			token:         user2ReadToken,
+			owner:         privUser1Org.AsUser(),
+			shouldSucceed: false,
+			ownerType:     project_module.APIOwnerTypeOrganization,
+		}
+		baseString := getProjectAPIBaseString(runOpts)
+		deleteProject(t, user2WriteToken, baseString, delProj.ID, http.StatusForbidden)
+	})
 }

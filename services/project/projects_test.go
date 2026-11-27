@@ -665,6 +665,7 @@ func TestCUDProject(t *testing.T) {
 	})
 
 	t.Run("TestCRUDProjectIssues", func(t *testing.T) {
+		// TODO: improve the tests
 		// The yml's in models/fixtures provide information about the test DB
 		require.NoError(t, unittest.PrepareTestDatabase())
 		column1 := unittest.AssertExistsAndLoadBean(t, &project_model.Column{ID: 1})
@@ -709,6 +710,60 @@ func TestCUDProject(t *testing.T) {
 
 		assert.Contains(t, defaultIssues, pI1)
 		assert.Contains(t, defaultIssues, pI2)
+
+		// Remove an issue
+		issuesBefore, err := db.Find[project_model.ProjectIssue](t.Context(), project_model.FindProjectIssueOptions{
+			ListOptions: db.ListOptionsAll,
+			ProjectID:   project.ID,
+		})
+		require.NoError(t, err)
+
+		issue1 := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 1})
+		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+		err = RemoveIssueFromProject(t.Context(), issue1, user, column1.ID)
+		require.NoError(t, err)
+
+		issuesAfter, err := db.Find[project_model.ProjectIssue](t.Context(), project_model.FindProjectIssueOptions{
+			ListOptions: db.ListOptionsAll,
+			ProjectID:   project.ID,
+		})
+		require.NoError(t, err)
+
+		assert.Less(t, len(issuesAfter), len(issuesBefore))
+
+		// Create an issue
+		_, err = CreateIssueInProject(t.Context(), issue1, user, project.ID, column1.ID)
+		require.NoError(t, err)
+
+		issuesAfter, err = db.Find[project_model.ProjectIssue](t.Context(), project_model.FindProjectIssueOptions{
+			ListOptions: db.ListOptionsAll,
+			ProjectID:   project.ID,
+		})
+		require.NoError(t, err)
+
+		assert.Len(t, issuesAfter, len(issuesBefore))
+
+		_, err = CreateIssueInProject(t.Context(), issue1, user, project.ID, 0)
+		require.NoError(t, err)
+
+		// Remove issues
+		for _, projectIssue := range issuesAfter {
+			issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: projectIssue.ID})
+			err = RemoveIssueFromProject(t.Context(), issue, user, column1.ID)
+			require.NoError(t, err)
+		}
+
+		defaultCol, err = project.GetDefaultColumn(t.Context())
+		require.NoError(t, err)
+
+		defaultIssues, err = db.Find[project_model.ProjectIssue](t.Context(), project_model.FindProjectIssueOptions{
+			ListOptions:     db.ListOptionsAll,
+			ProjectID:       defaultCol.ProjectID,
+			ProjectColumnID: defaultCol.ID,
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, issue1.ID, defaultIssues[0].IssueID)
 	})
 
 	// delete project

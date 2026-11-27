@@ -256,4 +256,7 @@ type swaggerParameterBodies struct {
 
 	// in:body
 	CreateOrUpdateProjectOptions api.CreateOrUpdateProjectOptions
+
+	// in:body
+	CreateProjectIssueOptions api.CreateProjectIssueOptions
 }

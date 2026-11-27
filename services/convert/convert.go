@@ -637,3 +637,25 @@ func ToAPIProjectList(p []*project_model.Project) []*api.Project {
 	}
 	return projs
 }
+
+// ToProjectIssue converts project_model.ProjectIssue to api.ProjectIssue.
+func ToProjectIssue(issue *project_model.ProjectIssue) *api.ProjectIssue {
+	return &api.ProjectIssue{
+		ID: issue.ID,
+		Issue: &api.IssueHeader{
+			ID: issue.IssueID,
+		},
+		ProjectID:       issue.ProjectID,
+		ProjectColumnID: issue.ProjectColumnID,
+		Sorting:         issue.Sorting,
+	}
+}
+
+// ToProjectIssueList converts project_model.ProjectIssue list to api.ProjectIssue list.
+func ToProjectIssueList(p []*project_model.ProjectIssue) []*api.ProjectIssue {
+	var apiIssues []*api.ProjectIssue
+	for _, issue := range p {
+		apiIssues = append(apiIssues, ToProjectIssue(issue))
+	}
+	return apiIssues
+}
