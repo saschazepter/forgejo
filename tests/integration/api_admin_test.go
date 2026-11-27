@@ -6,6 +6,7 @@ package integration
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"testing"
 	"time"
 
@@ -22,6 +23,7 @@ import (
 
 	"github.com/gobwas/glob"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAPIAdminCreateAndDeleteSSHKey(t *testing.T) {
@@ -429,11 +431,25 @@ func TestAPICron(t *testing.T) {
 			AddTokenAuth(token)
 		resp := MakeRequest(t, req, http.StatusOK)
 
-		assert.Equal(t, "30", resp.Header().Get("X-Total-Count"))
+		count, err := strconv.ParseInt(resp.Header().Get("X-Total-Count"), 10, 64)
+		require.NoError(t, err)
+		assert.Greater(t, count, int64(30)) // exact number doesn't matter, but at least 30 cron jobs today
 
 		var crons []api.Cron
 		DecodeJSON(t, resp, &crons)
-		assert.Len(t, crons, 30)
+		assert.Equal(t, len(crons), setting.API.DefaultPagingNum)
+
+		// Load 2nd page:
+		req = NewRequest(t, "GET", "/api/v1/admin/cron?page=2").
+			AddTokenAuth(token)
+		resp = MakeRequest(t, req, http.StatusOK)
+		countSecondReq, err := strconv.ParseInt(resp.Header().Get("X-Total-Count"), 10, 64)
+		require.NoError(t, err)
+		assert.Equal(t, count, countSecondReq)
+
+		crons = []api.Cron{}
+		DecodeJSON(t, resp, &crons)
+		assert.NotEmpty(t, crons)
 	})
 
 	t.Run("Execute", func(t *testing.T) {
