@@ -9,6 +9,7 @@ import (
 
 	activities_model "forgejo.org/models/activities"
 	asymkey_model "forgejo.org/models/asymkey"
+	access_model "forgejo.org/models/perm/access"
 	"forgejo.org/models/system"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/git"
@@ -235,6 +236,16 @@ func registerRemoveResolvedReports() {
 	})
 }
 
+func registerRebuildAccessTable() {
+	RegisterTaskFatal("rebuild_access_table", &BaseConfig{
+		Enabled:    false,
+		RunAtStart: false,
+		Schedule:   "@annually",
+	}, func(ctx context.Context, _ *user_model.User, config Config) error {
+		return access_model.RecalculateAllAccesses(ctx)
+	})
+}
+
 func initExtendedTasks() {
 	registerDeleteInactiveUsers()
 	registerDeleteRepositoryArchives()
@@ -249,6 +260,7 @@ func initExtendedTasks() {
 	registerDeleteOldSystemNotices()
 	registerGCLFS()
 	registerRebuildIssueIndexer()
+	registerRebuildAccessTable()
 	if setting.Moderation.Enabled {
 		registerRemoveResolvedReports()
 	}
