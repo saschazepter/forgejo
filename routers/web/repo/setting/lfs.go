@@ -430,11 +430,25 @@ func LFSPointerFiles(ctx *context.Context) {
 	ctx.Data["PageIsSettingsLFS"] = true
 	ctx.Data["LFSFilesLink"] = ctx.Repo.RepoLink + "/settings/lfs"
 
+	if ctx.Repo.GitRepo == nil {
+		ctx.NotFound("LFSPointerFiles", nil)
+		return
+	}
+
 	var err error
 	err = func() error {
 		pointerChan := make(chan lfs.PointerBlob)
 		errChan := make(chan error, 1)
-		go lfs.SearchPointerBlobs(ctx, ctx.Repo.GitRepo, pointerChan, errChan)
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Error("PANIC during SearchPointerBlobs: %v\nStacktrace: %s", r, log.Stack(2))
+					close(pointerChan) // assume channels weren't closed at the end of lfs.SearchPointerBlobs
+					close(errChan)
+				}
+			}()
+			lfs.SearchPointerBlobs(ctx, ctx.Repo.GitRepo, pointerChan, errChan)
+		}()
 
 		numPointers := 0
 		var numAssociated, numNoExist, numAssociatable int
